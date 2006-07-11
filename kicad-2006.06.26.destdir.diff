@@ -1,0 +1,127 @@
+diff -ur kicad-dev/cvpcb/makefile.gtk kicad-dev-fedora/cvpcb/makefile.gtk
+--- kicad-dev/cvpcb/makefile.gtk	2006-03-20 13:31:36.000000000 +0100
++++ kicad-dev-fedora/cvpcb/makefile.gtk	2006-05-22 09:43:55.000000000 +0200
+@@ -31,9 +31,9 @@
+ 	$(LD) $(OBJECTS) $(LDFLAGS)  $(LIBVIEWER3D)  $(LIBS_WITH_GL) -o $(TARGET)
+ 
+ 
+-install:
+-	cp -f $(TARGET) $(KICAD_BIN)
+-
++install:
++	cp -f $(TARGET) $(DESTDIR)$(KICAD_BIN)
++
+ clean:
+ 		-erase *.o
+ 
+diff -ur kicad-dev/eeschema/makefile.gtk kicad-dev-fedora/eeschema/makefile.gtk
+--- kicad-dev/eeschema/makefile.gtk	2005-09-09 12:22:04.000000000 +0200
++++ kicad-dev-fedora/eeschema/makefile.gtk	2006-05-22 09:44:19.000000000 +0200
+@@ -31,7 +31,7 @@
+ 
+ 
+ install:
+-	cp $(TARGET) $(KICAD_BIN)
++	cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
+diff -ur kicad-dev/eeschema/plugins/makefile.gtk kicad-dev-fedora/eeschema/plugins/makefile.gtk
+--- kicad-dev/eeschema/plugins/makefile.gtk	2005-09-09 12:31:20.000000000 +0200
++++ kicad-dev-fedora/eeschema/plugins/makefile.gtk	2006-05-22 09:46:58.000000000 +0200
+@@ -19,7 +19,7 @@
+ 	gcc -D__UNIX__  -Wall netlist_form_pads-pcb.cpp -o netlist_form_pads-pcb $(LIBSTDC)
+ 
+ install:
+-	cp -v netlist_form_pads-pcb $(KICAD_BIN)/plugins/
++	cp -v netlist_form_pads-pcb $(DESTDIR)/usr/lib/kicad/plugins/
+ 
+ clean :
+ 	rm -f netlist_form_pads-pcb
+diff -ur kicad-dev/gerbview/makefile.gtk kicad-dev-fedora/gerbview/makefile.gtk
+--- kicad-dev/gerbview/makefile.gtk	2005-12-05 09:48:00.000000000 +0100
++++ kicad-dev-fedora/gerbview/makefile.gtk	2006-05-22 09:45:13.000000000 +0200
+@@ -21,10 +21,10 @@
+ 
+ 
+ $(TARGET): $(OBJECTS) makefile.gtk makefile.include $(EXTRALIBS) ../libs.linux
+-		$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(TARGET)
+-		
++		$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(TARGET)
++		
+ install:
+-		cp $(TARGET) $(KICAD_BIN)
++		cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
+diff -ur kicad-dev/kicad/makefile.gtk kicad-dev-fedora/kicad/makefile.gtk
+--- kicad-dev/kicad/makefile.gtk	2005-07-29 13:13:38.000000000 +0200
++++ kicad-dev-fedora/kicad/makefile.gtk	2006-05-22 09:45:50.000000000 +0200
+@@ -24,9 +24,9 @@
+ 
+ $(TARGET): $(OBJECTS) makefile.gtk $(EXTRALIBS) ../libs.linux
+ 	$(LD) $(OBJECTS) $(LDFLAGS)  $(LIBS) -o $(TARGET)
+-
+-install:
+-	cp -f  $(TARGET) $(KICAD_BIN)
++
++install:
++	cp -f  $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ clean:
+ 	rm -f *.o; rm -f *~; rm core; rm *.bak
+diff -ur kicad-dev/libs.linux kicad-dev-fedora/libs.linux
+--- kicad-dev/libs.linux	2006-04-04 12:54:20.000000000 +0200
++++ kicad-dev-fedora/libs.linux	2006-05-22 09:43:09.000000000 +0200
+@@ -1,6 +1,6 @@
+ 
+ #Configuration for build kicad
+-KICAD_BIN = /usr/local/kicad/linux
++KICAD_BIN = /usr/bin
+ 
+ 
+ SRCSUFF = .cpp
+@@ -14,7 +14,7 @@
+ # KICAD_STATIC_LINK = 1
+ 
+ # path and version definition for wxWidgets and mesa libs
+-MESALIBSPATH = /usr/local/lib
++MESALIBSPATH = /usr/lib
+ WXPATH = `wx-config --prefix`/lib
+ PREFIX_WX_LIBS = lib`wx-config --basename`
+ SUFFIX_WX_LIBSTD = `wx-config --utility=`
+@@ -69,11 +69,11 @@
+ endif
+ 
+ 
+-# attention à l'ordre des libairies
+-LIBS = -L/usr/local/lib -L/usr/X11R6/lib\
++# attention ï¿½l'ordre des libairies
++LIBS = -L/usr/lib -L/usr/X11R6/lib\
+ 	$(EXTRALIBS) $(WXSYSLIB)\
+ 	$(LIBSTDC)
+ 
+-LIBS_WITH_GL = -L/usr/local/lib -L/usr/X11R6/lib\
++LIBS_WITH_GL = -L/usr/lib -L/usr/X11R6/lib\
+ 	$(EXTRALIBS) $(WXSYSLIB_WITH_GL)\
+ 	$(LIBSTDC)
+diff -ur kicad-dev/pcbnew/makefile.gtk kicad-dev-fedora/pcbnew/makefile.gtk
+--- kicad-dev/pcbnew/makefile.gtk	2006-03-20 13:31:34.000000000 +0100
++++ kicad-dev-fedora/pcbnew/makefile.gtk	2006-05-22 09:43:35.000000000 +0200
+@@ -23,11 +23,11 @@
+ 
+ $(TARGET): $(OBJECTS) makefile.gtk  makefile.include $(LIBVIEWER3D) $(EXTRALIBS) ../libs.linux
+ 		$(LD) $(LDFLAGS) $(OBJECTS) $(LIBVIEWER3D) $(LIBS_WITH_GL)\
+-		-o $(TARGET)
+-		
+-		
++		-o $(TARGET)
++		
++		
+ install:
+-		cp $(TARGET) $(KICAD_BIN)
++		cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
