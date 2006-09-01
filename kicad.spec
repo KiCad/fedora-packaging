@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2006.06.26
-Release:	5%{?dist}
+Release:	6%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de cicrcuit imprimé
 
@@ -238,6 +238,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Fri Sep  1 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-6
+  - FE6 rebuild
+
 * Mon Jul 10 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-5
   - Removing backup files is no more needed.
 
