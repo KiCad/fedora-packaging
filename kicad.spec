@@ -1,14 +1,14 @@
 Name: 		kicad
-Version:	2006.06.26
-Release:	6%{?dist}
+Version:	2006.08.28
+Release:	1%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de cicrcuit imprimé
 
 Group: 		Applications/Engineering
 License: 	GPL
 Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
-Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2006-06-26.zip
-Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2006-06-26.tar.bz2
+Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2006-08-28.zip
+Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2006-08-28.tar.bz2
 Source2:	%{name}.desktop
 Patch:		%{name}-%{version}.destdir.diff
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -38,8 +38,8 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 
 %prep
 %setup -q -n kicad-dev -a 1
-%{__cp} -a kicad-src-extras/* .
-%{__rm} -rf kicad-src-extras
+%{__cp} -a kicad-src-extras-2006-08-28/* .
+%{__rm} -rf kicad-src-extras-2006-08-28
 
 # Convert MSDOS EOL to Unix EOL before applying patches
 
@@ -57,13 +57,13 @@ done
 %build
 
 # These files are not scripts
-for f in {copyright,gpl,licendoc,readme,version}.txt
+for f in {copyright,gpl,licendoc,README,version}.txt
 do
   %{__chmod} -x $f
 done
 
 # Convert MSDOS EOL to Unix EOL
-for f in {author,contrib,copyright,doc_conv_orcad*,gpl,licendoc,readme}.txt
+for f in {author,contrib,copyright,doc_conv_orcad*,gpl,licendoc,README}.txt
 do
   %{__sed} -i -e 's/\r$//' $f
 done
@@ -83,7 +83,7 @@ do
   %{__sed} -i -e 's/\r$//' $f
 done
 
-for f in help/pt/{contents.hhc,kicad.hhp,cvpcb/cvpcb-pt.html,eeschema/eeschema-pt.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad-pt.html,kicad/kicad_pt_BR.html,pcbnew/pcbnew.html}
+for f in help/pt/{contents.hhc,kicad.hhp,cvpcb/cvpcb-pt.html,eeschema/eeschema-pt.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad_pt_BR.html,pcbnew/pcbnew.html}
 do
   %{__sed} -i -e 's/\r$//' $f
 done
@@ -96,112 +96,117 @@ done
 make -f makefile.gtk %{?_smp_mflags}
 
 %install
-%{__rm} -rf $RPM_BUILD_ROOT
+%{__rm} -rf %{buildroot}
 
-install -d $RPM_BUILD_ROOT%{_datadir}
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}
+install -d %{buildroot}%{_datadir}
+install -d %{buildroot}%{_datadir}/%{name}
 
 # install demos files
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/demos
+install -d %{buildroot}%{_datadir}/%{name}/demos
 for dir in electric interf_u microwave pic_programmer pspice sonde_xilinx test_xil_95108 video
 do
-  install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/demos/${dir}
+  install -d %{buildroot}%{_datadir}/%{name}/demos/${dir}
   for f in demos/${dir}/*
   do
-    install -m 644 ${f} $RPM_BUILD_ROOT%{_datadir}/%{name}/${f}
+    install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
   done
 done
 
 # install help files
-install -d $RPM_BUILD_ROOT%%{_docdir}
-install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/
+install -d %{buildroot}%%{_docdir}
+install -d %{buildroot}%{_docdir}/%{name}/
 for dir in en es fr pt
 do
-  install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}
+  install -d %{buildroot}%{_docdir}/%{name}/${dir}
   for subdir in cvpcb eeschema file_formats gerbview kicad pcbnew
   do
-    install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/${subdir}
+    install -d %{buildroot}%{_docdir}/%{name}/${dir}/${subdir}
     cd help
-    install -m 644 ${dir}/kicad.hhp $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/kicad.hhp
-    install -m 644 ${dir}/contents.hhc $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/contents.hhc
+    install -m 644 ${dir}/kicad.hhp %{buildroot}%{_docdir}/%{name}/${dir}/kicad.hhp
+    install -m 644 ${dir}/contents.hhc %{buildroot}%{_docdir}/%{name}/${dir}/contents.hhc
     for f in ${dir}/${subdir}/*
     do
-      install -m 644 ${f} $RPM_BUILD_ROOT%{_docdir}/%{name}/${f}
+      install -m 644 ${f} %{buildroot}%{_docdir}/%{name}/${f}
     done
     cd ..
   done
 done
 
 # install ru help files
-install -d $RPM_BUILD_ROOT%%{_docdir}
-install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/
+install -d %{buildroot}%%{_docdir}
+install -d %{buildroot}%{_docdir}/%{name}/
 for dir in ru
 do
-  install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}
+  install -d %{buildroot}%{_docdir}/%{name}/${dir}
   for subdir in eeschema pcbnew
   do
-    install -d $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/${subdir}
+    install -d %{buildroot}%{_docdir}/%{name}/${dir}/${subdir}
     cd help
-    install -m 644 ${dir}/kicad.hhp $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/kicad.hhp
-    install -m 644 ${dir}/contents.hhc $RPM_BUILD_ROOT%{_docdir}/%{name}/${dir}/contents.hhc
+    install -m 644 ${dir}/kicad.hhp %{buildroot}%{_docdir}/%{name}/${dir}/kicad.hhp
+    install -m 644 ${dir}/contents.hhc %{buildroot}%{_docdir}/%{name}/${dir}/contents.hhc
     for f in ${dir}/${subdir}/*
     do
-      install -m 644 ${f} $RPM_BUILD_ROOT%{_docdir}/%{name}/${f}
+      install -m 644 ${f} %{buildroot}%{_docdir}/%{name}/${f}
     done
     cd ..
   done
 done
 
 # install librairies
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/library
+install -d %{buildroot}%{_datadir}/%{name}/library
 for f in library/*
 do
-  install -m 644 ${f} $RPM_BUILD_ROOT%{_datadir}/%{name}/${f}
+  install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
 done
 
 # install localization
-install -d $RPM_BUILD_ROOT%{_datadir}/locale
+install -d %{buildroot}%{_datadir}/locale
 cd locale
-for dir in es fr hu it ko pl pt sl
+for dir in de es fr hu it ko pl pt sl
 do
-  install -d $RPM_BUILD_ROOT%{_datadir}/locale/${dir}
-  install -m 644 ${dir}/%{name}.mo $RPM_BUILD_ROOT%{_datadir}/locale/${dir}/%{name}.mo
+  install -d %{buildroot}%{_datadir}/locale/${dir}
+  install -m 644 ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
 done
 cd ..
 
 # install modules
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/modules
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/modules/packages3d
+install -d %{buildroot}%{_datadir}/%{name}/modules
+install -d %{buildroot}%{_datadir}/%{name}/modules/packages3d
 for dir in conn_DBxx connectors conn_europe device dil discret divers pga pin_array smd support
 do
-  install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/modules/packages3d/${dir}
+  install -d %{buildroot}%{_datadir}/%{name}/modules/packages3d/${dir}
   for f in modules/packages3d/${dir}/*
   do
-    install -m 644 ${f} $RPM_BUILD_ROOT%{_datadir}/%{name}/${f}
+    install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
   done
 done
+for f in modules/*.*
+do
+  install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
+done
+
 
 # install template
-install -d $RPM_BUILD_ROOT%{_datadir}/%{name}/template
-install -m 644 template/%{name}.pro $RPM_BUILD_ROOT%{_datadir}/%{name}/template
+install -d %{buildroot}%{_datadir}/%{name}/template
+install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
 # install binaries
-install -d $RPM_BUILD_ROOT%{_bindir}
-install -d $RPM_BUILD_ROOT%{_libdir}/%{name}/plugins
-make -f makefile.gtk install DESTDIR=$RPM_BUILD_ROOT
+install -d %{buildroot}%{_bindir}
+install -d %{buildroot}%{_libdir}/%{name}/plugins
+make -f makefile.gtk install DESTDIR=%{buildroot}
 
 # install desktop
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
+mkdir -p %{buildroot}%{_datadir}/applications
 desktop-file-install --vendor fedora \
-  --dir $RPM_BUILD_ROOT%{_datadir}/applications \
+  --dir %{buildroot}%{_datadir}/applications \
   --add-category "Engineering" \
   --add-category "Electronics" \
   --add-category "X-Fedora" \
   %{SOURCE2}
 
 # install icon
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
-install -m 644 kicad_icon.png $RPM_BUILD_ROOT%{_datadir}/pixmaps/kicad_icon.png
+mkdir -p %{buildroot}%{_datadir}/pixmaps
+install -m 644 kicad_icon.png %{buildroot}%{_datadir}/pixmaps/kicad_icon.png
 
 %find_lang %{name}
 
@@ -222,13 +227,13 @@ then
 fi
 
 %clean
-%{__rm} -rf $RPM_BUILD_ROOT
+%{__rm} -rf %{buildroot}
 
 %files -f %{name}.lang
 %defattr(-,root,root)
 %doc author.txt contrib.txt copyright.txt doc_conv_orcad_to_kicad_spanish.txt
 %doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt lisezmoi.txt news.txt
-%doc readme.txt version.txt
+%doc README.txt version.txt
 %{_bindir}/*
 %{_libdir}/%{name}/
 %{_libdir}/%{name}/plugins/
@@ -238,6 +243,11 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Fri Sep 22 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.08.28-1
+  - New upstream version
+  - Use macro style instead of variable style
+  - Install missing modules. Fix #206602
+
 * Fri Sep  1 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-6
   - FE6 rebuild
 
