@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2006.08.28
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de cicrcuit imprimé
 
@@ -243,6 +243,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Thu Dec 28 2006 Jason L Tibbitts III <tibbs@math.uh.edu> 2006.08.28-3
+  - Rebuild with wxGTK 2.8.
+
 * Thu Oct 05 2006 Christian Iseli <Christian.Iseli@licr.org> 2006.08.28-2
  - rebuilt for unwind info generation, broken in gcc-4.1.1-21
 
