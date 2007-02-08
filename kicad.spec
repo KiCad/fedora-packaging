@@ -1,8 +1,8 @@
 Name: 		kicad
 Version:	2006.08.28
-Release:	3%{?dist}
+Release:	4%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
-Summary(fr): 	Saisie de schéma électronique et tracé de cicrcuit imprimé
+Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
 Group: 		Applications/Engineering
 License: 	GPL
@@ -11,6 +11,7 @@ Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2006-08-28.zip
 Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2006-08-28.tar.bz2
 Source2:	%{name}.desktop
 Patch:		%{name}-%{version}.destdir.diff
+Patch1:		%{name}-%{version}.rpm.opt.flags.diff
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:	wxGTK
@@ -53,6 +54,7 @@ do
 done
 
 %patch0 -p1
+%patch1 -p1
 
 %build
 
@@ -243,6 +245,12 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Thu Feb  8 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.08.28-4
+  - Add patch to build with RPM_OPT_FLAGS and remove -s from LDFLAGS
+    Contribution of Ville Skyttä <ville[DOT]skytta[AT]iki[DOT]fi>
+    Fix #227757
+  - Fix typo in french summary
+
 * Thu Dec 28 2006 Jason L Tibbitts III <tibbs@math.uh.edu> 2006.08.28-3
   - Rebuild with wxGTK 2.8.
 

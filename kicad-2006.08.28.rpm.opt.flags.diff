@@ -1,0 +1,96 @@
+--- kicad-dev/eeschema/makefile.gtk~	2007-02-07 23:33:48.000000000 +0200
++++ kicad-dev/eeschema/makefile.gtk	2007-02-08 00:13:19.000000000 +0200
+@@ -6,14 +6,14 @@
+ FINAL = 1
+ 
+ 
+-LDFLAGS =  -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+ TARGET = eeschema
+ 
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+ 
+ all: $(TARGET)
+--- kicad-dev/common/makefile.gtk~	2006-06-02 13:45:44.000000000 +0300
++++ kicad-dev/common/makefile.gtk	2007-02-08 00:13:05.000000000 +0200
+@@ -2,7 +2,7 @@
+ CC = gcc
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 -I./ -I../include `wx-config --cflags`
++CPPFLAGS =  -Wall -O2 -I./ -I../include `wx-config --cflags` $(RPM_OPT_FLAGS)
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+--- kicad-dev/pcbnew/makefile.gtk~	2007-02-07 23:33:48.000000000 +0200
++++ kicad-dev/pcbnew/makefile.gtk	2007-02-08 00:13:00.000000000 +0200
+@@ -4,9 +4,9 @@
+ 
+ # Compiler flags.
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS = -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+--- kicad-dev/cvpcb/makefile.gtk~	2007-02-07 23:33:48.000000000 +0200
++++ kicad-dev/cvpcb/makefile.gtk	2007-02-08 00:12:50.000000000 +0200
+@@ -8,9 +8,9 @@
+ 
+ # Compiler flags.
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS =  -s
++LDFLAGS =
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+--- kicad-dev/kicad/makefile.gtk~	2007-02-07 23:33:48.000000000 +0200
++++ kicad-dev/kicad/makefile.gtk	2007-02-08 00:12:43.000000000 +0200
+@@ -7,8 +7,8 @@
+ FINAL = 1
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 `wx-config --cxxflags`
+-LDFLAGS =  -s
++CPPFLAGS =  -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+--- kicad-dev/gerbview/makefile.gtk~	2007-02-07 23:33:48.000000000 +0200
++++ kicad-dev/gerbview/makefile.gtk	2007-02-08 00:12:35.000000000 +0200
+@@ -3,9 +3,9 @@
+ LD = gcc
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS =  -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS = -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+--- kicad-dev/3d-viewer/makefile.gtk~	2006-06-02 13:45:52.000000000 +0300
++++ kicad-dev/3d-viewer/makefile.gtk	2007-02-08 00:12:26.000000000 +0200
+@@ -4,7 +4,7 @@
+ # Compiler flags.
+ 
+ CPPFLAGS =  -Wall -O2 -DPCBNEW  -I../pcbnew -I ../include -I../common\
+-	  `wx-config --cxxflags`
++	  `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+ 
+ include ../libs.linux
