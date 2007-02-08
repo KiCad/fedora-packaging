@@ -1,0 +1,103 @@
+diff -ru kicad-dev/3d-viewer/makefile.gtk kicad-dev-fedora/3d-viewer/makefile.gtk
+--- kicad-dev/3d-viewer/makefile.gtk	2006-06-02 13:45:52.000000000 +0200
++++ kicad-dev-fedora/3d-viewer/makefile.gtk	2007-02-08 13:53:45.000000000 +0100
+@@ -4,7 +4,7 @@
+ # Compiler flags.
+ 
+ CPPFLAGS =  -Wall -O2 -DPCBNEW  -I../pcbnew -I ../include -I../common\
+-	  `wx-config --cxxflags`
++	  `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+ 
+ include ../libs.linux
+diff -ru kicad-dev/common/makefile.gtk kicad-dev-fedora/common/makefile.gtk
+--- kicad-dev/common/makefile.gtk	2006-06-02 13:45:44.000000000 +0200
++++ kicad-dev-fedora/common/makefile.gtk	2007-02-08 13:54:14.000000000 +0100
+@@ -2,7 +2,7 @@
+ CC = gcc
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 -I./ -I../include `wx-config --cflags`
++CPPFLAGS =  -Wall -O2 -I./ -I../include `wx-config --cflags` $(RPM_OPT_FLAGS)
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+diff -ru kicad-dev/cvpcb/makefile.gtk kicad-dev-fedora/cvpcb/makefile.gtk
+--- kicad-dev/cvpcb/makefile.gtk	2007-02-07 16:39:09.000000000 +0100
++++ kicad-dev-fedora/cvpcb/makefile.gtk	2007-02-08 13:54:41.000000000 +0100
+@@ -8,9 +8,9 @@
+ 
+ # Compiler flags.
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS =  -s
++LDFLAGS =
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+diff -ru kicad-dev/eeschema/makefile.gtk kicad-dev-fedora/eeschema/makefile.gtk
+--- kicad-dev/eeschema/makefile.gtk	2007-02-07 16:39:35.000000000 +0100
++++ kicad-dev-fedora/eeschema/makefile.gtk	2007-02-08 13:55:06.000000000 +0100
+@@ -6,14 +6,14 @@
+ FINAL = 1
+ 
+ 
+-LDFLAGS =  -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+ TARGET = eeschema
+ 
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+ 
+ all: $(TARGET)
+diff -ru kicad-dev/gerbview/makefile.gtk kicad-dev-fedora/gerbview/makefile.gtk
+--- kicad-dev/gerbview/makefile.gtk	2007-02-07 16:39:47.000000000 +0100
++++ kicad-dev-fedora/gerbview/makefile.gtk	2007-02-08 13:55:23.000000000 +0100
+@@ -3,9 +3,9 @@
+ LD = gcc
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS =  -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS = -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+diff -ru kicad-dev/kicad/makefile.gtk kicad-dev-fedora/kicad/makefile.gtk
+--- kicad-dev/kicad/makefile.gtk	2007-02-07 16:40:08.000000000 +0100
++++ kicad-dev-fedora/kicad/makefile.gtk	2007-02-08 13:55:39.000000000 +0100
+@@ -7,8 +7,8 @@
+ FINAL = 1
+ 
+ # Compiler flags.
+-CPPFLAGS =  -Wall -O2 `wx-config --cxxflags`
+-LDFLAGS =  -s
++CPPFLAGS =  -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
++LDFLAGS =
+ 
+ include ../libs.linux
+ 
+diff -ru kicad-dev/pcbnew/makefile.gtk kicad-dev-fedora/pcbnew/makefile.gtk
+--- kicad-dev/pcbnew/makefile.gtk	2007-02-07 16:40:27.000000000 +0100
++++ kicad-dev-fedora/pcbnew/makefile.gtk	2007-02-08 13:56:01.000000000 +0100
+@@ -4,9 +4,9 @@
+ 
+ # Compiler flags.
+ 
+-CPPFLAGS = -Wall -O2 `wx-config --cxxflags`
++CPPFLAGS = -Wall -O2 `wx-config --cxxflags` $(RPM_OPT_FLAGS)
+ 
+-LDFLAGS = -s
++LDFLAGS =
+ 
+ include ../libs.linux
+ 

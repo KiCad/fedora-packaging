@@ -1,14 +1,14 @@
 Name: 		kicad
-Version:	2006.08.28
-Release:	4%{?dist}
+Version:	2007.01.15
+Release:	1%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
 Group: 		Applications/Engineering
 License: 	GPL
 Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
-Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2006-08-28.zip
-Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2006-08-28.tar.bz2
+Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2007-01-15.zip
+Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-01-15.tar.bz2
 Source2:	%{name}.desktop
 Patch:		%{name}-%{version}.destdir.diff
 Patch1:		%{name}-%{version}.rpm.opt.flags.diff
@@ -39,8 +39,8 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 
 %prep
 %setup -q -n kicad-dev -a 1
-%{__cp} -a kicad-src-extras-2006-08-28/* .
-%{__rm} -rf kicad-src-extras-2006-08-28
+%{__cp} -a kicad-src-extras-2007-01-15/* .
+%{__rm} -rf kicad-src-extras-2007-01-15
 
 # Convert MSDOS EOL to Unix EOL before applying patches
 
@@ -59,18 +59,18 @@ done
 %build
 
 # These files are not scripts
-for f in {copyright,gpl,licendoc,README,version}.txt
+for f in {copyright,gpl,licendoc,version}.txt
 do
   %{__chmod} -x $f
 done
 
 # Convert MSDOS EOL to Unix EOL
-for f in {author,contrib,copyright,doc_conv_orcad*,gpl,licendoc,README}.txt
+for f in {author,contrib,copyright,doc_conv_orcad*,gpl,licendoc}.txt
 do
   %{__sed} -i -e 's/\r$//' $f
 done
 
-for f in help/fr/{contents.hhc,kicad.hhp,cvpcb/cvpcb.pdf,cvpcb/cvpcb-fr.html,eeschema/eeschema.html,eeschema/eeschema.pdf,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad.html,pcbnew/pcbnew.html}
+for f in help/fr/{contents.hhc,kicad.hhp,cvpcb/cvpcb-fr.html,eeschema/eeschema.html,eeschema/eeschema.pdf,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad.html,pcbnew/pcbnew.html}
 do
   %{__sed} -i -e 's/\r$//' $f
 done
@@ -85,7 +85,7 @@ do
   %{__sed} -i -e 's/\r$//' $f
 done
 
-for f in help/pt/{contents.hhc,kicad.hhp,cvpcb/cvpcb-pt.html,eeschema/eeschema-pt.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad_pt_BR.html,pcbnew/pcbnew.html}
+for f in help/pt/{contents.hhc,kicad.hhp,cvpcb/cvpcb-pt.html,eeschema/eeschema-pt.html,eeschema/eeschema_pt_BR.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad_pt_BR.html,kicad/kicad-pt.html,pcbnew/pcbnew.html,pcbnew/pcbnew_pt_BR.html}
 do
   %{__sed} -i -e 's/\r$//' $f
 done
@@ -234,8 +234,7 @@ fi
 %files -f %{name}.lang
 %defattr(-,root,root)
 %doc author.txt contrib.txt copyright.txt doc_conv_orcad_to_kicad_spanish.txt
-%doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt lisezmoi.txt news.txt
-%doc README.txt version.txt
+%doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt news.txt version.txt
 %{_bindir}/*
 %{_libdir}/%{name}/
 %{_libdir}/%{name}/plugins/
@@ -245,6 +244,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Thu Feb  8 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-1
+  - New upstream version
+
 * Thu Feb  8 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.08.28-4
   - Add patch to build with RPM_OPT_FLAGS and remove -s from LDFLAGS
     Contribution of Ville Skyttä <ville[DOT]skytta[AT]iki[DOT]fi>
