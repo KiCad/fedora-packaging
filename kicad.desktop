@@ -1,6 +1,6 @@
 [Desktop Entry]
-Categories=Application;
-Comment=Une suite logicielle intégrée pour la saisie de schémas et le routage de circuits imprimés
+Categories=Qt;KDE;Education;Science;Engineering;X-Fedora;
+Comment=An open source software for the creation of electronic schematic diagrams and printed circuit board artwork
 Comment[fr]=Une suite logicielle intégrée pour la saisie de schémas et le routage de circuits imprimés
 Encoding=UTF-8
 Exec=kicad
