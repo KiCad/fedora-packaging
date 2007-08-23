@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2007.01.15
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -244,6 +244,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Thu Aug 23 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-3
+  - Rebuild
+
 * Wed Feb 14 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-2
   - Fix desktop entry. Fix #228598
 
