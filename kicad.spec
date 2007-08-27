@@ -1,11 +1,11 @@
 Name: 		kicad
 Version:	2007.01.15
-Release:	3%{?dist}
+Release:	4%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
 Group: 		Applications/Engineering
-License: 	GPL
+License: 	GPLv2+
 Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
 Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2007-01-15.zip
 Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-01-15.tar.bz2
@@ -244,6 +244,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Mon Aug 27 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-4
+  - License tag clarification
+
 * Thu Aug 23 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-3
   - Rebuild
 
