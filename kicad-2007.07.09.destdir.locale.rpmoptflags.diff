@@ -1,0 +1,255 @@
+diff -ru kicad-dev/3d-viewer/makefile.gtk kicad-dev-fedora/3d-viewer/makefile.gtk
+--- kicad-dev/3d-viewer/makefile.gtk	2007-07-02 15:53:40.000000000 +0200
++++ kicad-dev-fedora/3d-viewer/makefile.gtk	2007-08-27 17:04:26.000000000 +0200
+@@ -3,7 +3,7 @@
+ include ../libs.linux
+ 
+ # Compiler flags.
+-CPPFLAGS += -DPCBNEW -I../pcbnew -I ../include -I../common
++CPPFLAGS += -DPCBNEW -I../pcbnew -I ../include -I../common $(RPM_OPT_FLAGS)
+ 
+ TARGET = 3d-viewer
+ 
+diff -ru kicad-dev/common/makefile.gtk kicad-dev-fedora/common/makefile.gtk
+--- kicad-dev/common/makefile.gtk	2007-07-02 15:53:32.000000000 +0200
++++ kicad-dev-fedora/common/makefile.gtk	2007-08-27 17:04:46.000000000 +0200
+@@ -5,7 +5,7 @@
+ include ../libs.linux
+ 
+ # Compiler flags.
+-CPPFLAGS +=  -I./ -I../include
++CPPFLAGS +=  -I./ -I../include $(RPM_OPT_FLAGS)
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+diff -ru kicad-dev/cvpcb/makefile.gtk kicad-dev-fedora/cvpcb/makefile.gtk
+--- kicad-dev/cvpcb/makefile.gtk	2007-07-02 15:53:42.000000000 +0200
++++ kicad-dev-fedora/cvpcb/makefile.gtk	2007-08-27 17:03:57.000000000 +0200
+@@ -6,7 +6,7 @@
+ include ../libs.linux
+ 
+ # Compiler flags.
+-CPPFLAGS +=
++CPPFLAGS += $(RPM_OPT_FLAGS)
+ 
+ EDACPPFLAGS = $(CPPFLAGS)
+ 
+@@ -25,7 +25,7 @@
+ 
+ 
+ install: $(TARGET)
+-	cp -f $(TARGET) $(KICAD_BIN)
++	cp -f $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ clean:
+ 		rm -f *.o
+diff -ru kicad-dev/eeschema/makefile.gtk kicad-dev-fedora/eeschema/makefile.gtk
+--- kicad-dev/eeschema/makefile.gtk	2007-07-02 15:53:36.000000000 +0200
++++ kicad-dev-fedora/eeschema/makefile.gtk	2007-08-27 17:05:31.000000000 +0200
+@@ -5,7 +5,7 @@
+ 
+ 
+ # Additional compiler flags
+-CPPFLAGS +=
++CPPFLAGS += $(RPM_OPT_FLAGS)
+ 
+ TARGET = eeschema
+ 
+@@ -26,7 +26,7 @@
+ 
+ 
+ install: $(TARGET)
+-	cp $(TARGET) $(KICAD_BIN)
++	cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
+diff -ru kicad-dev/eeschema/plugins/makefile.gtk kicad-dev-fedora/eeschema/plugins/makefile.gtk
+--- kicad-dev/eeschema/plugins/makefile.gtk	2007-07-02 15:53:34.000000000 +0200
++++ kicad-dev-fedora/eeschema/plugins/makefile.gtk	2007-08-27 17:07:26.000000000 +0200
+@@ -19,10 +19,10 @@
+ 	gcc -D__UNIX__  -Wall netlist_form_pads-pcb.cpp -o netlist_form_pads-pcb $(LIBSTDC)
+ 
+ $(KICAD_PLUGINS):
+-	mkdir -p $(KICAD_PLUGINS)
++	mkdir -p $(DESTDIR)$(KICAD_PLUGINS)
+ 
+ install: $(KICAD_PLUGINS)
+-	cp netlist_form_pads-pcb $(KICAD_PLUGINS)
++	cp netlist_form_pads-pcb $(DESTDIR)$(KICAD_PLUGINS)
+ 
+ clean :
+ 	rm -f netlist_form_pads-pcb
+diff -ru kicad-dev/gerbview/makefile.gtk kicad-dev-fedora/gerbview/makefile.gtk
+--- kicad-dev/gerbview/makefile.gtk	2007-07-02 15:53:42.000000000 +0200
++++ kicad-dev-fedora/gerbview/makefile.gtk	2007-08-27 17:08:05.000000000 +0200
+@@ -4,7 +4,7 @@
+ include ../libs.linux
+ 
+ # Additional compiler flags.
+-CPPFLAGS +=
++CPPFLAGS += $(RPM_OPT_FLAGS)
+ 
+ 
+ TARGET = gerbview
+@@ -21,7 +21,7 @@
+ 		$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(TARGET)
+ 		
+ install: $(TARGET)
+-		cp $(TARGET) $(KICAD_BIN)
++		cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
+Seulement dans kicad-dev-fedora/internat: Makefile
+diff -ru kicad-dev/kicad/makefile.gtk kicad-dev-fedora/kicad/makefile.gtk
+--- kicad-dev/kicad/makefile.gtk	2007-07-02 15:53:40.000000000 +0200
++++ kicad-dev-fedora/kicad/makefile.gtk	2007-08-27 17:08:38.000000000 +0200
+@@ -4,7 +4,7 @@
+ include ../libs.linux
+ 
+ # Additional compiler flags
+-CPPFLAGS +=
++CPPFLAGS += $(RPM_OPT_FLAGS)
+ 
+ FINAL = 1
+ 
+@@ -22,7 +22,7 @@
+ 	$(LD) $(OBJECTS) $(LDFLAGS)  $(LIBS) -o $(TARGET)
+ 
+ install:$(TARGET)
+-	cp -f  $(TARGET) $(KICAD_BIN)
++	cp -f  $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ clean:
+ 	rm -f *.o;
+diff -ru kicad-dev/libs.linux kicad-dev-fedora/libs.linux
+--- kicad-dev/libs.linux	2007-07-02 16:46:14.000000000 +0200
++++ kicad-dev-fedora/libs.linux	2007-10-04 13:50:37.000000000 +0200
+@@ -12,15 +12,15 @@
+ 
+ STD_INSTALL = 1
+ 
+-ifeq ($(STD_INSTALL), 1)
++ifeq ($(STD_INSTALL), 1)
+ PREFIX = /usr
+-KICAD_BIN = $(PREFIX)/linux
+-KICAD_PLUGINS = $(PREFIX)/lib/kicad/plugins
+-KICAD_DOCS=$(PREFIX)/share/doc/kicad
++KICAD_BIN = $(PREFIX)/bin
++KICAD_PLUGINS = %{_libdir}/kicad/plugins
++KICAD_DOCS=$(DESTDIR)$(PREFIX)/share/doc/kicad
+ KICAD_DATA=$(PREFIX)/share/kicad
+ KICAD_MODULES=$(KICAD_DATA)/modules
+ KICAD_LIBRARY=$(KICAD_DATA)/library
+-KICAD_INTERNAT=$(KICAD_DATA)/internat
++KICAD_INTERNAT=$(KICAD_DATA)/locale
+ KICAD_TEMPLATE=$(KICAD_DATA)/template
+ 
+ else
+@@ -56,7 +56,7 @@
+ LDFLAGS = -g #-v
+ else
+ CPPFLAGS = -Wall -O2 `wx-config --cxxflags` -fno-strict-aliasing
+-LDFLAGS = -s #-v
++LDFLAGS = #-v
+ endif
+ 
+ 
+@@ -66,17 +66,17 @@
+ # You must uncomment these lines for static link (or build with "make -f makefile.gtk KICAD_STATIC_LINK=1")
+ # dynamic link is less difficult than static link and is what you would normally want
+ # to use if kicad is running only on your system or one with same level of libraries.
+-ifndef KICAD_PYTHON
+-ifeq ($(STD_INSTALL), 0)
+-KICAD_STATIC_LINK = 1
+-endif
+-endif
++ifndef KICAD_PYTHON
++ifeq ($(STD_INSTALL), 0)
++KICAD_STATIC_LINK = 1
++endif
++endif
+ 
+ ifeq ($(KICAD_STATIC_LINK), 1)
+ LD  = gcc
+ else
+ LD  = g++
+-endif
++endif
+ 
+ ifdef KICAD_PYTHON
+ PYTHON_VERSION=2.5
+@@ -88,7 +88,7 @@
+ endif
+ 
+ # path and version definition for wxWidgets and mesa libs
+-MESALIBSPATH = /usr/local/lib
++MESALIBSPATH = /usr/lib
+ WXPATH = `wx-config --prefix`/lib
+ PREFIX_WX_LIBS = lib`wx-config --basename`
+ SUFFIX_WX_LIBSTD = `wx-config --utility=`
+@@ -153,11 +153,11 @@
+ endif
+ 
+ 
+-# attention à l'ordre des libairies
+-LIBS = -L/usr/local/lib -L/usr/X11R6/lib\
++# attention ï¿½ l'ordre des libairies
++LIBS = -L/usr/lib -L/usr/X11R6/lib\
+ 	$(EXTRALIBS) $(WXSYSLIB)\
+ 	$(LIBSTDC) $(PYLIBS)
+ 
+-LIBS_WITH_GL = -L/usr/local/lib -L/usr/X11R6/lib\
++LIBS_WITH_GL = -L/usr/lib -L/usr/X11R6/lib\
+ 	$(EXTRALIBS) $(WXSYSLIB_WITH_GL)\
+ 	$(LIBSTDC) $(PYLIBS)
+Seulement dans kicad-dev-fedora: libs.linux~
+diff -ru kicad-dev/makefile.gtk kicad-dev-fedora/makefile.gtk
+--- kicad-dev/makefile.gtk	2007-07-02 15:53:30.000000000 +0200
++++ kicad-dev-fedora/makefile.gtk	2007-10-03 13:25:43.000000000 +0200
+@@ -2,7 +2,7 @@
+ MAKEGTK = $(MAKE) -f makefile.gtk
+ KICAD_SUBDIRS = common 3d-viewer eeschema eeschema/plugins pcbnew cvpcb kicad gerbview
+ KICAD_SUBDIRS_BIN = eeschema eeschema/plugins pcbnew cvpcb kicad gerbview
+-KICAD_SUBDIRS_RES = internat modules template library
++KICAD_SUBDIRS_RES = locale modules template library
+ KICAD_SUBDIRS_HELP = help
+ 
+ all:
+diff -ru kicad-dev/pcbnew/makefile.gtk kicad-dev-fedora/pcbnew/makefile.gtk
+--- kicad-dev/pcbnew/makefile.gtk	2007-07-02 15:53:38.000000000 +0200
++++ kicad-dev-fedora/pcbnew/makefile.gtk	2007-08-27 17:09:56.000000000 +0200
+@@ -4,7 +4,7 @@
+ include ../libs.linux
+ 
+ # Additional compiler flags
+-CPPFLAGS +=
++CPPFLAGS += $(RPM_OPT_FLAGS)
+ 
+ 
+ TARGET = pcbnew
+@@ -23,7 +23,7 @@
+ 		
+ 		
+ install: $(TARGET)
+-		cp $(TARGET) $(KICAD_BIN)
++		cp $(TARGET) $(DESTDIR)$(KICAD_BIN)
+ 
+ 
+ clean:
+diff -ru kicad-dev/template/makefile kicad-dev-fedora/template/makefile
+--- kicad-dev/template/makefile	2007-06-18 17:39:22.000000000 +0200
++++ kicad-dev-fedora/template/makefile	2007-08-27 19:40:32.000000000 +0200
+@@ -6,9 +6,9 @@
+ install: $(TARGETS)
+ 
+ $(KICAD_TEMPLATE):
+-	mkdir -p $(KICAD_TEMPLATE)
++	mkdir -p $(DESTDIR)$(KICAD_TEMPLATE)
+ 
+ $(TARGETS): $(KICAD_TEMPLATE)
+-	cp -R $@ $(KICAD_TEMPLATE)
++	cp -R $@ $(DESTDIR)$(KICAD_TEMPLATE)
+ 
+ .PHONY: $(TARGETS)

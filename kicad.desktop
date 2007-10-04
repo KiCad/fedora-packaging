@@ -1,20 +1,11 @@
 [Desktop Entry]
-Categories=Qt;KDE;Education;Science;Engineering;X-Fedora;
-Comment=An open source software for the creation of electronic schematic diagrams and printed circuit board artwork
-Comment[fr]=Une suite logicielle intégrée pour la saisie de schémas et le routage de circuits imprimés
 Encoding=UTF-8
-Exec=kicad
-GenericName=
-GenericName[fr]=
-Icon=kicad_icon.png
-MimeType=
 Name=KiCad
 Name[fr]=KiCad
-Path=
-StartupNotify=true
-Terminal=false
-TerminalOptions=
+Comment=A software for the creation of electronic schematic diagrams and printed circuit board artwork
+Comment[fr]=Une suite logicielle intégrée pour la saisie de schémas et le routage de circuits imprimés
+Exec=kicad
+Icon=kicad_icon.png
 Type=Application
-X-DCOP-ServiceType=
-X-KDE-SubstituteUID=false
-X-KDE-Username=
+Terminal=false
+Categories=Application;Education;Electronics;Engineering;Science;

@@ -1,17 +1,16 @@
 Name: 		kicad
-Version:	2007.01.15
-Release:	4%{?dist}
+Version:	2007.07.09
+Release:	1%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
 Group: 		Applications/Engineering
 License: 	GPLv2+
 Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
-Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources-2007-01-15.zip
-Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-01-15.tar.bz2
+Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources--2007-07-09.zip
+Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-07-09.tar.bz2
 Source2:	%{name}.desktop
-Patch:		%{name}-%{version}.destdir.diff
-Patch1:		%{name}-%{version}.rpm.opt.flags.diff
+Patch:		%{name}-%{version}.destdir.locale.rpmoptflags.diff
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:	wxGTK
@@ -39,8 +38,8 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 
 %prep
 %setup -q -n kicad-dev -a 1
-%{__cp} -a kicad-src-extras-2007-01-15/* .
-%{__rm} -rf kicad-src-extras-2007-01-15
+%{__cp} -a kicad-src-extras-2007-07-09/* .
+%{__rm} -rf kicad-src-extras-2007-07-09
 
 # Convert MSDOS EOL to Unix EOL before applying patches
 
@@ -54,7 +53,6 @@ do
 done
 
 %patch0 -p1
-%patch1 -p1
 
 %build
 
@@ -199,11 +197,10 @@ make -f makefile.gtk install DESTDIR=%{buildroot}
 
 # install desktop
 mkdir -p %{buildroot}%{_datadir}/applications
-desktop-file-install --vendor fedora \
+desktop-file-install --vendor=fedora \
   --dir %{buildroot}%{_datadir}/applications \
   --add-category "Engineering" \
   --add-category "Electronics" \
-  --add-category "X-Fedora" \
   %{SOURCE2}
 
 # install icon
@@ -236,14 +233,19 @@ fi
 %doc author.txt contrib.txt copyright.txt doc_conv_orcad_to_kicad_spanish.txt
 %doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt news.txt version.txt
 %{_bindir}/*
-%{_libdir}/%{name}/
 %{_libdir}/%{name}/plugins/
 %{_datadir}/%{name}/
 %{_docdir}/%{name}/
-%{_datadir}/applications/*
+%{_datadir}/applications/fedora-%{name}.desktop
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Thu Oct 04 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-1
+  - New upstream version
+  - Merge previous patches
+  - Remove X-Fedora, Electronics and Engineering categories
+  - Update desktop file
+
 * Mon Aug 27 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-4
   - License tag clarification
 
