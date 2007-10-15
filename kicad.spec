@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2007.07.09
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -199,8 +199,6 @@ make -f makefile.gtk install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}%{_datadir}/applications
 desktop-file-install --vendor=fedora \
   --dir %{buildroot}%{_datadir}/applications \
-  --add-category "Engineering" \
-  --add-category "Electronics" \
   %{SOURCE2}
 
 # install icon
@@ -240,6 +238,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Mon Oct 15 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-2
+  - Update desktop file
+
 * Thu Oct 04 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-1
   - New upstream version
   - Merge previous patches

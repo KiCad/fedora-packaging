@@ -8,4 +8,4 @@ Exec=kicad
 Icon=kicad_icon.png
 Type=Application
 Terminal=false
-Categories=Application;Education;Electronics;Engineering;Science;
+Categories=Application;Electronics;Engineering;Science;
