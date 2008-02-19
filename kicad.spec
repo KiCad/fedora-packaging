@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2007.07.09
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -238,6 +238,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Mon Feb 18 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2007.07.09-3
+- Autorebuild for GCC 4.3
+
 * Mon Oct 15 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-2
   - Update desktop file
 
