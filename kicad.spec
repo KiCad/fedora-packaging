@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2007.07.09
-Release:	3%{?dist}
+Release:	4%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -13,7 +13,6 @@ Source2:	%{name}.desktop
 Patch:		%{name}-%{version}.destdir.locale.rpmoptflags.diff
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:	wxGTK
 BuildRequires:	desktop-file-utils, wxGTK-devel
 
 %description
@@ -231,6 +230,7 @@ fi
 %doc author.txt contrib.txt copyright.txt doc_conv_orcad_to_kicad_spanish.txt
 %doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt news.txt version.txt
 %{_bindir}/*
+%dir %{_libdir}/%{name}
 %{_libdir}/%{name}/plugins/
 %{_datadir}/%{name}/
 %{_docdir}/%{name}/
@@ -238,6 +238,10 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Fri Aug 29 2008 Michael Schwendt <mschwendt@fedoraproject.org> - 2007.07.09-4
+- Include %%_libdir/kicad directory.
+- Drop explicit Requires wxGTK in favour of automatic SONAME dependencies.
+
 * Mon Feb 18 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2007.07.09-3
 - Autorebuild for GCC 4.3
 
