@@ -10,7 +10,7 @@ Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
 Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources--2007-07-09.zip
 Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-07-09.tar.bz2
 Source2:	%{name}.desktop
-Patch:		%{name}-%{version}.destdir.locale.rpmoptflags.diff
+Patch0:		%{name}-%{version}.destdir.locale.rpmoptflags.diff
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:	desktop-file-utils, wxGTK-devel
@@ -239,6 +239,7 @@ fi
 
 %changelog
 * Fri Aug 29 2008 Michael Schwendt <mschwendt@fedoraproject.org> - 2007.07.09-4
+- First patch is Patch0 - should fix build in Rawhide.
 - Include %%_libdir/kicad directory.
 - Drop explicit Requires wxGTK in favour of automatic SONAME dependencies.
 
