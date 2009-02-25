@@ -1,6 +1,6 @@
 Name: 		kicad
 Version:	2007.07.09
-Release:	4%{?dist}
+Release:	5%{?dist}
 Summary: 	Electronic schematic diagrams and printed circuit board artwork
 Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -238,6 +238,9 @@ fi
 %{_datadir}/pixmaps/kicad_icon.png
 
 %changelog
+* Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2007.07.09-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
 * Fri Aug 29 2008 Michael Schwendt <mschwendt@fedoraproject.org> - 2007.07.09-4
 - First patch is Patch0 - should fix build in Rawhide.
 - Include %%_libdir/kicad directory.
