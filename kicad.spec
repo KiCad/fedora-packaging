@@ -1,22 +1,29 @@
-Name: 		kicad
-Version:	2007.07.09
-Release:	5%{?dist}
-Summary: 	Electronic schematic diagrams and printed circuit board artwork
-Summary(fr): 	Saisie de schéma électronique et tracé de circuit imprimé
+Name:           kicad
+Version:        2009.07.07
+Release:        1.rev1863%{?dist}
+Summary:        Electronic schematic diagrams and printed circuit board artwork
+Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
-Group: 		Applications/Engineering
-License: 	GPLv2+
-Url: 		http://www.lis.inpg.fr/realise_au_lis/kicad/
-Source:		ftp://iut-tice.ujf-grenoble.fr/cao/sources/kicad-sources--2007-07-09.zip
-Source1:	http://linuxelectronique.free.fr/download/kicad-src-extras-2007-07-09.tar.bz2
-Source2:	%{name}.desktop
-Patch0:		%{name}-%{version}.destdir.locale.rpmoptflags.diff
-BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Group:          Applications/Engineering
+License:        GPLv2+
+URL:            http://www.lis.inpg.fr/realise_au_lis/kicad/
 
-BuildRequires:	desktop-file-utils, wxGTK-devel
+# Source files created from upstream's SVN repository
+Source:         kicad-%{version}.tar.bz2
+Source1:        kicad-doc-%{version}.tar.bz2
+Source2:        kicad-library-%{version}.tar.bz2
+
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+BuildRequires:  desktop-file-utils
+BuildRequires:  wxGTK-devel
+BuildRequires:  boost-devel
+BuildRequires:  cmake
+
+Requires:       electronics-menu
 
 %description
-Kicad is an open source (GPL) software for the creation of electronic schematic
+Kicad is an EDA software to design electronic schematic
 diagrams and printed circuit board artwork up to 16 layers.
 Kicad is a set of four softwares and a project manager:
 - Eeschema: schematic entry
@@ -35,176 +42,210 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 - Cvpcb : sélecteur d'empreintes pour les composants utilisés dans le circuit
 - Kicad : gestionnaire de projet.
 
+
+%package        doc
+Summary:        Documentations for kicad
+Group:          Applications/Engineering
+License:        GPLv2+
+Requires:       %{name} = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+
+%description    doc
+Documentations and tutorials for kicad in English
+
+
+%package        doc-de
+Summary:        Documentation for Kicad in German
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-de
+Documentation and tutorials for Kicad in German
+
+
+%package        doc-es
+Summary:        Documentation for Kicad in Spanish
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-es
+Documentation and tutorials for Kicad in Spanish
+
+
+%package        doc-fr
+Summary:        Documentation for Kicad in French
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-fr
+Documentation and tutorials for Kicad in French
+
+
+%package        doc-hu
+Summary:        Documentation for Kicad in Hungarian
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-hu
+Documentation and tutorials for Kicad in Hungarian
+
+
+%package        doc-it
+Summary:        Documentation for Kicad in Italian
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-it
+Documentation and tutorials for Kicad in Italian
+
+
+%package        doc-pt
+Summary:        Documentation for Kicad in Portuguese
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-pt
+Documentation and tutorials for Kicad in Portuguese
+
+
+%package        doc-ru
+Summary:        Documentation for Kicad in Russian
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-ru
+Documentation and tutorials for Kicad in Russian
+
+
+%package        doc-zh_CN
+Summary:        Documentation for Kicad in Chinese
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-zh_CN
+Documentation and tutorials for Kicad in Chinese
+
+
 %prep
-%setup -q -n kicad-dev -a 1
-%{__cp} -a kicad-src-extras-2007-07-09/* .
-%{__rm} -rf kicad-src-extras-2007-07-09
+%setup -q -a 1 -a 2
 
-# Convert MSDOS EOL to Unix EOL before applying patches
+#kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
+iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
 
-for f in 3d-viewer/{3d_struct.h,3d_viewer.h} \
-eeschema/libcmp.h \
-include/{pcbstruct.h,wxstruct.h} \
-kicad/kicad.h \
-pcbnew/{autorout.h,class_cotation.h,class_equipot.h,class_mire.h,class_module.h,class_pcb_text.h,class_text_mod.h,class_track.h,track.cpp}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
 
-%patch0 -p1
+#multilibs
+%ifarch x86_64 sparc64 ppc64 amd64
+%{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
+%endif
+
 
 %build
 
-# These files are not scripts
-for f in {copyright,gpl,licendoc,version}.txt
-do
-  %{__chmod} -x $f
-done
+#
+# Symbols libraries
+#
+pushd %{name}-library-%{version}/
+%cmake -DCMAKE_BUILD_TYPE=Release .
+%{__make} %{?_smp_mflags} VERBOSE=1
+popd
 
-# Convert MSDOS EOL to Unix EOL
-for f in {author,contrib,copyright,doc_conv_orcad*,gpl,licendoc}.txt
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
 
-for f in help/fr/{contents.hhc,kicad.hhp,cvpcb/cvpcb-fr.html,eeschema/eeschema.html,eeschema/eeschema.pdf,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad.html,pcbnew/pcbnew.html}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
+#
+# Core components
+#
+%cmake -DCMAKE_BUILD_TYPE=Release
+%{__make} %{?_smp_mflags} VERBOSE=1
 
-for f in help/en/{contents.hhc,kicad.hhp,cvpcb/cvpcb-en.html,eeschema/eeschema.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad.html,pcbnew/pcbnew.html}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
-
-for f in help/es/{contents.hhc,kicad.hhp,cvpcb/cvpcb-es.html,eeschema/eeschema-es.html,file_formats/file_formats-es.html,gerbview/gerbview.html,kicad/kicad-es.html,pcbnew/pcbnew-es.html}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
-
-for f in help/pt/{contents.hhc,kicad.hhp,cvpcb/cvpcb-pt.html,eeschema/eeschema-pt.html,eeschema/eeschema_pt_BR.html,file_formats/file_formats.html,gerbview/gerbview.html,kicad/kicad_pt_BR.html,kicad/kicad-pt.html,pcbnew/pcbnew.html,pcbnew/pcbnew_pt_BR.html}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
-
-for f in help/ru/{contents.hhc,kicad.hhp,eeschema/eeschema_ru.html}
-do
-  %{__sed} -i -e 's/\r$//' $f
-done
-
-make -f makefile.gtk %{?_smp_mflags}
 
 %install
 %{__rm} -rf %{buildroot}
 
-install -d %{buildroot}%{_datadir}
-install -d %{buildroot}%{_datadir}/%{name}
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 
-# install demos files
-install -d %{buildroot}%{_datadir}/%{name}/demos
-for dir in electric interf_u microwave pic_programmer pspice sonde_xilinx test_xil_95108 video
-do
-  install -d %{buildroot}%{_datadir}/%{name}/demos/${dir}
-  for f in demos/${dir}/*
-  do
-    install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
-  done
-done
-
-# install help files
-install -d %{buildroot}%%{_docdir}
-install -d %{buildroot}%{_docdir}/%{name}/
-for dir in en es fr pt
-do
-  install -d %{buildroot}%{_docdir}/%{name}/${dir}
-  for subdir in cvpcb eeschema file_formats gerbview kicad pcbnew
-  do
-    install -d %{buildroot}%{_docdir}/%{name}/${dir}/${subdir}
-    cd help
-    install -m 644 ${dir}/kicad.hhp %{buildroot}%{_docdir}/%{name}/${dir}/kicad.hhp
-    install -m 644 ${dir}/contents.hhc %{buildroot}%{_docdir}/%{name}/${dir}/contents.hhc
-    for f in ${dir}/${subdir}/*
-    do
-      install -m 644 ${f} %{buildroot}%{_docdir}/%{name}/${f}
-    done
-    cd ..
-  done
-done
-
-# install ru help files
-install -d %{buildroot}%%{_docdir}
-install -d %{buildroot}%{_docdir}/%{name}/
-for dir in ru
-do
-  install -d %{buildroot}%{_docdir}/%{name}/${dir}
-  for subdir in eeschema pcbnew
-  do
-    install -d %{buildroot}%{_docdir}/%{name}/${dir}/${subdir}
-    cd help
-    install -m 644 ${dir}/kicad.hhp %{buildroot}%{_docdir}/%{name}/${dir}/kicad.hhp
-    install -m 644 ${dir}/contents.hhc %{buildroot}%{_docdir}/%{name}/${dir}/contents.hhc
-    for f in ${dir}/${subdir}/*
-    do
-      install -m 644 ${f} %{buildroot}%{_docdir}/%{name}/${f}
-    done
-    cd ..
-  done
-done
-
-# install librairies
-install -d %{buildroot}%{_datadir}/%{name}/library
-for f in library/*
-do
-  install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
-done
 
 # install localization
+%{__rm} -rf %{buildroot}%{_datadir}/%{name}/internat/
 install -d %{buildroot}%{_datadir}/locale
-cd locale
-for dir in de es fr hu it ko pl pt sl
+cd internat
+for dir in ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
   install -d %{buildroot}%{_datadir}/locale/${dir}
   install -m 644 ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
 done
 cd ..
 
-# install modules
-install -d %{buildroot}%{_datadir}/%{name}/modules
-install -d %{buildroot}%{_datadir}/%{name}/modules/packages3d
-for dir in conn_DBxx connectors conn_europe device dil discret divers pga pin_array smd support
-do
-  install -d %{buildroot}%{_datadir}/%{name}/modules/packages3d/${dir}
-  for f in modules/packages3d/${dir}/*
-  do
-    install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
-  done
-done
-for f in modules/*.*
-do
-  install -m 644 ${f} %{buildroot}%{_datadir}/%{name}/${f}
-done
+
+# install desktop
+desktop-file-install --vendor=fedora         \
+  --dir %{buildroot}%{_datadir}/applications \
+  --delete-original                          \
+  %{buildroot}%{_datadir}/applications/kicad.desktop
+
+desktop-file-install --vendor=fedora         \
+  --dir %{buildroot}%{_datadir}/applications \
+  --delete-original                          \
+  %{buildroot}%{_datadir}/applications/eeschema.desktop
+
+
+# Missing requires libraries
+%{__cp} -p ./3d-viewer/lib3d-viewer.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./bitmaps/libbitmaps.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./common/libcommon.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./polygon/kbool/src/libkbool.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./common/libpcbcommon.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./polygon/libpolygon.so %{buildroot}%{_libdir}/%{name}
+
+#
+# Symbols libraries
+#
+pushd %{name}-library-%{version}/
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+popd
 
 
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
-# install binaries
-install -d %{buildroot}%{_bindir}
-install -d %{buildroot}%{_libdir}/%{name}/plugins
-make -f makefile.gtk install DESTDIR=%{buildroot}
 
-# install desktop
-mkdir -p %{buildroot}%{_datadir}/applications
-desktop-file-install --vendor=fedora \
-  --dir %{buildroot}%{_datadir}/applications \
-  %{SOURCE2}
+# Preparing for documentation pull-ups
+%{__rm} -f  %{name}-doc-%{version}/doc/help/CMakeLists.txt
+%{__rm} -f  %{name}-doc-%{version}/doc/help/makefile
+%{__rm} -f  %{name}-doc-%{version}/doc/tutorials/CMakeLists.txt
 
-# install icon
-mkdir -p %{buildroot}%{_datadir}/pixmaps
-install -m 644 kicad_icon.png %{buildroot}%{_datadir}/pixmaps/kicad_icon.png
+%{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
+%{__cp} -pr AUTHORS.txt CHANGELOG* TODO.txt version.txt %{buildroot}%{_docdir}/%{name}
+
 
 %find_lang %{name}
+
 
 %post
 update-desktop-database &> /dev/null || :
@@ -214,6 +255,7 @@ then
   %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
 fi
 
+
 %postun
 update-desktop-database &> /dev/null || :
 touch --no-create %{_datadir}/icons/hicolor || :
@@ -222,22 +264,81 @@ then
   %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
 fi
 
+
 %clean
 %{__rm} -rf %{buildroot}
 
+
 %files -f %{name}.lang
 %defattr(-,root,root)
-%doc author.txt contrib.txt copyright.txt doc_conv_orcad_to_kicad_spanish.txt
-%doc doc_conv_orcad_to_kicad.txt gpl.txt licendoc.txt news.txt version.txt
 %{_bindir}/*
-%dir %{_libdir}/%{name}
-%{_libdir}/%{name}/plugins/
+%{_libdir}/%{name}
 %{_datadir}/%{name}/
-%{_docdir}/%{name}/
 %{_datadir}/applications/fedora-%{name}.desktop
-%{_datadir}/pixmaps/kicad_icon.png
+%{_datadir}/applications/fedora-eeschema.desktop
+%{_datadir}/icons/hicolor/*/mimetypes/application-x-kicad-project.*
+%{_datadir}/icons/hicolor/*/apps/%{name}.*
+%{_datadir}/mime/packages/%{name}.xml
+%{_datadir}/mimelnk/application/x-%{name}-*.desktop
+
+%files doc
+%defattr(-,root,root,-)
+%dir %{_docdir}/%{name}
+%dir %{_docdir}/%{name}/help/
+%dir %{_docdir}/%{name}/tutorials
+%doc %{_docdir}/%{name}/*.txt
+%doc %{_docdir}/%{name}/scripts
+%doc %{_docdir}/%{name}/contrib
+%doc %{_docdir}/%{name}/help/en
+%doc %{_docdir}/%{name}/help/file_formats
+%doc %{_docdir}/%{name}/tutorials/en
+
+%files doc-de
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/de
+%doc %{_docdir}/%{name}/tutorials/de
+
+%files doc-es
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/es
+%doc %{_docdir}/%{name}/tutorials/es
+
+%files doc-fr
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/fr
+%doc %{_docdir}/%{name}/tutorials/fr
+
+%files doc-hu
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/tutorials/hu
+
+%files doc-it
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/it
+
+%files doc-pt
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/pt
+
+
+%files doc-ru
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/ru
+%doc %{_docdir}/%{name}/tutorials/ru
+
+%files doc-zh_CN
+%defattr(-,root,root,-)
+#%doc %{_docdir}/%{name}/help/zh_CN
+%doc %{_docdir}/%{name}/tutorials/zh_CN
+
 
 %changelog
+* Tue Jul 7 2009 Chitlesh Goorah <chitlesh [AT] fedoraproject DOT org> - 2009.07.07-1.rev1863
+- svn rev 1863
+- documentation splitted into multiple packages
+- libraries are now taken directly from SVN rather than from older releases
+- build changed to cmake based
+
 * Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2007.07.09-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
 
