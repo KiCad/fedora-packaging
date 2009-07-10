@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2009.07.07
-Release:        1.rev1863%{?dist}
+Release:        2.rev1863%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -12,6 +12,7 @@ URL:            http://www.lis.inpg.fr/realise_au_lis/kicad/
 Source:         kicad-%{version}.tar.bz2
 Source1:        kicad-doc-%{version}.tar.bz2
 Source2:        kicad-library-%{version}.tar.bz2
+Source3:	kicad-ld.conf
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -205,14 +206,10 @@ cd ..
 # install desktop
 desktop-file-install --vendor=fedora         \
   --dir %{buildroot}%{_datadir}/applications \
+  --remove-category Development		     \
   --delete-original                          \
   %{buildroot}%{_datadir}/applications/kicad.desktop
-
-desktop-file-install --vendor=fedora         \
-  --dir %{buildroot}%{_datadir}/applications \
-  --delete-original                          \
-  %{buildroot}%{_datadir}/applications/eeschema.desktop
-
+rm -f %{buildroot}%{_datadir}/applications/eeschema.desktop
 
 # Missing requires libraries
 %{__cp} -p ./3d-viewer/lib3d-viewer.so %{buildroot}%{_libdir}/%{name}
@@ -229,6 +226,9 @@ pushd %{name}-library-%{version}/
 %{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 popd
 
+# install ld.conf
+mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
+install -pm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
@@ -255,6 +255,7 @@ then
   %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
 fi
 
+/sbin/ldconfig
 
 %postun
 update-desktop-database &> /dev/null || :
@@ -264,6 +265,7 @@ then
   %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
 fi
 
+/sbin/ldconfig
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -271,15 +273,16 @@ fi
 
 %files -f %{name}.lang
 %defattr(-,root,root)
+%doc %{_docdir}/%{name}/help/en/kicad.pdf
 %{_bindir}/*
 %{_libdir}/%{name}
 %{_datadir}/%{name}/
 %{_datadir}/applications/fedora-%{name}.desktop
-%{_datadir}/applications/fedora-eeschema.desktop
 %{_datadir}/icons/hicolor/*/mimetypes/application-x-kicad-project.*
 %{_datadir}/icons/hicolor/*/apps/%{name}.*
 %{_datadir}/mime/packages/%{name}.xml
 %{_datadir}/mimelnk/application/x-%{name}-*.desktop
+%{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 %files doc
 %defattr(-,root,root,-)
@@ -289,7 +292,11 @@ fi
 %doc %{_docdir}/%{name}/*.txt
 %doc %{_docdir}/%{name}/scripts
 %doc %{_docdir}/%{name}/contrib
-%doc %{_docdir}/%{name}/help/en
+%doc %{_docdir}/%{name}/help/en/docs_src/
+%doc %{_docdir}/%{name}/help/en/cvpcb.pdf
+%doc %{_docdir}/%{name}/help/en/eeschema.pdf
+%doc %{_docdir}/%{name}/help/en/gerbview.pdf
+%doc %{_docdir}/%{name}/help/en/pcbnew.pdf
 %doc %{_docdir}/%{name}/help/file_formats
 %doc %{_docdir}/%{name}/tutorials/en
 
@@ -333,6 +340,12 @@ fi
 
 
 %changelog
+* Wed Jul 08 2009 Jon Ciesla <limb@jcomserv.net> - 2009.07.07-2.rev1863
+- Dropped eeschema desktop file.
+- Moved English kicad.pdf to main rpm.
+- Added ls.so.conf file and ldconfig to post, postun to fix libs issue.
+- Dropped category Development from desktop file.
+
 * Tue Jul 7 2009 Chitlesh Goorah <chitlesh [AT] fedoraproject DOT org> - 2009.07.07-1.rev1863
 - svn rev 1863
 - documentation splitted into multiple packages
