@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2009.07.07
-Release:        2.rev1863%{?dist}
+Release:        3.rev1863%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -340,6 +340,9 @@ fi
 
 
 %changelog
+* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2009.07.07-3.rev1863
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
 * Wed Jul 08 2009 Jon Ciesla <limb@jcomserv.net> - 2009.07.07-2.rev1863
 - Dropped eeschema desktop file.
 - Moved English kicad.pdf to main rpm.
