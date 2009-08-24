@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2009.07.07
-Release:        3.rev1863%{?dist}
+Release:        4.rev1863%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -164,6 +164,7 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 #multilibs
 %ifarch x86_64 sparc64 ppc64 amd64
 %{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
+%{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
 %endif
 
 
@@ -340,6 +341,9 @@ fi
 
 
 %changelog
+* Mon Aug 24 2009 Jon Ciesla <limb@jcomserv.net> - 2009.07.07-4.rev1863
+- Multilib path correction, BZ 518916.
+
 * Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2009.07.07-3.rev1863
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
