@@ -1,0 +1,210 @@
+Index: eeschema/class_text-label.cpp
+===================================================================
+--- eeschema/class_text-label.cpp	(révision 2462)
++++ eeschema/class_text-label.cpp	(révision 2463)
+@@ -1219,5 +1219,6 @@
+         rect.SetEnd(end);
+     }
+ 
++    rect.Normalize();
+     return rect;
+ }
+Index: eeschema/class_sch_cmp_field.cpp
+===================================================================
+--- eeschema/class_sch_cmp_field.cpp	(révision 2462)
++++ eeschema/class_sch_cmp_field.cpp	(révision 2463)
+@@ -155,10 +155,10 @@
+                          LineWidth, m_Italic,
+                          m_Bold, false );
+     }
++
+     /* Enable this to draw the bounding box around the text field to validate
+      * the bounding box calculations.
+     */
+-
+ #if 0
+     // Draw boundary box:
+     int x1 = BoundaryBox.GetX();
+@@ -243,27 +243,24 @@
+  */
+ EDA_Rect SCH_FIELD::GetBoundaryBox() const
+ {
+-    EDA_Rect       BoundaryBox;
+-    int            hjustify, vjustify;
+-    int            orient;
+-    int            dx, dy, x1, y1, x2, y2;
++    EDA_Rect BoundaryBox;
++    int      hjustify, vjustify;
++    int      orient;
++    wxSize   size;
++    wxPoint  pos1, pos2;
+ 
+     SCH_COMPONENT* parentComponent = (SCH_COMPONENT*) m_Parent;
+ 
+     orient = m_Orient;
+-    wxPoint        pos = parentComponent->m_Pos;
+-    x1 = m_Pos.x - pos.x;
+-    y1 = m_Pos.y - pos.y;
++    wxPoint pos = parentComponent->m_Pos;
++    pos1 = m_Pos - pos;
+ 
+-    dx = LenSize( m_Text );
+-    dy = m_Size.y;
++    size.x = LenSize( m_Text );
++    size.y = m_Size.y;
+     hjustify = m_HJustify;
+     vjustify = m_VJustify;
+ 
+-    x2 = pos.x + ( parentComponent->m_Transform[0][0] * x1 )
+-         + ( parentComponent->m_Transform[0][1] * y1 );
+-    y2 = pos.y + ( parentComponent->m_Transform[1][0] * x1 )
+-         + ( parentComponent->m_Transform[1][1] * y1 );
++    pos2 = pos + TransformCoordinate( parentComponent->m_Transform, pos1 );
+ 
+     /* Calculate the text orientation, according to the component
+      * orientation/mirror */
+@@ -295,42 +292,40 @@
+     }
+ 
+     if( orient == TEXT_ORIENT_VERT )
+-        EXCHG( dx, dy );
++        EXCHG( size.x, size.y );
+ 
+     switch( hjustify )
+     {
+     case GR_TEXT_HJUSTIFY_CENTER:
+-        x1 = x2 - (dx / 2);
++        pos1.x = pos2.x - (size.x / 2);
+         break;
+ 
+     case GR_TEXT_HJUSTIFY_RIGHT:
+-        x1 = x2 - dx;
++        pos1.x = pos2.x - size.x;
+         break;
+ 
+     default:
+-        x1 = x2;
++        pos1.x = pos2.x;
+         break;
+     }
+ 
+     switch( vjustify )
+     {
+     case GR_TEXT_VJUSTIFY_CENTER:
+-        y1 = y2 - (dy / 2);
++        pos1.y = pos2.y - (size.y / 2);
+         break;
+ 
+     case GR_TEXT_VJUSTIFY_BOTTOM:
+-        y1 = y2 - dy;
++        pos1.y = pos2.y - size.y;
+         break;
+ 
+     default:
+-        y1 = y2;
++        pos1.y = pos2.y;
+         break;
+     }
+ 
+-    BoundaryBox.SetX( x1 );
+-    BoundaryBox.SetY( y1 );
+-    BoundaryBox.SetWidth( dx );
+-    BoundaryBox.SetHeight( dy );
++    BoundaryBox.SetOrigin( pos1 );
++    BoundaryBox.SetSize( size );
+ 
+     // Take thickness in account:
+     int linewidth = ( m_Width == 0 ) ? g_DrawDefaultLineThickness : m_Width;
+Index: eeschema/class_BodyItem_Text.cpp
+===================================================================
+--- eeschema/class_BodyItem_Text.cpp	(révision 2462)
++++ eeschema/class_BodyItem_Text.cpp	(révision 2463)
+@@ -305,15 +305,54 @@
+ 
+     GRSetDrawMode( aDC, aDrawMode );
+ 
++    /* Calculate the text orientation, according to the component
++     * orientation/mirror (needed when draw text in schematic)
++     */
++    int orient = m_Orient;
++    if( aTransformMatrix[0][1] )  // Rotate component 90 degrees.
++    {
++        if( orient == TEXT_ORIENT_HORIZ )
++            orient = TEXT_ORIENT_VERT;
++        else
++            orient = TEXT_ORIENT_HORIZ;
++    }
++
++    /* Calculate the text justification, according to the component
++     * orientation/mirror this is a bit complicated due to cumulative
++     * calculations:
++     * - numerous cases (mirrored or not, rotation)
++     * - the DrawGraphicText function recalculate also H and H justifications
++     *      according to the text orientation.
++     * - When a component is mirrored, the text is not mirrored and
++     *   justifications are complicated to calculate
++     * so the more easily way is to use no justifications ( Centered text )
++     * and use GetBoundaryBox to know the text coordinate considered as centered
++    */
++    EDA_Rect bBox = GetBoundingBox();
++    pos1 = bBox.Centre();   // this is the coordinates of the graphic text relative to the component position
++                            // in schematic Y axis orientation
++    /* convert y coordinate from schematic to library Y axis orientation
++     * because we want to call TransformCoordinate to calculate real coordinates
++     */
++    NEGATE( pos1.y );
++    pos1 = TransformCoordinate( aTransformMatrix, pos1 ) + aOffset;
+     DrawGraphicText( aPanel, aDC, pos1, (EDA_Colors) color, m_Text,
+-                     m_Orient, m_Size, m_HJustify, m_VJustify,
++                     orient, m_Size, GR_TEXT_HJUSTIFY_CENTER, GR_TEXT_VJUSTIFY_CENTER,
+                      GetPenSize( ), m_Italic, m_Bold );
+ 
++    
++    /* Enable this to draw the bounding box around the text field to validate
++     * the bounding box calculations.
++    */
+ #if 0
+-    EDA_Rect bBox = GetBoundingBox();
+-    bBox.Inflate( 1, 1 );
+-    GRRect( &aPanel->m_ClipBox, aDC, bBox.GetOrigin().x, bBox.GetOrigin().y,
+-            bBox.GetEnd().x, bBox.GetEnd().y, 0, LIGHTMAGENTA );
++    EDA_Rect grBox;
++    bBox.SetY( -bBox.GetY() );
++    bBox.SetHeight( -bBox.GetHeight());
++    grBox.SetOrigin( TransformCoordinate( aTransformMatrix, bBox.GetOrigin() ) );
++    grBox.SetEnd( TransformCoordinate( aTransformMatrix, bBox.GetEnd() ) );
++    grBox.Move( aOffset );
++    GRRect( &aPanel->m_ClipBox, aDC, grBox.GetOrigin().x, grBox.GetOrigin().y,
++            grBox.GetEnd().x, grBox.GetEnd().y, 0, LIGHTMAGENTA );
+ #endif
+ }
+ 
+@@ -331,11 +370,18 @@
+ }
+ 
+ 
++/**
++ * @return the boundary box for this, in schematic coordinates
++ */
+ EDA_Rect LIB_TEXT::GetBoundingBox()
+ {
++    /* remenber Y coordinates in lib are bottom to top, so we must
++     * negate the Y position befire calling GetTextBox() that works using top to bottom
++     * Y axis orientation
++     */
++    NEGATE(m_Pos.y );
+     EDA_Rect rect = GetTextBox();
+-    rect.m_Pos.y *= -1;
+-    rect.m_Pos.y -= rect.GetHeight();
++    NEGATE(m_Pos.y );   // restore Y cooordinate for the graphic text
+ 
+     wxPoint orig = rect.GetOrigin();
+     wxPoint end = rect.GetEnd();
+@@ -345,6 +391,6 @@
+     RotatePoint( &end, center, m_Orient );
+     rect.SetOrigin( orig );
+     rect.SetEnd( end );
+-
++    rect.Normalize();
+     return rect;
+ }

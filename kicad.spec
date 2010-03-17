@@ -1,18 +1,23 @@
 Name:           kicad
-Version:        2009.07.07
-Release:        4.rev1863%{?dist}
+Version:        2010.03.14
+Release:        3.rev2463%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
 Group:          Applications/Engineering
 License:        GPLv2+
-URL:            http://www.lis.inpg.fr/realise_au_lis/kicad/
+URL:            http://kicad.sourceforge.net
 
 # Source files created from upstream's SVN repository
 Source:         kicad-%{version}.tar.bz2
 Source1:        kicad-doc-%{version}.tar.bz2
 Source2:        kicad-library-%{version}.tar.bz2
-Source3:	kicad-ld.conf
+Source3:        kicad-ld.conf
+
+Patch0:         kicad-2010.03.14-link-fixes.patch
+# Fix spacing issue
+Patch1:         kicad-2010.03.14-fix-demos-install.patch
+Patch2:         kicad-2010.03.14-rev2463.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -46,6 +51,7 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 
 %package        doc
 Summary:        Documentations for kicad
+Summary(fr):    Documentations pour kicad en anglais
 Group:          Applications/Engineering
 License:        GPLv2+
 Requires:       %{name} = %{version}-%{release}
@@ -53,13 +59,13 @@ Requires:       %{name} = %{version}-%{release}
 BuildArch:      noarch
 %endif
 
-
 %description    doc
 Documentations and tutorials for kicad in English
 
 
 %package        doc-de
 Summary:        Documentation for Kicad in German
+Summary(fr):    Documentations pour kicad en allemand
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -72,6 +78,7 @@ Documentation and tutorials for Kicad in German
 
 %package        doc-es
 Summary:        Documentation for Kicad in Spanish
+Summary(fr):    Documentations pour kicad en espagnol
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -84,6 +91,7 @@ Documentation and tutorials for Kicad in Spanish
 
 %package        doc-fr
 Summary:        Documentation for Kicad in French
+Summary(fr):    Documentations pour kicad en français
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -96,6 +104,7 @@ Documentation and tutorials for Kicad in French
 
 %package        doc-hu
 Summary:        Documentation for Kicad in Hungarian
+Summary(fr):    Documentations pour kicad en hongrois
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -108,6 +117,7 @@ Documentation and tutorials for Kicad in Hungarian
 
 %package        doc-it
 Summary:        Documentation for Kicad in Italian
+Summary(fr):    Documentations pour kicad en italien
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -120,6 +130,7 @@ Documentation and tutorials for Kicad in Italian
 
 %package        doc-pt
 Summary:        Documentation for Kicad in Portuguese
+Summary(fr):    Documentations pour kicad en portugais
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -132,6 +143,7 @@ Documentation and tutorials for Kicad in Portuguese
 
 %package        doc-ru
 Summary:        Documentation for Kicad in Russian
+Summary(fr):    Documentations pour kicad en russe
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -144,6 +156,7 @@ Documentation and tutorials for Kicad in Russian
 
 %package        doc-zh_CN
 Summary:        Documentation for Kicad in Chinese
+Summary(fr):    Documentations pour kicad en chinois
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
 %if 0%{?fedora} >= 11
@@ -156,6 +169,9 @@ Documentation and tutorials for Kicad in Chinese
 
 %prep
 %setup -q -a 1 -a 2
+%patch0 -p1 -b .link-fix
+%patch1 -p1 -b .space-fix
+%patch2 -p0 -b .rev2463
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -328,7 +344,6 @@ fi
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/pt
 
-
 %files doc-ru
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/ru
@@ -336,11 +351,22 @@ fi
 
 %files doc-zh_CN
 %defattr(-,root,root,-)
-#%doc %{_docdir}/%{name}/help/zh_CN
 %doc %{_docdir}/%{name}/tutorials/zh_CN
 
 
 %changelog
+* Wed Mar 17 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.03.14-3.rev2463
+- Patch with svn revision 2463 which fix 2 bugs
+- Harmonize identation in %%changelog
+
+* Tue Mar 16 2010 Tom "spot" Callaway <tcallawa@redhat.com> 2010.03.14-2.rev2462
+- Link fixes. Really, these libraries should be linked properly so they don't need
+  the executable linking calls to be explicitly correct, but cmake gives me a headache.
+- Fix demo installation
+
+* Mon Mar 15 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.03.14-1.rev2462
+- New upstream version
+
 * Mon Aug 24 2009 Jon Ciesla <limb@jcomserv.net> - 2009.07.07-4.rev1863
 - Multilib path correction, BZ 518916.
 
@@ -374,81 +400,80 @@ fi
   - Update desktop file
 
 * Thu Oct 04 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-1
-  - New upstream version
-  - Merge previous patches
-  - Remove X-Fedora, Electronics and Engineering categories
-  - Update desktop file
+- New upstream version
+- Merge previous patches
+- Remove X-Fedora, Electronics and Engineering categories
+- Update desktop file
 
 * Mon Aug 27 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-4
-  - License tag clarification
+- License tag clarification
 
 * Thu Aug 23 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-3
-  - Rebuild
+- Rebuild
 
 * Wed Feb 14 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-2
-  - Fix desktop entry. Fix #228598
+- Fix desktop entry. Fix #228598
 
 * Thu Feb  8 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.01.15-1
-  - New upstream version
+- New upstream version
 
 * Thu Feb  8 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.08.28-4
-  - Add patch to build with RPM_OPT_FLAGS and remove -s from LDFLAGS
-    Contribution of Ville Skyttä <ville[DOT]skytta[AT]iki[DOT]fi>
-    Fix #227757
-  - Fix typo in french summary
+- Add patch to build with RPM_OPT_FLAGS and remove -s from LDFLAGS
+  Contribution of Ville Skyttä <ville[DOT]skytta[AT]iki[DOT]fi>
+  Fix #227757
+- Fix typo in french summary
 
 * Thu Dec 28 2006 Jason L Tibbitts III <tibbs@math.uh.edu> 2006.08.28-3
-  - Rebuild with wxGTK 2.8.
+- Rebuild with wxGTK 2.8.
 
 * Thu Oct 05 2006 Christian Iseli <Christian.Iseli@licr.org> 2006.08.28-2
- - rebuilt for unwind info generation, broken in gcc-4.1.1-21
+- rebuilt for unwind info generation, broken in gcc-4.1.1-21
 
 * Fri Sep 22 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.08.28-1
-  - New upstream version
-  - Use macro style instead of variable style
-  - Install missing modules. Fix #206602
+- New upstream version
+- Use macro style instead of variable style
+- Install missing modules. Fix #206602
 
 * Fri Sep  1 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-6
-  - FE6 rebuild
+- FE6 rebuild
 
 * Mon Jul 10 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-5
-  - Removing backup files is no more needed.
+- Removing backup files is no more needed.
 
 * Mon Jul 10 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-4
-  - Remove BR libGLU-devel that is no more needed (bug #197501 is closed)
-  - Fix files permissions.
+- Remove BR libGLU-devel that is no more needed (bug #197501 is closed)
+- Fix files permissions.
 
 * Mon Jul  3 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-3
-  - s/mesa-libGLU-devel/libGLU-devel/
+- s/mesa-libGLU-devel/libGLU-devel/
 
 * Mon Jul  3 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-2
-  - BR mesa-libGLU-devel
+- BR mesa-libGLU-devel
 
 * Wed Jun 28 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.06.26-1
-  - New upstream version
+- New upstream version
 
 * Tue Jun 13 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006.04.24-5
-  - Change name
-  - Use %%{_docdir} instead of %%{_datadir}/doc
-  - Use %%find_lang
-  - Update desktop database
-  - Convert MSDOS EOL to Unix EOL
-  - Remove BR utrac
+- Change name
+- Use %%{_docdir} instead of %%{_datadir}/doc
+- Use %%find_lang
+- Update desktop database
+- Convert MSDOS EOL to Unix EOL
+- Remove BR utrac
 
 * Mon Jun 12 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006-04-24-0-4
-  - Patch to suppress extra qualification compile time error on FC5
-  - BR utrac to convert MSDOS files before applying patch
-    This will be remove for the next upstream version.
+- Patch to suppress extra qualification compile time error on FC5
+- BR utrac to convert MSDOS files before applying patch
+  This will be remove for the next upstream version.
 
 * Tue May 23 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006-04-24-0-3
-  - Install help in /usr/share/doc/kicad/ as the path is hardcoded
-    in gestfich.cpp
-  - Add desktop file
+- Install help in /usr/share/doc/kicad/ as the path is hardcoded in gestfich.cpp
+- Add desktop file
 
 * Mon May 22 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006-04-24-0-2
-  - Add a second tarball that contains many things that are not included in
-    the upstream source tarball such components and footprints librairies,
-    help, localisation, etc.
+- Add a second tarball that contains many things that are not included in
+  the upstream source tarball such components and footprints librairies,
+  help, localisation, etc.
 
 * Sun May 21 2006 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2006-04-24-0-1
-  - Initial Fedora RPM
+- Initial Fedora RPM
