@@ -1,6 +1,6 @@
 Name:           kicad
-Version:        2010.03.14
-Release:        3.rev2463%{?dist}
+Version:        2010.04.06
+Release:        1.rev2514%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -9,15 +9,11 @@ License:        GPLv2+
 URL:            http://kicad.sourceforge.net
 
 # Source files created from upstream's SVN repository
-Source:         kicad-%{version}.tar.bz2
-Source1:        kicad-doc-%{version}.tar.bz2
-Source2:        kicad-library-%{version}.tar.bz2
-Source3:        kicad-ld.conf
-
-Patch0:         kicad-2010.03.14-link-fixes.patch
-# Fix spacing issue
-Patch1:         kicad-2010.03.14-fix-demos-install.patch
-Patch2:         kicad-2010.03.14-rev2463.patch
+# available on packager web site
+Source:         http://dionysos.fedorapeople.org/SOURCES/kicad-%{version}.tar.bz2
+Source1:        http://dionysos.fedorapeople.org/SOURCES/kicad-doc-%{version}.tar.bz2
+Source2:        http://dionysos.fedorapeople.org/SOURCES/kicad-library-%{version}.tar.bz2
+Source3:        http://dionysos.fedorapeople.org/SOURCES/kicad-ld.conf
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -169,9 +165,6 @@ Documentation and tutorials for Kicad in Chinese
 
 %prep
 %setup -q -a 1 -a 2
-%patch0 -p1 -b .link-fix
-%patch1 -p1 -b .space-fix
-%patch2 -p0 -b .rev2463
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -355,6 +348,17 @@ fi
 
 
 %changelog
+* Mon Apr 12 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-1.rev2514
+- New upstream version
+- Patches no more needed
+
+* Mon Apr  5 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.03.14-5.rev2463
+- Add patch to fix SF #2981759
+
+* Sat Apr  3 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.03.14-4.rev2463
+- Apply upstream patch to fix inch/mm ratio
+- Provide a source download URL
+
 * Wed Mar 17 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.03.14-3.rev2463
 - Patch with svn revision 2463 which fix 2 bugs
 - Harmonize identation in %%changelog
