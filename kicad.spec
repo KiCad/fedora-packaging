@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.04.06
-Release:        1.rev2514%{?dist}
+Release:        3.rev2514%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -14,6 +14,9 @@ Source:         http://dionysos.fedorapeople.org/SOURCES/kicad-%{version}.tar.bz
 Source1:        http://dionysos.fedorapeople.org/SOURCES/kicad-doc-%{version}.tar.bz2
 Source2:        http://dionysos.fedorapeople.org/SOURCES/kicad-library-%{version}.tar.bz2
 Source3:        http://dionysos.fedorapeople.org/SOURCES/kicad-ld.conf
+
+Patch:          %{name}-%{version}.edit_component_in_schematic.cpp.fix_footprint_edition.patch
+Patch1:         %{name}-%{version}.dialog_design_rules.cpp.fix-sort-function.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -165,6 +168,9 @@ Documentation and tutorials for Kicad in Chinese
 
 %prep
 %setup -q -a 1 -a 2
+
+%patch -p0 -b .fix_footprint_edition
+%patch1 -p0 -b .fix-sort-function
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -348,6 +354,12 @@ fi
 
 
 %changelog
+* Thu Apr 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-3.rev2514
+- Fix a crash that happens sometimes when opening the design rule dialog
+
+* Mon Apr 26 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-2.rev2514
+- Fix https://bugs.launchpad.net/bugs/570074
+
 * Mon Apr 12 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-1.rev2514
 - New upstream version
 - Patches no more needed
