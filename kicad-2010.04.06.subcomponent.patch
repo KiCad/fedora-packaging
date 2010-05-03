@@ -1,0 +1,492 @@
+diff -ru kicad-2010.04.06/eeschema/build_BOM.cpp kicad-2010.04.06-new/eeschema/build_BOM.cpp
+--- kicad-2010.04.06/eeschema/build_BOM.cpp	2010-03-19 21:15:30.000000000 +0100
++++ kicad-2010.04.06-new/eeschema/build_BOM.cpp	2010-05-01 11:11:13.000000000 +0200
+@@ -71,7 +71,6 @@
+ static bool SortLabelsBySheet( const LABEL_OBJECT& obj1,
+                                const LABEL_OBJECT& obj2 );
+ static void DeleteSubCmp( std::vector <OBJ_CMP_TO_LIST>& aList );
+-
+ static int  PrintListeGLabel( FILE* f, std::vector <LABEL_OBJECT>& aList );
+ 
+ int         RefDesStringCompare( const char* obj1, const char* obj2 );
+@@ -204,7 +203,7 @@
+ 
+     /*  sort component list by value*/
+     sort( cmplist.begin(), cmplist.end(), SortComponentsByValue );
+-    PrintComponentsListByPart( f, cmplist );
++    PrintComponentsListByPart( f, cmplist, aIncludeSubComponents );
+ 
+     fclose( f );
+ }
+@@ -369,6 +368,11 @@
+ 
+             // Ensure always null terminate m_Ref.
+             item.m_Reference[sizeof( item.m_Reference ) - 1 ] = 0;
++            // Skip pseudo components:
++            // pseudo components have a reference starting by #. Mainly power symbols
++            if( item.m_Reference[0] == '#' )
++                continue;
++            // Real component found, push it in list
+             aList.push_back( item );
+         }
+     }
+@@ -626,7 +630,6 @@
+     bool                           CompactForm,
+     bool                           aIncludeSubComponents )
+ {
+-    int             Multi, Unit;
+     EDA_BaseStruct* DrawList;
+     SCH_COMPONENT*  DrawLibItem;
+     LIB_COMPONENT*  Entry;
+@@ -683,66 +686,42 @@
+             continue;
+ 
+         DrawLibItem = (SCH_COMPONENT*) DrawList;
+-        if( aList[ii].m_Reference[0] == '#' )
+-            continue;
+ 
+-        Multi = 0;
+-        Unit  = ' ';
++        bool isMulti = false;
++        wxString subRef;
+         Entry = CMP_LIBRARY::FindLibraryComponent( DrawLibItem->m_ChipName );
+         if( Entry )
+-            Multi = Entry->GetPartCount();
+-
+-        if( ( Multi > 1 ) && aIncludeSubComponents )
+-#if defined(KICAD_GOST)
+-
+-
+-
+-            Unit = aList[ii].m_Unit + '1' - 1;
+-#else
++            isMulti = Entry->IsMulti();
+ 
+-
+-
+-            Unit = aList[ii].m_Unit + 'A' - 1;
+-#endif
++        if( isMulti && aIncludeSubComponents )
++            subRef = LIB_COMPONENT::ReturnSubReference( aList[ii].m_Unit );
++        else
++            subRef.Empty();
+ 
+         sprintf( CmpName, "%s", aList[ii].m_Reference );
+-        if( !CompactForm || Unit != ' ' )
+-            sprintf( CmpName + strlen( CmpName ), "%c", Unit );
++        if( !CompactForm )
++            sprintf( CmpName + strlen( CmpName ), "%s", CONV_TO_UTF8(subRef) );
+ 
+         if( CompactForm )
+ #if defined(KICAD_GOST)
+-
+-
+-
+             fprintf( f, "%s%c%s%c%s", CmpName, s_ExportSeparatorSymbol,
+                     CONV_TO_UTF8( DrawLibItem->GetField(
+                                       VALUE )->m_Text ), s_ExportSeparatorSymbol,
+                     CONV_TO_UTF8( DrawLibItem->GetField( DATASHEET )->m_Text ) );
+ #else
+-
+-
+-
+             fprintf( f, "%s%c%s", CmpName, s_ExportSeparatorSymbol,
+                     CONV_TO_UTF8( DrawLibItem->GetField( VALUE )->m_Text ) );
+ #endif
+ 
+         else
+ #if defined(KICAD_GOST)
+-
+-
+-
+             fprintf( f, "| %-10s %-12s %-20s", CmpName,
+                     CONV_TO_UTF8( DrawLibItem->GetField( VALUE )->m_Text ),
+                     CONV_TO_UTF8( DrawLibItem->GetField( DATASHEET )->m_Text ) );
+ #else
+-
+-
+-
+             fprintf( f, "| %-10s %-12s", CmpName,
+                     CONV_TO_UTF8( DrawLibItem->GetField( VALUE )->m_Text ) );
+ #endif
+-
+-
+         if( aIncludeSubComponents )
+         {
+             msg = aList[ii].m_SheetPath.PathHumanReadable();
+@@ -794,82 +773,76 @@
+  */
+ int DIALOG_BUILD_BOM::PrintComponentsListByPart(
+     FILE*                          f,
+-    std::vector <OBJ_CMP_TO_LIST>& aList )
++    std::vector <OBJ_CMP_TO_LIST>& aList,
++    bool aIncludeSubComponents)
+ {
+-    int             qty = 1;
++    int             qty = 0;
+     wxString        RefName;
++    wxString        fullRefName;        // reference + part Id (for multiple parts per package
+     wxString        ValName;
+-    wxString        NxtName;
+     wxString        RNames;
+-    EDA_BaseStruct* DrawList;
+-    EDA_BaseStruct* NxtList;
+-    SCH_COMPONENT*  DrawLibItem;
+-    SCH_COMPONENT*  NxtLibItem;
++    wxString        lastRef;
++    wxString        unitId;
++    SCH_COMPONENT*  currCmp, *nextCmp;
+     SCH_COMPONENT   dummyCmp;        // A dummy component, to store fields
+ 
+     for( unsigned ii = 0; ii < aList.size(); ii++ )
+     {
+-        DrawList = aList[ii].m_RootCmp;
+-        if( DrawList == NULL )
+-            continue;
+-        if( DrawList->Type() != TYPE_SCH_COMPONENT )
+-            continue;
+-        if( aList[ii].m_Reference[0] == '#' )
+-            continue;
+-        DrawLibItem = (SCH_COMPONENT*) DrawList;
+-        if( ( DrawLibItem->GetField( VALUE )->m_Text.IsEmpty() ) )
+-            continue;
++        currCmp = (SCH_COMPONENT*) aList[ii].m_RootCmp;
++        if( ii < aList.size() -1 )
++            nextCmp = aList[ii+1].m_RootCmp;
++        else
++            nextCmp = NULL;
+ 
+         // Store fields. Store non empty fields only.
+-        for( int jj = FOOTPRINT; jj < DrawLibItem->GetFieldCount(); jj++ )
++        for( int jj = FOOTPRINT; jj < currCmp->GetFieldCount(); jj++ )
+         {
+-            if( !DrawLibItem->GetField( jj )->m_Text.IsEmpty() )
+-                dummyCmp.GetField( jj )->m_Text = DrawLibItem->GetField( jj )->m_Text;
++            if( !currCmp->GetField( jj )->m_Text.IsEmpty() )
++                dummyCmp.GetField( jj )->m_Text = currCmp->GetField( jj )->m_Text;
+         }
+ 
+-        NxtLibItem = NULL;
+-        for( unsigned ij = ii + 1; ij < aList.size(); ij++ )
++        RefName = CONV_FROM_UTF8( aList[ii].m_Reference );
++        ValName = currCmp->GetField( VALUE )->m_Text;
++
++        int multi = 0;
++        if( aIncludeSubComponents )
+         {
+-            NxtList = aList[ij].m_RootCmp;
+-            if( NxtList == NULL )
+-                continue;
+-            if( NxtList->Type() != TYPE_SCH_COMPONENT )
+-                continue;
+-            if( aList[ij].m_Reference[0] == '#' )
+-                continue;
+-            NxtLibItem = (SCH_COMPONENT*) NxtList;
+-            if( ( NxtLibItem->GetField( VALUE )->m_Text.IsEmpty() ) )
+-            {
+-                continue;
+-            }
+-            break;
++            LIB_COMPONENT* Entry = CMP_LIBRARY::FindLibraryComponent( currCmp->m_ChipName );
++            if( Entry )
++                multi = Entry->GetPartCount();
++            if ( multi <= 1 )
++                multi = 0;
+         }
+ 
+-        if( NxtLibItem != NULL )
+-            NxtName = NxtLibItem->GetField( VALUE )->m_Text;
+-        else
+-            NxtName = wxT( "" );
++        if ( multi && aList[ii].m_Unit > 0 )
++            unitId.Printf(wxT("%c"), 'A' -1 + aList[ii].m_Unit);
++        else unitId.Empty();
++        fullRefName = RefName + unitId;
+ 
+-        RefName = CONV_FROM_UTF8( aList[ii].m_Reference );
+-        ValName = DrawLibItem->GetField( VALUE )->m_Text;
+-
+-        if( !NxtName.CmpNoCase( ValName ) )
+-        {
++        if( RNames.IsEmpty() )
++            RNames = fullRefName;
++        else
++            RNames << wxT( ", " ) << fullRefName;
++        // In multi parts per package, we have the reference more than once
++        // but we must count only one package
++        if( lastRef != RefName )
+             qty++;
+-            RNames << wxT( ", " ) << RefName;
+-            continue;
+-        }
++        lastRef = RefName;
+ 
+-        fprintf( f, "%15s%c%3d", CONV_TO_UTF8( ValName ), s_ExportSeparatorSymbol, qty );
+-        qty = 1;
++        // if the next cmoponent has same value the line will be printed after.
++        if( nextCmp && nextCmp->GetField( VALUE )->m_Text.CmpNoCase( ValName ) == 0 )
++            continue;
++ 
++       // Print line for the current component value:
++       fprintf( f, "%15s%c%3d", CONV_TO_UTF8( ValName ), s_ExportSeparatorSymbol, qty );
+ 
+         if( IsFieldChecked(FOOTPRINT ) )
+             fprintf( f, "%c%15s", s_ExportSeparatorSymbol,
+-                    CONV_TO_UTF8( DrawLibItem->GetField( FOOTPRINT )->m_Text ) );
++                    CONV_TO_UTF8( currCmp->GetField( FOOTPRINT )->m_Text ) );
+ 
+ #if defined(KICAD_GOST)
+             fprintf( f, "%c%20s", s_ExportSeparatorSymbol,
+-                    CONV_TO_UTF8( DrawLibItem->GetField( DATASHEET) ->m_Text ) );
++                    CONV_TO_UTF8( currCmp->GetField( DATASHEET) ->m_Text ) );
+ #endif
+ 
+         // print fields, on demand
+@@ -880,14 +853,13 @@
+                         CONV_TO_UTF8( dummyCmp.GetField( jj )->m_Text ) );
+         }
+ 
+-        fprintf( f, "%c%s%s", s_ExportSeparatorSymbol,
+-                CONV_TO_UTF8( RefName ),
++        fprintf( f, "%c%s\n", s_ExportSeparatorSymbol,
+                 CONV_TO_UTF8( RNames ) );
+-        fputs( "\n", f );
+ 
+-        // Clear strings, to prepare next component
++        // Clear strings and values, to prepare next component
++        qty = 0;
+         RNames.Empty();
+-        for( int jj = FOOTPRINT; jj < DrawLibItem->GetFieldCount(); jj++ )
++        for( int jj = FOOTPRINT; jj < currCmp->GetFieldCount(); jj++ )
+             dummyCmp.GetField( jj )->m_Text.Empty();
+     }
+ 
+@@ -900,8 +872,6 @@
+     std::vector <OBJ_CMP_TO_LIST>& aList,
+     bool                           aIncludeSubComponents )
+ {
+-    int             Multi;
+-    wxChar          Unit;
+     EDA_BaseStruct* DrawList;
+     SCH_COMPONENT*  DrawLibItem;
+     LIB_COMPONENT*  Entry;
+@@ -926,28 +896,20 @@
+             continue;
+ 
+         DrawLibItem = (SCH_COMPONENT*) DrawList;
+-        if( aList[ii].m_Reference[0] == '#' )
+-            continue;
+ 
+-        Multi = 0;
+-        Unit  = ' ';
++        bool isMulti = false;
+         Entry = CMP_LIBRARY::FindLibraryComponent( DrawLibItem->m_ChipName );
+         if( Entry )
+-            Multi = Entry->GetPartCount();
++            isMulti = Entry->IsMulti();
+ 
+-        if( ( Multi > 1 ) && aIncludeSubComponents )
+-        {
+-#if defined(KICAD_GOST)
+-            Unit = aList[ii].m_Unit + '1' - 1;
+-        }
++        wxString subRef;
++        if( isMulti && aIncludeSubComponents )
++            subRef = LIB_COMPONENT::ReturnSubReference( aList[ii].m_Unit );
++        else
++            subRef.Empty();
+ 
+-        sprintf( CmpName, "%s.%c", aList[ii].m_Reference, Unit );
+-#else
+-            Unit = aList[ii].m_Unit + 'A' - 1;
+-        }
++        sprintf( CmpName, "%s%s", aList[ii].m_Reference, CONV_TO_UTF8(subRef) );
+ 
+-        sprintf( CmpName, "%s%c", aList[ii].m_Reference, Unit );
+-#endif
+         fprintf( f, "| %-12s %-10s",
+                  CONV_TO_UTF8( DrawLibItem->GetField( VALUE )->m_Text ),
+                  CmpName );
+diff -ru kicad-2010.04.06/eeschema/class_libentry.cpp kicad-2010.04.06-new/eeschema/class_libentry.cpp
+--- kicad-2010.04.06/eeschema/class_libentry.cpp	2010-03-28 17:46:49.000000000 +0200
++++ kicad-2010.04.06-new/eeschema/class_libentry.cpp	2010-05-01 11:13:41.000000000 +0200
+@@ -230,6 +230,22 @@
+ {
+ }
+ 
++/** function IsMulti
++ * @return the sub reference for component having multiple parts per package.
++ * The sub reference identify the part (or unit)
++ * @param aUnit = the part identifier ( 1 to 26)
++ */
++wxString LIB_COMPONENT::ReturnSubReference( int aUnit )
++{
++    wxString subRef;
++ #if defined(KICAD_GOST)
++    subRef.Printf( wxT(".%d" ), aUnit);
++#else
++    subRef.Append( aUnit + 'A' - 1 );
++#endif
++    return subRef;
++}
++
+ 
+ void LIB_COMPONENT::Draw( WinEDA_DrawPanel* aPanel, wxDC* aDc,
+                           const wxPoint& aOffset, int aMulti,
+diff -ru kicad-2010.04.06/eeschema/class_libentry_fields.cpp kicad-2010.04.06-new/eeschema/class_libentry_fields.cpp
+--- kicad-2010.04.06/eeschema/class_libentry_fields.cpp	2009-11-03 14:26:31.000000000 +0100
++++ kicad-2010.04.06-new/eeschema/class_libentry_fields.cpp	2010-05-01 11:15:27.000000000 +0200
+@@ -502,20 +502,10 @@
+         return m_Text;
+ 
+     wxString text = m_Text;
++    text << wxT( "?" );
+ 
+-    if( GetParent()->GetPartCount() > 1 )
+-    {
+-#if defined(KICAD_GOST)
+-        text.Printf( wxT( "%s?.%c" ),
+-                     m_Text.GetData(), unit + '1' - 1 );
+-#else
+-
+-        text.Printf( wxT( "%s?%c" ),
+-                     m_Text.GetData(), unit + 'A' - 1 );
+-#endif
+-    }
+-    else
+-        text << wxT( "?" );
++    if( GetParent()->IsMulti() )
++        text << LIB_COMPONENT::ReturnSubReference( unit );
+ 
+     return text;
+ }
+diff -ru kicad-2010.04.06/eeschema/class_libentry.h kicad-2010.04.06-new/eeschema/class_libentry.h
+--- kicad-2010.04.06/eeschema/class_libentry.h	2010-02-17 14:22:25.000000000 +0100
++++ kicad-2010.04.06-new/eeschema/class_libentry.h	2010-05-01 11:14:24.000000000 +0200
+@@ -575,6 +575,20 @@
+ 
+     int GetPartCount() { return unitCount; }
+ 
++    /** function IsMulti
++     * @return true if the component has multiple parts per package.
++     * When happens, the reference has a sub reference ti identify part
++     */
++    bool IsMulti() { return unitCount > 1; }
++
++    /** function IsMulti
++     * @return the sub reference for component having multiple parts per package.
++     * The sub reference identify the part (or unit)
++     * @param aUnit = the part identifier ( 1 to max count)
++     * Note: this is a static function.
++     */
++    static wxString ReturnSubReference( int aUnit );
++
+     /**
+      * Set or clear the alternate body style (DeMorgan) for the component.
+      *
+diff -ru kicad-2010.04.06/eeschema/class_sch_cmp_field.cpp kicad-2010.04.06-new/eeschema/class_sch_cmp_field.cpp
+--- kicad-2010.04.06/eeschema/class_sch_cmp_field.cpp	2010-04-02 08:19:33.000000000 +0200
++++ kicad-2010.04.06-new/eeschema/class_sch_cmp_field.cpp	2010-05-01 11:17:00.000000000 +0200
+@@ -140,14 +140,7 @@
+         /* For more than one part per package, we must add the part selection
+          * A, B, ... or 1, 2, .. to the reference. */
+         wxString fulltext = m_Text;
+-        char     part_id;
+-#if defined(KICAD_GOST)
+-        fulltext.Append( '.' );
+-        part_id = '1' - 1 + parentComponent->m_Multi;
+-#else
+-        part_id = 'A' - 1 + parentComponent->m_Multi;
+-#endif
+-        fulltext.Append( part_id );
++        fulltext << LIB_COMPONENT::ReturnSubReference( parentComponent->m_Multi );
+ 
+         DrawGraphicText( panel, DC, textpos, color, fulltext,
+                          orient,
+@@ -432,13 +425,7 @@
+             /* For more than one part per package, we must add the part selection
+              * A, B, ... or 1, 2, .. to the reference. */
+             int part_id = pSch->GetUnitSelection( sheet );
+-    #if defined(KICAD_GOST)
+-            fulltext.Append( '.' );
+-            part_id += '1' - 1;
+-    #else
+-            part_id += 'A' - 1;
+-    #endif
+-            fulltext.Append( (char)part_id );
++            fulltext << LIB_COMPONENT::ReturnSubReference( part_id );
+         }
+         return SCH_ITEM::Matches( fulltext, aSearchData );
+     }
+diff -ru kicad-2010.04.06/eeschema/dialog_build_BOM.h kicad-2010.04.06-new/eeschema/dialog_build_BOM.h
+--- kicad-2010.04.06/eeschema/dialog_build_BOM.h	2010-03-19 21:15:30.000000000 +0100
++++ kicad-2010.04.06-new/eeschema/dialog_build_BOM.h	2010-05-01 11:17:49.000000000 +0200
+@@ -34,7 +34,8 @@
+                             bool CompactForm, bool aIncludeSubComponents );
+     int PrintComponentsListByVal( FILE *f, std::vector <OBJ_CMP_TO_LIST>& aList,
+                             bool aIncludeSubComponents);
+-    int PrintComponentsListByPart( FILE *f, std::vector <OBJ_CMP_TO_LIST>& aList);
++    int PrintComponentsListByPart( FILE *f, std::vector <OBJ_CMP_TO_LIST>& aList,
++                            bool aIncludeSubComponents);
+     void PrintFieldData(FILE * f, SCH_COMPONENT * DrawLibItem, bool CompactForm = FALSE);
+     bool IsFieldChecked(int aFieldId);
+ 
+diff -ru kicad-2010.04.06/eeschema/plot.cpp kicad-2010.04.06-new/eeschema/plot.cpp
+--- kicad-2010.04.06/eeschema/plot.cpp	2010-03-04 10:32:51.000000000 +0100
++++ kicad-2010.04.06-new/eeschema/plot.cpp	2010-05-01 11:20:18.000000000 +0200
+@@ -21,7 +21,7 @@
+ static void Plot_Hierarchical_PIN_Sheet( PLOTTER* plotter,
+                                          SCH_SHEET_PIN* Struct );
+ static void PlotTextField( PLOTTER* plotter, SCH_COMPONENT* DrawLibItem,
+-                           int FieldNumber, int IsMulti, int DrawMode );
++                           int FieldNumber, bool IsMulti, int DrawMode );
+ 
+ 
+ static void PlotNoConnectStruct( PLOTTER* plotter, SCH_NO_CONNECT* Struct )
+@@ -53,10 +53,10 @@
+ 
+     Entry->Plot( plotter, DrawLibItem->m_Multi, DrawLibItem->m_Convert,
+                  DrawLibItem->m_Pos, TransMat );
+-
+-    for( int i = 0; i < NUMBER_OF_FIELDS; i++ )
++    bool isMulti = Entry->GetPartCount() > 1;
++    for( int fieldId = 0; fieldId < NUMBER_OF_FIELDS; fieldId++ )
+     {
+-        PlotTextField( plotter, DrawLibItem, i, 0, 0 );
++        PlotTextField( plotter, DrawLibItem, fieldId, isMulti, 0 );
+     }
+ }
+ 
+@@ -65,13 +65,13 @@
+  * Input:
+  * DrawLibItem: pointer to the component
+  * FieldNumber: Number Field
+- * IsMulti: No Null flag if there are several sides by housing.
++ * IsMulti: true flag if there are several parts per package.
+  * Only useful for the field to add a reference to this one
+  * The identification from (A, B ...)
+  * DrawMode: trace mode
+  */
+ static void PlotTextField( PLOTTER* plotter, SCH_COMPONENT* DrawLibItem,
+-                           int FieldNumber, int IsMulti, int DrawMode )
++                           int FieldNumber, bool IsMulti, int DrawMode )
+ {
+     SCH_FIELD* field = DrawLibItem->GetField( FieldNumber );
+     EDA_Colors color = UNSPECIFIED_COLOR;
+@@ -125,15 +125,7 @@
+     {
+         /* Adding A, B ... to the reference */
+         wxString Text;
+-        Text = field->m_Text;
+-        char     unit_id;
+-#if defined(KICAD_GOST)
+-        Text.Append( '.' );
+-        unit_id = '1' - 1 + DrawLibItem->m_Multi;
+-#else
+-        unit_id = 'A' - 1 + DrawLibItem->m_Multi;
+-#endif
+-        Text.Append( unit_id );
++        Text = field->m_Text + LIB_COMPONENT::ReturnSubReference( DrawLibItem->m_Multi );
+         plotter->text( textpos, color, Text,
+                        orient,
+                        field->m_Size, hjustify, vjustify,

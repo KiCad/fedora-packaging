@@ -1,0 +1,1781 @@
+diff -ru kicad-2010.04.06/CHANGELOG.txt kicad-2010.04.06-dimension/CHANGELOG.txt
+--- kicad-2010.04.06/CHANGELOG.txt	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/CHANGELOG.txt	2010-05-02 15:31:26.000000000 +0200
+@@ -4,6 +4,12 @@
+ Please add newer entries at the top, list the date and your name with
+ email address.
+ 
++2010-apr-23, UPDATE Jean-Pierre Charras <jean-pierre.charras@gipsa-lab.inpg.fr>
++================================================================================
++++Pcbnew:
++    Fixed minor problems.
++    Changed French word COTATION to DIMENSION in class COTATION (now class DIMENSION)
++
+ 2010-apr-22, UPDATE Jean-Pierre Charras <jean-pierre.charras@gipsa-lab.inpg.fr>
+ ================================================================================
+ ++Pcbnew+Gerbview:
+diff -ru kicad-2010.04.06/include/base_struct.h kicad-2010.04.06-dimension/include/base_struct.h
+--- kicad-2010.04.06/include/base_struct.h	2009-12-30 19:06:12.000000000 +0100
++++ kicad-2010.04.06-dimension/include/base_struct.h	2010-05-02 15:32:02.000000000 +0200
+@@ -38,7 +38,7 @@
+     TYPE_ZONE,              // a segment used to fill a zone area (segment on a
+                             // copper layer)
+     TYPE_MARKER_PCB,        // a marker used to show something
+-    TYPE_COTATION,          // a dimension (graphic item)
++    TYPE_DIMENSION,          // a dimension (graphic item)
+     TYPE_MIRE,              // a target (graphic item)
+     TYPE_ZONE_EDGE_CORNER,  // in zone outline: a point to define an outline
+     TYPE_ZONE_CONTAINER,    // a zone area
+diff -ru kicad-2010.04.06/include/class_board_item.h kicad-2010.04.06-dimension/include/class_board_item.h
+--- kicad-2010.04.06/include/class_board_item.h	2009-10-21 22:16:25.000000000 +0200
++++ kicad-2010.04.06-dimension/include/class_board_item.h	2010-05-02 15:32:40.000000000 +0200
+@@ -87,7 +87,7 @@
+      * Function SetLayer
+      * sets the layer this item is on.
+      * @param aLayer The layer number.
+-     * is virtual because some items (in fact: class COTATION)
++     * is virtual because some items (in fact: class DIMENSION)
+      * have a slightly different initialisation
+      */
+     virtual void  SetLayer( int aLayer )  { m_Layer = aLayer; }
+diff -ru kicad-2010.04.06/include/wxBasePcbFrame.h kicad-2010.04.06-dimension/include/wxBasePcbFrame.h
+--- kicad-2010.04.06/include/wxBasePcbFrame.h	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-dimension/include/wxBasePcbFrame.h	2010-05-02 15:33:13.000000000 +0200
+@@ -32,7 +32,7 @@
+ class D_PAD;
+ class TEXTE_MODULE;
+ class MIREPCB;
+-class COTATION;
++class DIMENSION;
+ class EDGE_MODULE;
+ class WinEDA3D_DrawFrame;
+ class DRC;
+diff -ru kicad-2010.04.06/include/wxPcbStruct.h kicad-2010.04.06-dimension/include/wxPcbStruct.h
+--- kicad-2010.04.06/include/wxPcbStruct.h	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/include/wxPcbStruct.h	2010-05-02 19:11:18.000000000 +0200
+@@ -27,7 +27,7 @@
+ class D_PAD;
+ class TEXTE_MODULE;
+ class MIREPCB;
+-class COTATION;
++class DIMENSION;
+ class EDGE_MODULE;
+ class WinEDA3D_DrawFrame;
+ class DRC;
+@@ -835,11 +835,11 @@
+     void         Delete_Drawings_All_Layer( int aLayer );
+ 
+     // Dimension handling:
+-    void         Install_Edit_Cotation( COTATION*      Cotation,
++    void         Install_Edit_Dimension( DIMENSION*      Dimension,
+                                         wxDC*          DC,
+                                         const wxPoint& pos );
+-    COTATION*    Begin_Cotation( COTATION* Cotation, wxDC* DC );
+-    void         Delete_Cotation( COTATION* Cotation, wxDC* DC );
++    DIMENSION*    Begin_Dimension( DIMENSION* Dimension, wxDC* DC );
++    void         Delete_Dimension( DIMENSION* Dimension, wxDC* DC );
+ 
+ 
+     // netlist  handling:
+Seulement dans kicad-2010.04.06-dimension/include: wxPcbStruct.h~
+diff -ru kicad-2010.04.06/pcbnew/block.cpp kicad-2010.04.06-dimension/pcbnew/block.cpp
+--- kicad-2010.04.06/pcbnew/block.cpp	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/block.cpp	2010-05-02 15:37:11.000000000 +0200
+@@ -477,7 +477,7 @@
+             select_me = true; // This item is in bloc: select it
+             break;
+ 
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             if( ( g_TabOneLayerMask[PtStruct->GetLayer()] & masque_layer ) == 0 )
+                 break;
+             if( !PtStruct->HitTest( GetScreen()->m_BlockLocate ) )
+@@ -619,7 +619,7 @@
+         case TYPE_TEXTE:        // a text on a layer
+         case TYPE_TRACK:        // a track segment (segment on a copper layer)
+         case TYPE_VIA:          // a via (like atrack segment on a copper layer)
+-        case TYPE_COTATION:     // a dimension (graphic item)
++        case TYPE_DIMENSION:    // a dimension (graphic item)
+         case TYPE_MIRE:         // a target (graphic item)
+             item->UnLink();
+             break;
+@@ -696,7 +696,7 @@
+         case TYPE_DRAWSEGMENT:
+         case TYPE_TEXTE:
+         case TYPE_MIRE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             break;
+ 
+         // This item is not put in undo list
+@@ -766,7 +766,7 @@
+         case TYPE_DRAWSEGMENT:
+         case TYPE_TEXTE:
+         case TYPE_MIRE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             break;
+ 
+         // This item is not put in undo list
+@@ -834,7 +834,7 @@
+         case TYPE_DRAWSEGMENT:
+         case TYPE_TEXTE:
+         case TYPE_MIRE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             break;
+ 
+         // This item is not put in undo list
+@@ -955,10 +955,10 @@
+         }
+         break;
+ 
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+         {
+-            COTATION* new_cotation = new COTATION( m_Pcb );
+-            new_cotation->Copy( (COTATION*) item );
++            DIMENSION* new_cotation = new DIMENSION( m_Pcb );
++            new_cotation->Copy( (DIMENSION*) item );
+             m_Pcb->Add( new_cotation );
+             newitem = new_cotation;
+         }
+diff -ru kicad-2010.04.06/pcbnew/board_undo_redo.cpp kicad-2010.04.06-dimension/pcbnew/board_undo_redo.cpp
+--- kicad-2010.04.06/pcbnew/board_undo_redo.cpp	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/board_undo_redo.cpp	2010-05-02 15:39:09.000000000 +0200
+@@ -209,14 +209,15 @@
+         EXCHG( ( (MIREPCB*) aItem )->m_Shape, ( (MIREPCB*) aImage )->m_Shape );
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+     {
+-        wxString txt = ( (COTATION*) aItem )->GetText();
+-        ( (COTATION*) aItem )->SetText( ( (COTATION*) aImage )->GetText() );
+-        ( (COTATION*) aImage )->SetText( txt );
+-        EXCHG( ( (COTATION*) aItem )->m_Text->m_Size, ( (COTATION*) aImage )->m_Text->m_Size );
+-        EXCHG( ( (COTATION*) aItem )->m_Text->m_Width, ( (COTATION*) aImage )->m_Text->m_Width );
+-        EXCHG( ( (COTATION*) aItem )->m_Text->m_Mirror, ( (COTATION*) aImage )->m_Text->m_Mirror );
++        wxString txt = ( (DIMENSION*) aItem )->GetText();
++        ( (DIMENSION*) aItem )->SetText( ( (DIMENSION*) aImage )->GetText() );
++        ( (DIMENSION*) aImage )->SetText( txt );
++        EXCHG( ( (DIMENSION*) aItem )->m_Width, ( (DIMENSION*) aImage )->m_Width );
++        EXCHG( ( (DIMENSION*) aItem )->m_Text->m_Size, ( (DIMENSION*) aImage )->m_Text->m_Size );
++        EXCHG( ( (DIMENSION*) aItem )->m_Text->m_Width, ( (DIMENSION*) aImage )->m_Text->m_Width );
++        EXCHG( ( (DIMENSION*) aItem )->m_Text->m_Mirror, ( (DIMENSION*) aImage )->m_Text->m_Mirror );
+     }
+     break;
+ 
+@@ -301,10 +302,10 @@
+     }
+     break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+     {
+-        COTATION* new_cotation = new COTATION( aItem->GetParent() );
+-        new_cotation->Copy( (COTATION*) aItem );
++        DIMENSION* new_cotation = new DIMENSION( aItem->GetParent() );
++        new_cotation->Copy( (DIMENSION*) aItem );
+         return new_cotation;
+     }
+     break;
+diff -ru kicad-2010.04.06/pcbnew/class_board.cpp kicad-2010.04.06-dimension/pcbnew/class_board.cpp
+--- kicad-2010.04.06/pcbnew/class_board.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/class_board.cpp	2010-05-02 15:40:49.000000000 +0200
+@@ -599,7 +599,7 @@
+         m_Status_Pcb = 0;
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+     case TYPE_DRAWSEGMENT:
+     case TYPE_TEXTE:
+     case TYPE_EDGE_MODULE:
+@@ -672,7 +672,7 @@
+         m_Zone.Remove( (SEGZONE*) aBoardItem );
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+     case TYPE_DRAWSEGMENT:
+     case TYPE_TEXTE:
+     case TYPE_EDGE_MODULE:
+@@ -803,7 +803,7 @@
+         ymax     = MAX( ymax, box.GetBottom() );
+     }
+ 
+-    /* Analise track and zones */
++    /* Analize track and zones */
+     for( TRACK* track = m_Track; track; track = track->Next() )
+     {
+         d = ( track->m_Width / 2 ) + 1;
+@@ -965,7 +965,7 @@
+ 
+         case TYPE_DRAWSEGMENT:
+         case TYPE_TEXTE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+         case TYPE_MIRE:
+             result = IterateForward( m_Drawings, inspector, testData, p );
+ 
+@@ -976,7 +976,7 @@
+                 {
+                 case TYPE_DRAWSEGMENT:
+                 case TYPE_TEXTE:
+-                case TYPE_COTATION:
++                case TYPE_DIMENSION:
+                 case TYPE_MIRE:
+                     continue;
+ 
+@@ -1369,7 +1369,7 @@
+         case TYPE_TEXTE:
+         case TYPE_DRAWSEGMENT:
+         case TYPE_MIRE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             if( !item->Save( aFile ) )
+                 goto out;
+             break;
+diff -ru kicad-2010.04.06/pcbnew/class_board_item.cpp kicad-2010.04.06-dimension/pcbnew/class_board_item.cpp
+--- kicad-2010.04.06/pcbnew/class_board_item.cpp	2010-01-18 13:37:53.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/class_board_item.cpp	2010-05-02 15:41:59.000000000 +0200
+@@ -1,6 +1,6 @@
+-/*****************************************/
+-/* class BOARD_ITEM: som basic functions */
+-/*****************************************/
++/******************************************/
++/* class BOARD_ITEM: some basic functions */
++/******************************************/
+ 
+ #include "fctsys.h"
+ #include "gr_basic.h"
+@@ -217,8 +217,8 @@
+              << wxT(",") << ((MARKER_PCB*)item)->GetPos().y << wxT(")");
+         break;
+ 
+-    case TYPE_COTATION:
+-        text << _( "Dimension" ) << wxT( " \"" ) << ( (COTATION*) item )->GetText() << wxT( "\"" );
++    case TYPE_DIMENSION:
++        text << _( "Dimension" ) << wxT( " \"" ) << ( (DIMENSION*) item )->GetText() << wxT( "\"" );
+         break;
+ 
+     case TYPE_MIRE:
+@@ -291,7 +291,7 @@
+         xpm = pad_xpm;              // @todo: create and use marker xpm
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+         xpm = add_dimension_xpm;
+         break;
+ 
+diff -ru kicad-2010.04.06/pcbnew/class_dimension.cpp kicad-2010.04.06-dimension/pcbnew/class_dimension.cpp
+--- kicad-2010.04.06/pcbnew/class_dimension.cpp	2010-02-08 19:15:42.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/class_dimension.cpp	2010-05-02 19:13:52.000000000 +0200
+@@ -1,6 +1,6 @@
+-/*****************************/
+-/* COTATION class definition */
+-/*****************************/
++/******************************/
++/* DIMENSION class definition */
++/******************************/
+ 
+ #include "fctsys.h"
+ #include "gr_basic.h"
+@@ -14,8 +14,8 @@
+ #include "kicad_string.h"
+ #include "protos.h"
+ 
+-COTATION::COTATION( BOARD_ITEM* aParent ) :
+-    BOARD_ITEM( aParent, TYPE_COTATION )
++DIMENSION::DIMENSION( BOARD_ITEM* aParent ) :
++    BOARD_ITEM( aParent, TYPE_DIMENSION )
+ {
+     m_Layer = DRAW_LAYER;
+     m_Width = 50;
+@@ -26,14 +26,14 @@
+ }
+ 
+ 
+-COTATION::~COTATION()
++DIMENSION::~DIMENSION()
+ {
+     delete m_Text;
+ }
+ 
+ 
+ /* Setup the dimension text */
+-void COTATION::SetText( const wxString& NewText )
++void DIMENSION::SetText( const wxString& NewText )
+ {
+     m_Text->m_Text = NewText;
+ }
+@@ -41,7 +41,7 @@
+ 
+ /* Return the dimension text
+ */
+-wxString COTATION::GetText( void )
++wxString DIMENSION::GetText( void )
+ {
+     return m_Text->m_Text;
+ }
+@@ -51,14 +51,14 @@
+  * sets the layer this item is on.
+  * @param aLayer The layer number.
+  */
+-void  COTATION::SetLayer( int aLayer )
++void  DIMENSION::SetLayer( int aLayer )
+ {
+     m_Layer = aLayer;
+     m_Text->SetLayer( aLayer);
+ }
+ 
+ 
+-void COTATION::Copy( COTATION* source )
++void DIMENSION::Copy( DIMENSION* source )
+ {
+     m_Value     = source->m_Value;
+     SetLayer( source->GetLayer() );
+@@ -100,13 +100,13 @@
+ }
+ 
+ 
+-bool COTATION::ReadCotationDescr( FILE* File, int* LineNum )
++bool DIMENSION::ReadDimensionDescr( FILE* File, int* LineNum )
+ {
+     char Line[2048], Text[2048];
+ 
+     while(  GetLine( File, Line, LineNum ) != NULL )
+     {
+-        if( strnicmp( Line, "$EndCOTATION", 4 ) == 0 )
++        if( strnicmp( Line, "$EndDIMENSION", 4 ) == 0 )
+             return TRUE;
+ 
+         if( Line[0] == 'V' )
+@@ -227,7 +227,7 @@
+  * Function Move
+  * @param offset : moving vector
+  */
+-void COTATION::Move(const wxPoint& offset)
++void DIMENSION::Move(const wxPoint& offset)
+ {
+     m_Pos += offset;
+     m_Text->m_Pos += offset;
+@@ -267,7 +267,7 @@
+  * @param center : Rotation point
+  * @param angle : Rotation angle in 0.1 degrees
+  */
+-void COTATION::Rotate(const wxPoint& centre, int angle)
++void DIMENSION::Rotate(const wxPoint& centre, int angle)
+ {
+     RotatePoint( &m_Pos, centre, angle );
+ 
+@@ -300,7 +300,7 @@
+  * Flip this object, i.e. change the board side for this object
+  * @param const wxPoint& aCentre - the rotation point.
+  */
+-void COTATION::Flip(const wxPoint& aCentre )
++void DIMENSION::Flip(const wxPoint& aCentre )
+ {
+     Mirror( aCentre );
+     SetLayer( ChangeSideNumLayer( GetLayer() ) );
+@@ -314,7 +314,7 @@
+  * the layer is not changed
+  * @param axis_pos : vertical axis position
+  */
+-void COTATION::Mirror(const wxPoint& axis_pos)
++void DIMENSION::Mirror(const wxPoint& axis_pos)
+ {
+ #define INVERT( pos )       (pos) = axis_pos.y - ( (pos) - axis_pos.y )
+ #define INVERT_ANGLE( phi ) (phi) = -(phi)
+@@ -343,14 +343,18 @@
+ }
+ 
+ 
+-bool COTATION::Save( FILE* aFile ) const
++bool DIMENSION::Save( FILE* aFile ) const
+ {
+     if( GetState( DELETED ) )
+         return true;
+ 
+     bool rc = false;
++    // note: COTATION was the previous name of DIMENSION
++    // this old keyword is used here for compatibility
++    const char keyWordLine[] = "$COTATION\n";
++    const char keyWordLineEnd[] = "$endCOTATION\n";
+ 
+-    if( fprintf( aFile, "$COTATION\n" ) != sizeof("$COTATION\n")-1 )
++    if( fprintf( aFile, keyWordLineEnd ) != sizeof(keyWordLineEnd)-1 )
+         goto out;
+ 
+     fprintf( aFile, "Ge %d %d %lX\n", m_Shape, m_Layer, m_TimeStamp );
+@@ -407,11 +411,123 @@
+ }
+ 
+ 
++/** function AdjustDimensionDetails
++ * Calculate coordinates of segments used to draw the dimension.
++ * @param aDoNotChangeText (bool) if false, the dimension text is initialized
++ */
++void DIMENSION::AdjustDimensionDetails( bool aDoNotChangeText )
++{
++    #define ARROW_SIZE 500    //size of arrows
++    int      ii;
++    int      mesure, deltax, deltay;            /* valeur de la mesure sur les axes X et Y */
++    int      fleche_up_X = 0, fleche_up_Y = 0;  /* coord des fleches : barre / */
++    int      fleche_dw_X = 0, fleche_dw_Y = 0;  /* coord des fleches : barre \ */
++    int      hx, hy;                            /* coord des traits de rappel de cote */
++    float    angle, angle_f;
++    wxString msg;
++
++    /* Init layer : */
++    m_Text->SetLayer( GetLayer() );
++
++    /* calculate the size of the cdimension
++     * (text + line above the text) */
++    ii = m_Text->m_Size.y +
++         m_Text->m_Width + (m_Width * 3);
++
++    deltax = TraitD_ox - TraitG_ox;
++    deltay = TraitD_oy - TraitG_oy;
++
++    /* Calculate dimension value */
++    mesure = wxRound(hypot( (double) deltax, (double) deltay ) );
++
++    if( deltax || deltay )
++        angle = atan2( (double) deltay, (double) deltax );
++    else
++        angle = 0.0;
++
++    /* Calcul des parametre dimensions X et Y des fleches et traits de cotes */
++    hx = hy = ii;
++
++    /* On tient compte de l'inclinaison de la cote */
++    if( mesure )
++    {
++        hx = (abs) ( (int) ( ( (double) deltay * hx ) / mesure ) );
++        hy = (abs) ( (int) ( ( (double) deltax * hy ) / mesure ) );
++
++        if( TraitG_ox > Barre_ox )
++            hx = -hx;
++        if( TraitG_ox == Barre_ox )
++            hx = 0;
++        if( TraitG_oy > Barre_oy )
++            hy = -hy;
++        if( TraitG_oy == Barre_oy )
++            hy = 0;
++
++        angle_f     = angle + (M_PI * 27.5 / 180);
++        fleche_up_X = (int) ( ARROW_SIZE * cos( angle_f ) );
++        fleche_up_Y = (int) ( ARROW_SIZE * sin( angle_f ) );
++        angle_f     = angle - (M_PI * 27.5 / 180);
++        fleche_dw_X = (int) ( ARROW_SIZE * cos( angle_f ) );
++        fleche_dw_Y = (int) ( ARROW_SIZE * sin( angle_f ) );
++    }
++
++
++    FlecheG1_ox = Barre_ox;
++    FlecheG1_oy = Barre_oy;
++    FlecheG1_fx = Barre_ox + fleche_up_X;
++    FlecheG1_fy = Barre_oy + fleche_up_Y;
++
++    FlecheG2_ox = Barre_ox;
++    FlecheG2_oy = Barre_oy;
++    FlecheG2_fx = Barre_ox + fleche_dw_X;
++    FlecheG2_fy = Barre_oy + fleche_dw_Y;
++
++    /*la fleche de droite est symetrique a celle de gauche:
++     *  / = -\  et  \ = -/
++     */
++    FlecheD1_ox = Barre_fx;
++    FlecheD1_oy = Barre_fy;
++    FlecheD1_fx = Barre_fx - fleche_dw_X;
++    FlecheD1_fy = Barre_fy - fleche_dw_Y;
++
++    FlecheD2_ox = Barre_fx;
++    FlecheD2_oy = Barre_fy;
++    FlecheD2_fx = Barre_fx - fleche_up_X;
++    FlecheD2_fy = Barre_fy - fleche_up_Y;
++
++
++    TraitG_fx = Barre_ox + hx;
++    TraitG_fy = Barre_oy + hy;
++
++    TraitD_fx = Barre_fx + hx;
++    TraitD_fy = Barre_fy + hy;
++
++    /* Calculate the better text position and orientation: */
++    m_Pos.x   = m_Text->m_Pos.x
++                          = (Barre_fx + TraitG_fx) / 2;
++    m_Pos.y   = m_Text->m_Pos.y
++                          = (Barre_fy + TraitG_fy) / 2;
++
++    m_Text->m_Orient = -(int) (angle * 1800 / M_PI);
++    if( m_Text->m_Orient < 0 )
++        m_Text->m_Orient += 3600;
++    if( m_Text->m_Orient >= 3600 )
++        m_Text->m_Orient -= 3600;
++    if( (m_Text->m_Orient > 900) && (m_Text->m_Orient <2700) )
++        m_Text->m_Orient -= 1800;
++
++    if( !aDoNotChangeText )
++    {
++        m_Value = mesure;
++        valeur_param( m_Value, msg );
++        SetText( msg );
++    }
++}
+ 
+ 
+-/* Print 1 dimension: series of n + 1 segments text
++/* Print 1 dimension: segments and text
+  */
+-void COTATION::Draw( WinEDA_DrawPanel* panel, wxDC* DC,
++void DIMENSION::Draw( WinEDA_DrawPanel* panel, wxDC* DC,
+                      int mode_color, const wxPoint& offset )
+ {
+     int ox, oy, typeaff, width, gcolor;
+@@ -502,9 +618,9 @@
+ 
+ 
+ // see class_cotation.h
+-void COTATION::DisplayInfo( WinEDA_DrawFrame* frame )
++void DIMENSION::DisplayInfo( WinEDA_DrawFrame* frame )
+ {
+-    // for now, display only the text within the COTATION using class TEXTE_PCB.
++    // for now, display only the text within the DIMENSION using class TEXTE_PCB.
+     m_Text->DisplayInfo( frame );
+ }
+ 
+@@ -515,7 +631,7 @@
+  * @param ref_pos A wxPoint to test
+  * @return bool - true if a hit, else false
+  */
+-bool COTATION::HitTest( const wxPoint& ref_pos )
++bool DIMENSION::HitTest( const wxPoint& ref_pos )
+ {
+     int             ux0, uy0;
+     int             dx, dy, spot_cX, spot_cY;
+@@ -619,7 +735,7 @@
+  * @param EDA_Rect : the given EDA_Rect
+  * @return bool - true if a hit, else false
+  */
+-bool COTATION::HitTest( EDA_Rect& refArea )
++bool DIMENSION::HitTest( EDA_Rect& refArea )
+ {
+     if( refArea.Inside( m_Pos ) )
+         return true;
+diff -ru kicad-2010.04.06/pcbnew/class_dimension.h kicad-2010.04.06-dimension/pcbnew/class_dimension.h
+--- kicad-2010.04.06/pcbnew/class_dimension.h	2010-01-31 21:01:46.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/class_dimension.h	2010-05-02 15:50:19.000000000 +0200
+@@ -1,12 +1,12 @@
+-/*****************************/
+-/* COTATION class definition */
+-/*****************************/
++/******************************/
++/* DIMENSION class definition */
++/******************************/
+ #ifndef DIMENSION_H
+ #define DIMENSION_H
+ 
+ #include "base_struct.h"
+ 
+-class COTATION : public BOARD_ITEM
++class DIMENSION : public BOARD_ITEM
+ {
+ public:
+     int        m_Width;
+@@ -25,8 +25,8 @@
+     int        FlecheG2_ox, FlecheG2_oy, FlecheG2_fx, FlecheG2_fy;
+ 
+ public:
+-    COTATION( BOARD_ITEM* aParent );
+-    ~COTATION();
++    DIMENSION( BOARD_ITEM* aParent );
++    ~DIMENSION();
+ 
+     wxPoint& GetPosition()
+     {
+@@ -40,7 +40,13 @@
+      */
+     void  SetLayer( int aLayer );
+ 
+-    bool    ReadCotationDescr( FILE* File, int* LineNum );
++    /** function AdjustDimensionDetails
++     * Calculate coordinates of segments used to draw the dimension.
++     * @param aDoNotChangeText (bool) if false, the dimension text is initialized
++     */
++    void AdjustDimensionDetails( bool aDoNotChangeText = false);
++
++    bool    ReadDimensionDescr( FILE* File, int* LineNum );
+ 
+     /**
+      * Function Save
+@@ -53,7 +59,7 @@
+     void    SetText( const wxString& NewText );
+     wxString GetText( void );
+ 
+-    void    Copy( COTATION* source );
++    void    Copy( DIMENSION* source );
+ 
+     void    Draw( WinEDA_DrawPanel* panel, wxDC* DC,
+                   int aColorMode, const wxPoint& offset = ZeroOffset );
+diff -ru kicad-2010.04.06/pcbnew/class_pcb_text.cpp kicad-2010.04.06-dimension/pcbnew/class_pcb_text.cpp
+--- kicad-2010.04.06/pcbnew/class_pcb_text.cpp	2010-01-31 21:01:46.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/class_pcb_text.cpp	2010-05-02 15:51:20.000000000 +0200
+@@ -218,7 +218,7 @@
+ 
+     wxASSERT( parent );
+ 
+-    if( parent->Type() == TYPE_COTATION )
++    if( parent->Type() == TYPE_DIMENSION )
+         board = (BOARD*) parent->GetParent();
+     else
+         board = (BOARD*) parent;
+@@ -226,8 +226,8 @@
+ 
+     frame->ClearMsgPanel();
+ 
+-    if( m_Parent && m_Parent->Type() == TYPE_COTATION )
+-        frame->AppendMsgPanel( _( "COTATION" ), m_Text, DARKGREEN );
++    if( m_Parent && m_Parent->Type() == TYPE_DIMENSION )
++        frame->AppendMsgPanel( _( "DIMENSION" ), m_Text, DARKGREEN );
+     else
+         frame->AppendMsgPanel( _( "PCB Text" ), m_Text, DARKGREEN );
+ 
+diff -ru kicad-2010.04.06/pcbnew/collectors.cpp kicad-2010.04.06-dimension/pcbnew/collectors.cpp
+--- kicad-2010.04.06/pcbnew/collectors.cpp	2010-02-05 11:56:23.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/collectors.cpp	2010-05-02 15:53:49.000000000 +0200
+@@ -39,12 +39,12 @@
+     TYPE_MARKER_PCB,                 // in m_markers
+     TYPE_TEXTE,                  // in m_Drawings
+     TYPE_DRAWSEGMENT,            // in m_Drawings
+-    TYPE_COTATION,               // in m_Drawings
++    TYPE_DIMENSION,              // in m_Drawings
+     TYPE_MIRE,                   // in m_Drawings
+     TYPE_VIA,                    // in m_Tracks
+     TYPE_TRACK,                  // in m_Tracks
+     TYPE_PAD,                    // in modules
+-    TYPE_TEXTE_MODULE,            // in modules
++    TYPE_TEXTE_MODULE,           // in modules
+     TYPE_MODULE,                 // in m_Modules
+     TYPE_ZONE,                   // in m_Zones
+     TYPE_ZONE_CONTAINER,         // in m_ZoneDescriptorList
+@@ -56,7 +56,7 @@
+   * const KICAD_T GENERAL_COLLECTOR::PrimaryItems[] = {
+   * TYPE_TEXTE,
+   * TYPE_DRAWSEGMENT,
+-  * TYPE_COTATION,
++  * TYPE_DIMENSION,
+   * TYPE_VIA,
+   * TYPE_TRACK,
+   * TYPE_MODULE,
+@@ -69,7 +69,7 @@
+     TYPE_MARKER_PCB,
+     TYPE_TEXTE,
+     TYPE_DRAWSEGMENT,
+-    TYPE_COTATION,
++    TYPE_DIMENSION,
+     TYPE_MIRE,
+     TYPE_VIA,
+     TYPE_TRACK,
+@@ -174,7 +174,7 @@
+         breakhere++;
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+         breakhere++;
+         break;
+ 
+@@ -211,9 +211,9 @@
+     case TYPE_PAD:
+         // there are pad specific visibility controls.
+         // Criterias to select a pad is:
+-        // for smd pads: the module parent must be seen, and pads on the corresponding board side must be seen 
++        // for smd pads: the module parent must be seen, and pads on the corresponding board side must be seen
+         // if pad is a thru hole, then it can be visible when its parent module is not.
+-        // for through pads: pads on Front or Back board sides must be seen 
++        // for through pads: pads on Front or Back board sides must be seen
+         pad = (D_PAD*) item;
+         if( (pad->m_Attribut != PAD_SMD) &&
+             (pad->m_Attribut != PAD_CONN) )    // a hole is present, so multiple layers
+@@ -244,7 +244,7 @@
+     case TYPE_DRAWSEGMENT:
+         break;
+ 
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+         break;
+ 
+     case TYPE_MIRE:
+@@ -285,7 +285,7 @@
+             goto exit;
+     }
+ 
+-    // Pads are not sensitive to the layer visibility controls. 
++    // Pads are not sensitive to the layer visibility controls.
+     // They all have their own separate visibility controls
+     // skip them if not visible
+     if ( pad )
+diff -ru kicad-2010.04.06/pcbnew/dimension.cpp kicad-2010.04.06-dimension/pcbnew/dimension.cpp
+--- kicad-2010.04.06/pcbnew/dimension.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/dimension.cpp	2010-05-02 16:06:57.000000000 +0200
+@@ -1,6 +1,6 @@
+-/*****************************************/
+-/* Edition du pcb: Gestion des cotations */
+-/*****************************************/
++/******************************************/
++/* Edition du pcb: Gestion des dimensions */
++/******************************************/
+ 
+ #include "fctsys.h"
+ #include "common.h"
+@@ -12,17 +12,16 @@
+ #include "drawtxt.h"
+ 
+ /* Routines Locales */
+-static void Exit_EditCotation( WinEDA_DrawPanel* Panel, wxDC* DC );
+-static void Montre_Position_New_Cotation( WinEDA_DrawPanel* panel, wxDC* DC, bool erase );
+-static void Ajuste_Details_Cotation( COTATION* pts, bool aDoNotChangeText = false );
++static void Exit_EditDimension( WinEDA_DrawPanel* Panel, wxDC* DC );
++static void Montre_Position_New_Dimension( WinEDA_DrawPanel* panel, wxDC* DC, bool erase );
+ 
+ /* Variables "locales" : */
+-static int status_cotation; /*  = 0 : pas de cotation en cours
++static int status_dimension; /*  = 0 : pas de dimension en cours
+                              *  = 1 : debut place, fin a placer
+                              *  = 2 : fin placee, texte a ajuster */
+ 
+ /*
+- *  Les routines generent une cotation de la forme
++ *  Les routines generent une dimension de la forme
+  *  - cote usuelle:
+  *
+  * |            |
+@@ -32,26 +31,18 @@
+  *
+  */
+ 
+-#define MAX_CHAR 40     /* longueur maxi de la cotation */
+-/* Dimension des fleches */
+-#define FLECHE_L 500
+-
+-
+-enum id_Cotation_properties {
+-    ID_TEXTPCB_SELECT_LAYER = 1900
+-};
+ 
+ /************************************/
+-/* class WinEDA_CotationPropertiesFrame */
++/* class DIMENSION_EDITOR_DIALOG */
+ /************************************/
+ 
+-class WinEDA_CotationPropertiesFrame : public wxDialog
++class DIMENSION_EDITOR_DIALOG : public wxDialog
+ {
+ private:
+ 
+     WinEDA_PcbFrame*  m_Parent;
+     wxDC*             m_DC;
+-    COTATION*         CurrentCotation;
++    DIMENSION*         CurrentDimension;
+     WinEDA_EnterText* m_Name;
+     WinEDA_SizeCtrl*  m_TxtSizeCtrl;
+     WinEDA_ValueCtrl* m_TxtWidthCtrl;
+@@ -61,9 +52,9 @@
+ public:
+ 
+     // Constructor and destructor
+-    WinEDA_CotationPropertiesFrame( WinEDA_PcbFrame* parent,
+-                                    COTATION* Cotation, wxDC* DC, const wxPoint& pos );
+-    ~WinEDA_CotationPropertiesFrame()
++    DIMENSION_EDITOR_DIALOG( WinEDA_PcbFrame* parent,
++                                    DIMENSION* Dimension, wxDC* DC, const wxPoint& pos );
++    ~DIMENSION_EDITOR_DIALOG()
+     {
+     }
+ 
+@@ -75,14 +66,14 @@
+     DECLARE_EVENT_TABLE()
+ };
+ 
+-BEGIN_EVENT_TABLE( WinEDA_CotationPropertiesFrame, wxDialog )
+-EVT_BUTTON( wxID_OK, WinEDA_CotationPropertiesFrame::OnOkClick )
+-EVT_BUTTON( wxID_CANCEL, WinEDA_CotationPropertiesFrame::OnCancelClick )
++BEGIN_EVENT_TABLE( DIMENSION_EDITOR_DIALOG, wxDialog )
++EVT_BUTTON( wxID_OK, DIMENSION_EDITOR_DIALOG::OnOkClick )
++EVT_BUTTON( wxID_CANCEL, DIMENSION_EDITOR_DIALOG::OnCancelClick )
+ END_EVENT_TABLE()
+ 
+ 
+-WinEDA_CotationPropertiesFrame::WinEDA_CotationPropertiesFrame( WinEDA_PcbFrame* parent,
+-                                                                COTATION* Cotation, wxDC* DC,
++DIMENSION_EDITOR_DIALOG::DIMENSION_EDITOR_DIALOG( WinEDA_PcbFrame* parent,
++                                                                DIMENSION* Dimension, wxDC* DC,
+                                                                 const wxPoint& framepos ) :
+     wxDialog( parent, -1, _( "Dimension properties" ), framepos, wxSize( 340, 270 ),
+               DIALOG_STYLE )
+@@ -93,7 +84,7 @@
+     m_DC = DC;
+     Centre();
+ 
+-    CurrentCotation = Cotation;
++    CurrentDimension = Dimension;
+ 
+     wxBoxSizer* MainBoxSizer = new wxBoxSizer( wxHORIZONTAL );
+     SetSizer( MainBoxSizer );
+@@ -113,25 +104,25 @@
+     m_Mirror = new wxRadioBox( this, -1, _( "Display" ),
+                                wxDefaultPosition, wxSize( -1, -1 ), 2, display_msg,
+                                1, wxRA_SPECIFY_COLS );
+-    if( Cotation->m_Text->m_Mirror )
++    if( Dimension->m_Text->m_Mirror )
+         m_Mirror->SetSelection( 1 );;
+     RightBoxSizer->Add( m_Mirror, 0, wxGROW | wxALL, 5 );
+ 
+     m_Name = new WinEDA_EnterText( this, wxT( "Text:" ),
+-                                  Cotation->m_Text->m_Text,
++                                  Dimension->m_Text->m_Text,
+                                   LeftBoxSizer, wxSize( 200, -1 ) );
+ 
+     m_TxtSizeCtrl = new WinEDA_SizeCtrl( this, _( "Size" ),
+-                                         Cotation->m_Text->m_Size,
++                                         Dimension->m_Text->m_Size,
+                                          g_UnitMetric, LeftBoxSizer, m_Parent->m_InternalUnits );
+ 
+     m_TxtWidthCtrl = new WinEDA_ValueCtrl( this, _( "Width" ),
+-                                           Cotation->m_Width,
++                                           Dimension->m_Width,
+                                            g_UnitMetric, LeftBoxSizer, m_Parent->m_InternalUnits );
+ 
+     wxStaticText* text = new wxStaticText( this, -1, _( "Layer:" ) );
+     LeftBoxSizer->Add( text, 0, wxGROW | wxLEFT | wxRIGHT | wxTOP, 5 );
+-    m_SelLayerBox = new WinEDAChoiceBox( this, ID_TEXTPCB_SELECT_LAYER,
++    m_SelLayerBox = new WinEDAChoiceBox( this, wxID_ANY,
+                                          wxDefaultPosition, wxDefaultSize );
+     LeftBoxSizer->Add( m_SelLayerBox, 0, wxGROW | wxLEFT | wxRIGHT | wxBOTTOM, 5 );
+ 
+@@ -140,7 +131,7 @@
+         m_SelLayerBox->Append( parent->GetBoard()->GetLayerName( layer ) );
+     }
+ 
+-    m_SelLayerBox->SetSelection( Cotation->GetLayer() - FIRST_NO_COPPER_LAYER );
++    m_SelLayerBox->SetSelection( Dimension->GetLayer() - FIRST_NO_COPPER_LAYER );
+ 
+     GetSizer()->Fit( this );
+     GetSizer()->SetSizeHints( this );
+@@ -148,7 +139,7 @@
+ 
+ 
+ /**********************************************************************/
+-void WinEDA_CotationPropertiesFrame::OnCancelClick( wxCommandEvent& WXUNUSED (event) )
++void DIMENSION_EDITOR_DIALOG::OnCancelClick( wxCommandEvent& WXUNUSED (event) )
+ /**********************************************************************/
+ {
+     EndModal( -1 );
+@@ -156,39 +147,41 @@
+ 
+ 
+ /***********************************************************************************/
+-void WinEDA_CotationPropertiesFrame::OnOkClick( wxCommandEvent& event )
++void DIMENSION_EDITOR_DIALOG::OnOkClick( wxCommandEvent& event )
+ /***********************************************************************************/
+ {
+     if( m_DC )     // Effacement ancien texte
+     {
+-        CurrentCotation->Draw( m_Parent->DrawPanel, m_DC, GR_XOR );
++        CurrentDimension->Draw( m_Parent->DrawPanel, m_DC, GR_XOR );
+     }
+ 
+-    m_Parent->SaveCopyInUndoList(CurrentCotation, UR_CHANGED);
++    m_Parent->SaveCopyInUndoList(CurrentDimension, UR_CHANGED);
+     if( m_Name->GetValue() != wxEmptyString )
+     {
+-        CurrentCotation->SetText( m_Name->GetValue() );
++        CurrentDimension->SetText( m_Name->GetValue() );
+     }
+ 
+-    CurrentCotation->m_Text->m_Size  = m_TxtSizeCtrl->GetValue();
+-    
++    CurrentDimension->m_Text->m_Size  = m_TxtSizeCtrl->GetValue();
++
+     int width = m_TxtWidthCtrl->GetValue();
+-    int maxthickness = Clamp_Text_PenSize(width, CurrentCotation->m_Text->m_Size );
++    int maxthickness = Clamp_Text_PenSize(width, CurrentDimension->m_Text->m_Size );
+     if( width > maxthickness )
+     {
+         DisplayError(NULL, _("The text thickness is too large for the text size. It will be clamped"));
+         width = maxthickness;
+     }
+-    CurrentCotation->m_Text->m_Width = CurrentCotation->m_Width = width ;
++    CurrentDimension->m_Text->m_Width = CurrentDimension->m_Width = width ;
++
++    CurrentDimension->m_Text->m_Mirror = (m_Mirror->GetSelection() == 1) ? true : false;
+ 
+-    CurrentCotation->m_Text->m_Mirror = (m_Mirror->GetSelection() == 1) ? true : false;
++    CurrentDimension->SetLayer( m_SelLayerBox->GetChoice() + FIRST_NO_COPPER_LAYER );
+ 
+-    CurrentCotation->SetLayer( m_SelLayerBox->GetChoice() + FIRST_NO_COPPER_LAYER );
++    CurrentDimension->AdjustDimensionDetails( true );
+ 
+     if( m_DC )     // Affichage nouveau texte
+     {
+         /* Redessin du Texte */
+-        CurrentCotation->Draw( m_Parent->DrawPanel, m_DC, GR_OR );
++        CurrentDimension->Draw( m_Parent->DrawPanel, m_DC, GR_OR );
+     }
+ 
+     m_Parent->OnModify();
+@@ -197,25 +190,25 @@
+ 
+ 
+ /**************************************************************/
+-static void Exit_EditCotation( WinEDA_DrawPanel* Panel, wxDC* DC )
++static void Exit_EditDimension( WinEDA_DrawPanel* Panel, wxDC* DC )
+ /**************************************************************/
+ {
+-    COTATION* Cotation = (COTATION*) Panel->GetScreen()->GetCurItem();
++    DIMENSION* Dimension = (DIMENSION*) Panel->GetScreen()->GetCurItem();
+ 
+-    if( Cotation )
++    if( Dimension )
+     {
+-        if( Cotation->m_Flags & IS_NEW )
++        if( Dimension->m_Flags & IS_NEW )
+         {
+-            Cotation->Draw( Panel, DC, GR_XOR );
+-            Cotation->DeleteStructure();
++            Dimension->Draw( Panel, DC, GR_XOR );
++            Dimension->DeleteStructure();
+         }
+         else
+         {
+-            Cotation->Draw( Panel, DC, GR_OR );
++            Dimension->Draw( Panel, DC, GR_OR );
+         }
+     }
+ 
+-    status_cotation      = 0;
++    status_dimension     = 0;
+     Panel->ManageCurseur = NULL;
+     Panel->ForceCloseManageCurseur = NULL;
+     ((WinEDA_PcbFrame*)Panel->GetParent())->SetCurItem(NULL);
+@@ -223,75 +216,75 @@
+ 
+ 
+ /*************************************************************************/
+-COTATION* WinEDA_PcbFrame::Begin_Cotation( COTATION* Cotation, wxDC* DC )
++DIMENSION* WinEDA_PcbFrame::Begin_Dimension( DIMENSION* Dimension, wxDC* DC )
+ /*************************************************************************/
+ {
+     wxPoint pos;
+ 
+-    if( Cotation == NULL )       /* debut reel du trace */
++    if( Dimension == NULL )       /* debut reel du trace */
+     {
+-        status_cotation = 1;
++        status_dimension = 1;
+         pos = GetScreen()->m_Curseur;
+ 
+-        Cotation = new COTATION( GetBoard() );
+-        Cotation->m_Flags = IS_NEW;
++        Dimension = new DIMENSION( GetBoard() );
++        Dimension->m_Flags = IS_NEW;
+ 
+-        Cotation->SetLayer( getActiveLayer() );
++        Dimension->SetLayer( getActiveLayer() );
+ 
+-        Cotation->Barre_ox = Cotation->Barre_fx = pos.x;
+-        Cotation->Barre_oy = Cotation->Barre_fy = pos.y;
++        Dimension->Barre_ox = Dimension->Barre_fx = pos.x;
++        Dimension->Barre_oy = Dimension->Barre_fy = pos.y;
+ 
+-        Cotation->TraitD_ox = Cotation->TraitD_fx = pos.x;
+-        Cotation->TraitD_oy = Cotation->TraitD_fy = pos.y;
++        Dimension->TraitD_ox = Dimension->TraitD_fx = pos.x;
++        Dimension->TraitD_oy = Dimension->TraitD_fy = pos.y;
+ 
+-        Cotation->TraitG_ox = Cotation->TraitG_fx = pos.x;
+-        Cotation->TraitG_oy = Cotation->TraitG_fy = pos.y;
++        Dimension->TraitG_ox = Dimension->TraitG_fx = pos.x;
++        Dimension->TraitG_oy = Dimension->TraitG_fy = pos.y;
+ 
+-        Cotation->FlecheG1_ox = Cotation->FlecheG1_fx = pos.x;
+-        Cotation->FlecheG1_oy = Cotation->FlecheG1_fy = pos.y;
++        Dimension->FlecheG1_ox = Dimension->FlecheG1_fx = pos.x;
++        Dimension->FlecheG1_oy = Dimension->FlecheG1_fy = pos.y;
+ 
+-        Cotation->FlecheG2_ox = Cotation->FlecheG2_fx = pos.x;
+-        Cotation->FlecheG2_oy = Cotation->FlecheG2_fy = pos.y;
++        Dimension->FlecheG2_ox = Dimension->FlecheG2_fx = pos.x;
++        Dimension->FlecheG2_oy = Dimension->FlecheG2_fy = pos.y;
+ 
+-        Cotation->FlecheD1_ox = Cotation->FlecheD1_fx = pos.x;
+-        Cotation->FlecheD1_oy = Cotation->FlecheD1_fy = pos.y;
++        Dimension->FlecheD1_ox = Dimension->FlecheD1_fx = pos.x;
++        Dimension->FlecheD1_oy = Dimension->FlecheD1_fy = pos.y;
+ 
+-        Cotation->FlecheD2_ox = Cotation->FlecheD2_fx = pos.x;
+-        Cotation->FlecheD2_oy = Cotation->FlecheD2_fy = pos.y;
++        Dimension->FlecheD2_ox = Dimension->FlecheD2_fx = pos.x;
++        Dimension->FlecheD2_oy = Dimension->FlecheD2_fy = pos.y;
+ 
+-        Cotation->m_Text->m_Size   = GetBoard()->GetBoardDesignSettings()->m_PcbTextSize;
++        Dimension->m_Text->m_Size   = GetBoard()->GetBoardDesignSettings()->m_PcbTextSize;
+         int width = GetBoard()->GetBoardDesignSettings()->m_PcbTextWidth;
+-        int maxthickness = Clamp_Text_PenSize(width, Cotation->m_Text->m_Size );
++        int maxthickness = Clamp_Text_PenSize(width, Dimension->m_Text->m_Size );
+         if( width > maxthickness )
+         {
+             width = maxthickness;
+         }
+-        Cotation->m_Text->m_Width = Cotation->m_Width = width ;
+- 
+-        Ajuste_Details_Cotation( Cotation );
++        Dimension->m_Text->m_Width = Dimension->m_Width = width ;
++
++        Dimension->AdjustDimensionDetails( );
+ 
+-        Cotation->Draw( DrawPanel, DC, GR_XOR );
++        Dimension->Draw( DrawPanel, DC, GR_XOR );
+ 
+-        DrawPanel->ManageCurseur = Montre_Position_New_Cotation;
+-        DrawPanel->ForceCloseManageCurseur = Exit_EditCotation;
+-        return Cotation;
++        DrawPanel->ManageCurseur = Montre_Position_New_Dimension;
++        DrawPanel->ForceCloseManageCurseur = Exit_EditDimension;
++        return Dimension;
+     }
+ 
+-    // Cotation != NULL
+-    if( status_cotation == 1 )
++    // Dimension != NULL
++    if( status_dimension == 1 )
+     {
+-        status_cotation = 2;
+-        return Cotation;
++        status_dimension = 2;
++        return Dimension;
+     }
+ 
+-    Cotation->Draw( DrawPanel, DC, GR_OR );
+-    Cotation->m_Flags = 0;
++    Dimension->Draw( DrawPanel, DC, GR_OR );
++    Dimension->m_Flags = 0;
+ 
+     /* ADD this new item in list */
+-    GetBoard()->Add( Cotation );
+-    
++    GetBoard()->Add( Dimension );
++
+     // Add store it in undo/redo list
+-    SaveCopyInUndoList( Cotation, UR_NEW );
++    SaveCopyInUndoList( Dimension, UR_NEW );
+ 
+     OnModify();
+     DrawPanel->ManageCurseur = NULL;
+@@ -302,202 +295,85 @@
+ 
+ 
+ /************************************************************************************/
+-static void Montre_Position_New_Cotation( WinEDA_DrawPanel* panel, wxDC* DC, bool erase )
++static void Montre_Position_New_Dimension( WinEDA_DrawPanel* panel, wxDC* DC, bool erase )
+ /************************************************************************************/
+ /* redessin du contour de la piste  lors des deplacements de la souris */
+ {
+     PCB_SCREEN* screen   = (PCB_SCREEN*) panel->GetScreen();
+-    COTATION*   Cotation = (COTATION*) screen->GetCurItem();
++    DIMENSION*   Dimension = (DIMENSION*) screen->GetCurItem();
+     wxPoint     pos = screen->m_Curseur;
+ 
+-    if( Cotation == NULL )
++    if( Dimension == NULL )
+         return;
+ 
+     /* efface ancienne position */
+     if( erase )
+     {
+-        Cotation->Draw( panel, DC, GR_XOR );
++        Dimension->Draw( panel, DC, GR_XOR );
+     }
+ 
+-    Cotation->SetLayer( screen->m_Active_Layer );
+-    if( status_cotation == 1 )
++    Dimension->SetLayer( screen->m_Active_Layer );
++    if( status_dimension == 1 )
+     {
+-        Cotation->TraitD_ox = pos.x;
+-        Cotation->TraitD_oy = pos.y;
+-        Cotation->Barre_fx  = Cotation->TraitD_ox;
+-        Cotation->Barre_fy  = Cotation->TraitD_oy;
+-        Ajuste_Details_Cotation( Cotation );
++        Dimension->TraitD_ox = pos.x;
++        Dimension->TraitD_oy = pos.y;
++        Dimension->Barre_fx  = Dimension->TraitD_ox;
++        Dimension->Barre_fy  = Dimension->TraitD_oy;
++        Dimension->AdjustDimensionDetails( );
+     }
+     else
+     {
+         int   deltax, deltay, dx, dy;
+         float angle, depl;
+-        deltax = Cotation->TraitD_ox - Cotation->TraitG_ox;
+-        deltay = Cotation->TraitD_oy - Cotation->TraitG_oy;
++        deltax = Dimension->TraitD_ox - Dimension->TraitG_ox;
++        deltay = Dimension->TraitD_oy - Dimension->TraitG_oy;
+ 
+         /* Calcul de la direction de deplacement
+          *  ( perpendiculaire a l'axe de la cote ) */
+         angle = atan2( (double)deltay, (double)deltax ) + (M_PI / 2);
+ 
+-        deltax = pos.x - Cotation->TraitD_ox;
+-        deltay = pos.y - Cotation->TraitD_oy;
++        deltax = pos.x - Dimension->TraitD_ox;
++        deltay = pos.y - Dimension->TraitD_oy;
+         depl   = ( deltax * cos( angle ) ) + ( deltay * sin( angle ) );
+         dx = (int) ( depl * cos( angle ) );
+         dy = (int) ( depl * sin( angle ) );
+-        Cotation->Barre_ox = Cotation->TraitG_ox + dx;
+-        Cotation->Barre_oy = Cotation->TraitG_oy + dy;
+-        Cotation->Barre_fx = Cotation->TraitD_ox + dx;
+-        Cotation->Barre_fy = Cotation->TraitD_oy + dy;
++        Dimension->Barre_ox = Dimension->TraitG_ox + dx;
++        Dimension->Barre_oy = Dimension->TraitG_oy + dy;
++        Dimension->Barre_fx = Dimension->TraitD_ox + dx;
++        Dimension->Barre_fy = Dimension->TraitD_oy + dy;
+ 
+-        Ajuste_Details_Cotation( Cotation );
++        Dimension->AdjustDimensionDetails( );
+     }
+ 
+-    Cotation->Draw( panel, DC, GR_XOR );
++    Dimension->Draw( panel, DC, GR_XOR );
+ }
+ 
+ 
+ /***************************************************************/
+-void WinEDA_PcbFrame::Install_Edit_Cotation( COTATION* Cotation,
++void WinEDA_PcbFrame::Install_Edit_Dimension( DIMENSION* Dimension,
+                                              wxDC* DC, const wxPoint& pos )
+ /***************************************************************/
+ {
+-    if( Cotation == NULL )
++    if( Dimension == NULL )
+         return;
+ 
+-    WinEDA_CotationPropertiesFrame* frame = new WinEDA_CotationPropertiesFrame( this,
+-                                                                                Cotation, DC, pos );
+-
+-    Ajuste_Details_Cotation( Cotation, true );
++    DIMENSION_EDITOR_DIALOG* frame = new DIMENSION_EDITOR_DIALOG( this, Dimension, DC, pos );
+     frame->ShowModal();
+     frame->Destroy();
+ }
+ 
+ 
+ /*******************************************************************/
+-void WinEDA_PcbFrame::Delete_Cotation( COTATION* Cotation, wxDC* DC )
++void WinEDA_PcbFrame::Delete_Dimension( DIMENSION* Dimension, wxDC* DC )
+ /*******************************************************************/
+ {
+-    if( Cotation == NULL )
++    if( Dimension == NULL )
+         return;
+ 
+     if( DC )
+-        Cotation->Draw( DrawPanel, DC, GR_XOR );
++        Dimension->Draw( DrawPanel, DC, GR_XOR );
+ 
+-    SaveCopyInUndoList(Cotation, UR_DELETED);
+-    Cotation->UnLink();
++    SaveCopyInUndoList(Dimension, UR_DELETED);
++    Dimension->UnLink();
+     OnModify();
+ }
+-
+-
+-/*****************************************************/
+-static void Ajuste_Details_Cotation( COTATION* Cotation, bool aDoNotChangeText )
+-/*****************************************************/
+-
+-/* Calcule les details des coordonnees des differents segments constitutifs
+- *  de la cotation
+- */
+-{
+-    int      ii;
+-    int      mesure, deltax, deltay;            /* valeur de la mesure sur les axes X et Y */
+-    int      fleche_up_X = 0, fleche_up_Y = 0;  /* coord des fleches : barre / */
+-    int      fleche_dw_X = 0, fleche_dw_Y = 0;  /* coord des fleches : barre \ */
+-    int      hx, hy;                            /* coord des traits de rappel de cote */
+-    float    angle, angle_f;
+-    wxString msg;
+-
+-    /* Init des couches : */
+-    Cotation->m_Text->SetLayer( Cotation->GetLayer() );
+-
+-    /* calcul de la hauteur du texte + trait de cotation */
+-    ii = Cotation->m_Text->m_Size.y +
+-         Cotation->m_Text->m_Width + (Cotation->m_Width * 3);
+-
+-    deltax = Cotation->TraitD_ox - Cotation->TraitG_ox;
+-    deltay = Cotation->TraitD_oy - Cotation->TraitG_oy;
+-
+-    /* Calcul de la cote */
+-    mesure = (int) (hypot( (double) deltax, (double) deltay ) + 0.5 );
+-
+-    if( deltax || deltay )
+-        angle = atan2( (double) deltay, (double) deltax );
+-    else
+-        angle = 0.0;
+-
+-    /* Calcul des parametre dimensions X et Y des fleches et traits de cotes */
+-    hx = hy = ii;
+-
+-    /* On tient compte de l'inclinaison de la cote */
+-    if( mesure )
+-    {
+-        hx = (abs) ( (int) ( ( (double) deltay * hx ) / mesure ) );
+-        hy = (abs) ( (int) ( ( (double) deltax * hy ) / mesure ) );
+-
+-        if( Cotation->TraitG_ox > Cotation->Barre_ox )
+-            hx = -hx;
+-        if( Cotation->TraitG_ox == Cotation->Barre_ox )
+-            hx = 0;
+-        if( Cotation->TraitG_oy > Cotation->Barre_oy )
+-            hy = -hy;
+-        if( Cotation->TraitG_oy == Cotation->Barre_oy )
+-            hy = 0;
+-
+-        angle_f     = angle + (M_PI * 27.5 / 180);
+-        fleche_up_X = (int) ( FLECHE_L * cos( angle_f ) );
+-        fleche_up_Y = (int) ( FLECHE_L * sin( angle_f ) );
+-        angle_f     = angle - (M_PI * 27.5 / 180);
+-        fleche_dw_X = (int) ( FLECHE_L * cos( angle_f ) );
+-        fleche_dw_Y = (int) ( FLECHE_L * sin( angle_f ) );
+-    }
+-
+-
+-    Cotation->FlecheG1_ox = Cotation->Barre_ox;
+-    Cotation->FlecheG1_oy = Cotation->Barre_oy;
+-    Cotation->FlecheG1_fx = Cotation->Barre_ox + fleche_up_X;
+-    Cotation->FlecheG1_fy = Cotation->Barre_oy + fleche_up_Y;
+-
+-    Cotation->FlecheG2_ox = Cotation->Barre_ox;
+-    Cotation->FlecheG2_oy = Cotation->Barre_oy;
+-    Cotation->FlecheG2_fx = Cotation->Barre_ox + fleche_dw_X;
+-    Cotation->FlecheG2_fy = Cotation->Barre_oy + fleche_dw_Y;
+-
+-    /*la fleche de droite est symetrique a celle de gauche:
+-     *  / = -\  et  \ = -/
+-     */
+-    Cotation->FlecheD1_ox = Cotation->Barre_fx;
+-    Cotation->FlecheD1_oy = Cotation->Barre_fy;
+-    Cotation->FlecheD1_fx = Cotation->Barre_fx - fleche_dw_X;
+-    Cotation->FlecheD1_fy = Cotation->Barre_fy - fleche_dw_Y;
+-
+-    Cotation->FlecheD2_ox = Cotation->Barre_fx;
+-    Cotation->FlecheD2_oy = Cotation->Barre_fy;
+-    Cotation->FlecheD2_fx = Cotation->Barre_fx - fleche_up_X;
+-    Cotation->FlecheD2_fy = Cotation->Barre_fy - fleche_up_Y;
+-
+-
+-    Cotation->TraitG_fx = Cotation->Barre_ox + hx;
+-    Cotation->TraitG_fy = Cotation->Barre_oy + hy;
+-
+-    Cotation->TraitD_fx = Cotation->Barre_fx + hx;
+-    Cotation->TraitD_fy = Cotation->Barre_fy + hy;
+-
+-    /* Calcul de la position du centre du texte et son orientation: */
+-    Cotation->m_Pos.x   = Cotation->m_Text->m_Pos.x
+-                          = (Cotation->Barre_fx + Cotation->TraitG_fx) / 2;
+-    Cotation->m_Pos.y   = Cotation->m_Text->m_Pos.y
+-                          = (Cotation->Barre_fy + Cotation->TraitG_fy) / 2;
+-
+-    Cotation->m_Text->m_Orient = -(int) (angle * 1800 / M_PI);
+-    if( Cotation->m_Text->m_Orient < 0 )
+-        Cotation->m_Text->m_Orient += 3600;
+-    if( Cotation->m_Text->m_Orient >= 3600 )
+-        Cotation->m_Text->m_Orient -= 3600;
+-    if( (Cotation->m_Text->m_Orient > 900) && (Cotation->m_Text->m_Orient <2700) )
+-        Cotation->m_Text->m_Orient -= 1800;
+-
+-    if( !aDoNotChangeText )
+-    {
+-        Cotation->m_Value = mesure;
+-        valeur_param( Cotation->m_Value, msg );
+-        Cotation->SetText( msg );
+-    }
+-}
+diff -ru kicad-2010.04.06/pcbnew/edit.cpp kicad-2010.04.06-dimension/pcbnew/edit.cpp
+--- kicad-2010.04.06/pcbnew/edit.cpp	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/edit.cpp	2010-05-02 16:09:09.000000000 +0200
+@@ -264,7 +264,7 @@
+         SetToolID( id, wxCURSOR_HAND, _( "Add Modules" ) );
+         break;
+ 
+-    case ID_PCB_COTATION_BUTT:
++    case ID_PCB_DIMENSION_BUTT:
+         SetToolID( id, wxCURSOR_PENCIL, _( "Add Dimension" ) );
+         break;
+ 
+@@ -803,14 +803,14 @@
+         SetCurItem( NULL );
+         break;
+ 
+-    case ID_POPUP_PCB_DELETE_COTATION:
++    case ID_POPUP_PCB_DELETE_DIMENSION:
+         DrawPanel->MouseToCursorSchema();
+-        Delete_Cotation( (COTATION*) GetCurItem(), &dc );
++        Delete_Dimension( (DIMENSION*) GetCurItem(), &dc );
+         SetCurItem( NULL );
+         break;
+ 
+-    case ID_POPUP_PCB_EDIT_COTATION:
+-        Install_Edit_Cotation( (COTATION*) GetCurItem(), &dc, pos );
++    case ID_POPUP_PCB_EDIT_DIMENSION:
++        Install_Edit_Dimension( (DIMENSION*) GetCurItem(), &dc, pos );
+         DrawPanel->MouseToCursorSchema();
+         break;
+ 
+@@ -991,8 +991,8 @@
+         Delete_Module( (MODULE*) Item, DC, true );
+         break;
+ 
+-    case TYPE_COTATION:
+-        Delete_Cotation( (COTATION*) Item, DC );
++    case TYPE_DIMENSION:
++        Delete_Dimension( (DIMENSION*) Item, DC );
+         break;
+ 
+     case TYPE_MIRE:
+diff -ru kicad-2010.04.06/pcbnew/editedge.cpp kicad-2010.04.06-dimension/pcbnew/editedge.cpp
+--- kicad-2010.04.06/pcbnew/editedge.cpp	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/editedge.cpp	2010-05-02 16:09:39.000000000 +0200
+@@ -139,7 +139,7 @@
+         {
+         case TYPE_DRAWSEGMENT:
+         case TYPE_TEXTE:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+         case TYPE_MIRE:
+             if( item->GetLayer() == aLayer )
+             {
+diff -ru kicad-2010.04.06/pcbnew/gen_drill_report_files.cpp kicad-2010.04.06-dimension/pcbnew/gen_drill_report_files.cpp
+--- kicad-2010.04.06/pcbnew/gen_drill_report_files.cpp	2010-01-31 21:01:46.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/gen_drill_report_files.cpp	2010-05-02 16:10:13.000000000 +0200
+@@ -136,8 +136,8 @@
+             PlotTextePcb( plotter, (TEXTE_PCB*) PtStruct, EDGE_LAYER, FILLED );
+             break;
+ 
+-        case TYPE_COTATION:
+-            PlotCotation( plotter, (COTATION*) PtStruct, EDGE_LAYER, FILLED );
++        case TYPE_DIMENSION:
++            PlotDimension( plotter, (DIMENSION*) PtStruct, EDGE_LAYER, FILLED );
+             break;
+ 
+         case TYPE_MIRE:
+diff -ru kicad-2010.04.06/pcbnew/ioascii.cpp kicad-2010.04.06-dimension/pcbnew/ioascii.cpp
+--- kicad-2010.04.06/pcbnew/ioascii.cpp	2010-01-31 21:01:46.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/ioascii.cpp	2010-05-02 16:11:01.000000000 +0200
+@@ -981,9 +981,9 @@
+ 
+         if( TESTLINE( "COTATION" ) )
+         {
+-            COTATION* Cotation = new COTATION( board );
+-            board->Add( Cotation, ADD_APPEND );
+-            Cotation->ReadCotationDescr( File, &LineNum );
++            DIMENSION* Dimension = new DIMENSION( board );
++            board->Add( Dimension, ADD_APPEND );
++            Dimension->ReadDimensionDescr( File, &LineNum );
+             continue;
+         }
+ 
+diff -ru kicad-2010.04.06/pcbnew/modedit_onclick.cpp kicad-2010.04.06-dimension/pcbnew/modedit_onclick.cpp
+--- kicad-2010.04.06/pcbnew/modedit_onclick.cpp	2009-12-19 20:24:49.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/modedit_onclick.cpp	2010-05-02 16:11:46.000000000 +0200
+@@ -339,7 +339,7 @@
+     case TYPE_TRACK:
+     case TYPE_ZONE:
+     case TYPE_MARKER_PCB:
+-    case TYPE_COTATION:
++    case TYPE_DIMENSION:
+     case TYPE_MIRE:
+         break;
+ 
+diff -ru kicad-2010.04.06/pcbnew/moduleframe.cpp kicad-2010.04.06-dimension/pcbnew/moduleframe.cpp
+--- kicad-2010.04.06/pcbnew/moduleframe.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/moduleframe.cpp	2010-05-02 16:12:08.000000000 +0200
+@@ -113,7 +113,7 @@
+                        WinEDA_ModuleEditFrame::ToolOnRightClick )
+     EVT_TOOL_RCLICKED( ID_PCB_ADD_LINE_BUTT,
+                        WinEDA_ModuleEditFrame::ToolOnRightClick )
+-    EVT_TOOL_RCLICKED( ID_PCB_COTATION_BUTT,
++    EVT_TOOL_RCLICKED( ID_PCB_DIMENSION_BUTT,
+                        WinEDA_ModuleEditFrame::ToolOnRightClick )
+ 
+     // Options Toolbar
+diff -ru kicad-2010.04.06/pcbnew/onleftclick.cpp kicad-2010.04.06-dimension/pcbnew/onleftclick.cpp
+--- kicad-2010.04.06/pcbnew/onleftclick.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/onleftclick.cpp	2010-05-02 16:13:52.000000000 +0200
+@@ -88,7 +88,7 @@
+                 }
+                 break;
+ 
+-            case TYPE_COTATION:
++            case TYPE_DIMENSION:
+                 // see above.
+                 break;
+ 
+@@ -331,23 +331,23 @@
+             DisplayError( this, wxT( "Internal err: Struct not TYPE_MODULE" ) );
+         break;
+ 
+-    case ID_PCB_COTATION_BUTT:
++    case ID_PCB_DIMENSION_BUTT:
+         if( getActiveLayer() <= LAST_COPPER_LAYER )
+         {
+-            DisplayError( this, _( "Cotation not authorized on Copper layers" ) );
++            DisplayError( this, _( "Dimension not authorized on Copper layers" ) );
+             break;
+         }
+         if( (DrawStruct == NULL) || (DrawStruct->m_Flags == 0) )
+         {
+-            DrawStruct = Begin_Cotation( NULL, DC );
++            DrawStruct = Begin_Dimension( NULL, DC );
+             SetCurItem( DrawStruct );
+             DrawPanel->m_AutoPAN_Request = true;
+         }
+         else if( DrawStruct
+-                && (DrawStruct->Type() == TYPE_COTATION)
++                && (DrawStruct->Type() == TYPE_DIMENSION)
+                 && (DrawStruct->m_Flags & IS_NEW) )
+         {
+-            DrawStruct = Begin_Cotation( (COTATION*) DrawStruct, DC );
++            DrawStruct = Begin_Dimension( (DIMENSION*) DrawStruct, DC );
+             SetCurItem( DrawStruct );
+             DrawPanel->m_AutoPAN_Request = true;
+         }
+@@ -444,8 +444,8 @@
+             DrawPanel->MouseToCursorSchema();
+             break;
+ 
+-        case TYPE_COTATION:
+-            Install_Edit_Cotation( (COTATION*) DrawStruct, DC, pos );
++        case TYPE_DIMENSION:
++            Install_Edit_Dimension( (DIMENSION*) DrawStruct, DC, pos );
+             DrawPanel->MouseToCursorSchema();
+             break;
+ 
+diff -ru kicad-2010.04.06/pcbnew/onrightclick.cpp kicad-2010.04.06-dimension/pcbnew/onrightclick.cpp
+--- kicad-2010.04.06/pcbnew/onrightclick.cpp	2010-02-07 12:39:22.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/onrightclick.cpp	2010-05-02 16:14:41.000000000 +0200
+@@ -211,12 +211,12 @@
+             createPopUpMenuForMarkers( (MARKER_PCB*) item, aPopMenu );
+             break;
+ 
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+             if( !flags )
+             {
+-                ADD_MENUITEM( aPopMenu, ID_POPUP_PCB_EDIT_COTATION,
++                ADD_MENUITEM( aPopMenu, ID_POPUP_PCB_EDIT_DIMENSION,
+                               _( "Edit Dimension" ), edit_xpm );
+-                ADD_MENUITEM( aPopMenu, ID_POPUP_PCB_DELETE_COTATION,
++                ADD_MENUITEM( aPopMenu, ID_POPUP_PCB_DELETE_DIMENSION,
+                               _( "Delete Dimension" ), delete_xpm );
+             }
+             break;
+@@ -302,7 +302,7 @@
+     case ID_PCB_ARC_BUTT:
+     case ID_PCB_ADD_TEXT_BUTT:
+     case ID_PCB_ADD_LINE_BUTT:
+-    case ID_PCB_COTATION_BUTT:
++    case ID_PCB_DIMENSION_BUTT:
+         ADD_MENUITEM( aPopMenu, ID_POPUP_PCB_SELECT_NO_CU_LAYER,
+                       _( "Select Working Layer" ), select_w_layer_xpm );
+         aPopMenu->AppendSeparator();
+diff -ru kicad-2010.04.06/pcbnew/pcbframe.cpp kicad-2010.04.06-dimension/pcbnew/pcbframe.cpp
+--- kicad-2010.04.06/pcbnew/pcbframe.cpp	2010-03-20 20:57:59.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/pcbframe.cpp	2010-05-02 16:16:08.000000000 +0200
+@@ -208,7 +208,7 @@
+     EVT_TOOL( ID_PCB_CIRCLE_BUTT, WinEDA_PcbFrame::Process_Special_Functions )
+     EVT_TOOL( ID_PCB_ADD_TEXT_BUTT, WinEDA_PcbFrame::Process_Special_Functions )
+     EVT_TOOL( ID_PCB_ADD_LINE_BUTT, WinEDA_PcbFrame::Process_Special_Functions )
+-    EVT_TOOL( ID_PCB_COTATION_BUTT, WinEDA_PcbFrame::Process_Special_Functions )
++    EVT_TOOL( ID_PCB_DIMENSION_BUTT, WinEDA_PcbFrame::Process_Special_Functions )
+     EVT_TOOL( ID_PCB_DELETE_ITEM_BUTT,
+               WinEDA_PcbFrame::Process_Special_Functions )
+     EVT_TOOL( ID_PCB_SHOW_1_RATSNEST_BUTT,
+@@ -224,7 +224,7 @@
+     EVT_TOOL_RCLICKED( ID_PCB_ARC_BUTT, WinEDA_PcbFrame::ToolOnRightClick )
+     EVT_TOOL_RCLICKED( ID_PCB_ADD_TEXT_BUTT, WinEDA_PcbFrame::ToolOnRightClick )
+     EVT_TOOL_RCLICKED( ID_PCB_ADD_LINE_BUTT, WinEDA_PcbFrame::ToolOnRightClick )
+-    EVT_TOOL_RCLICKED( ID_PCB_COTATION_BUTT, WinEDA_PcbFrame::ToolOnRightClick )
++    EVT_TOOL_RCLICKED( ID_PCB_DIMENSION_BUTT, WinEDA_PcbFrame::ToolOnRightClick )
+ 
+     EVT_MENU_RANGE( ID_POPUP_PCB_AUTOPLACE_START_RANGE,
+                     ID_POPUP_PCB_AUTOPLACE_END_RANGE,
+diff -ru kicad-2010.04.06/pcbnew/pcbnew_id.h kicad-2010.04.06-dimension/pcbnew/pcbnew_id.h
+--- kicad-2010.04.06/pcbnew/pcbnew_id.h	2010-01-27 21:07:50.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/pcbnew_id.h	2010-05-02 17:05:25.000000000 +0200
+@@ -89,7 +89,7 @@
+     ID_POPUP_PCB_REMOVE_FILLED_AREAS_IN_CURRENT_ZONE,
+ 
+     ID_POPUP_PCB_DELETE_MARKER,
+-    ID_POPUP_PCB_DELETE_COTATION,
++    ID_POPUP_PCB_DELETE_DIMENSION,
+ 
+     ID_POPUP_PCB_MOVE_MIRE_REQUEST,
+     ID_POPUP_PCB_DELETE_MIRE,
+@@ -97,7 +97,7 @@
+ 
+     ID_POPUP_PCB_STOP_CURRENT_DRAWING,
+ 
+-    ID_POPUP_PCB_EDIT_COTATION,
++    ID_POPUP_PCB_EDIT_DIMENSION,
+     ID_POPUP_PCB_END_TRACK,
+     ID_POPUP_PCB_PLACE_VIA,
+     ID_POPUP_PCB_PLACE_MICROVIA,
+@@ -222,7 +222,7 @@
+ 
+     ID_PCB_PAD_SETUP,
+ 
+-    ID_PCB_COTATION_BUTT,
++    ID_PCB_DIMENSION_BUTT,
+     ID_PCB_DRAWINGS_WIDTHS_SETUP,
+ 
+     ID_PCB_GEN_CMP_FILE,
+diff -ru kicad-2010.04.06/pcbnew/pcbplot.h kicad-2010.04.06-dimension/pcbnew/pcbplot.h
+--- kicad-2010.04.06/pcbnew/pcbplot.h	2010-02-24 16:33:03.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/pcbplot.h	2010-05-02 17:06:05.000000000 +0200
+@@ -79,7 +79,7 @@
+ void PlotDrawSegment( PLOTTER* plotter, DRAWSEGMENT* PtSegm, int masque_layer,
+                       GRTraceMode trace_mode );
+ 
+-void PlotCotation( PLOTTER* plotter, COTATION* Cotation, int masque_layer,
++void PlotDimension( PLOTTER* plotter, DIMENSION* Dimension, int masque_layer,
+                    GRTraceMode trace_mode );
+ 
+ void PlotMirePcb( PLOTTER* plotter, MIREPCB* PtMire, int masque_layer,
+diff -ru kicad-2010.04.06/pcbnew/plot_rtn.cpp kicad-2010.04.06-dimension/pcbnew/plot_rtn.cpp
+--- kicad-2010.04.06/pcbnew/plot_rtn.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/plot_rtn.cpp	2010-05-02 17:08:47.000000000 +0200
+@@ -55,9 +55,9 @@
+                           trace_mode );
+             break;
+ 
+-        case TYPE_COTATION:
+-            PlotCotation( plotter,
+-                          (COTATION*) PtStruct,
++        case TYPE_DIMENSION:
++            PlotDimension( plotter,
++                          (DIMENSION*) PtStruct,
+                           masque_layer,
+                           trace_mode );
+             break;
+@@ -276,61 +276,61 @@
+ }
+ 
+ 
+-void PlotCotation( PLOTTER* plotter, COTATION* Cotation, int masque_layer,
++void PlotDimension( PLOTTER* plotter, DIMENSION* Dimension, int masque_layer,
+                    GRTraceMode trace_mode )
+ {
+     DRAWSEGMENT* DrawTmp;
+ 
+-    if( (g_TabOneLayerMask[Cotation->GetLayer()] & masque_layer) == 0 )
++    if( (g_TabOneLayerMask[Dimension->GetLayer()] & masque_layer) == 0 )
+         return;
+ 
+     DrawTmp = new DRAWSEGMENT( NULL );
+ 
+-    DrawTmp->m_Width = (trace_mode==FILAIRE) ? -1 : Cotation->m_Width;
+-    DrawTmp->SetLayer( Cotation->GetLayer() );
++    DrawTmp->m_Width = (trace_mode==FILAIRE) ? -1 : Dimension->m_Width;
++    DrawTmp->SetLayer( Dimension->GetLayer() );
+ 
+-    PlotTextePcb( plotter, Cotation->m_Text, masque_layer, trace_mode );
++    PlotTextePcb( plotter, Dimension->m_Text, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->Barre_ox;
+-    DrawTmp->m_Start.y = Cotation->Barre_oy;
+-    DrawTmp->m_End.x = Cotation->Barre_fx;
+-    DrawTmp->m_End.y = Cotation->Barre_fy;
++    DrawTmp->m_Start.x = Dimension->Barre_ox;
++    DrawTmp->m_Start.y = Dimension->Barre_oy;
++    DrawTmp->m_End.x = Dimension->Barre_fx;
++    DrawTmp->m_End.y = Dimension->Barre_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->TraitG_ox;
+-    DrawTmp->m_Start.y = Cotation->TraitG_oy;
+-    DrawTmp->m_End.x = Cotation->TraitG_fx;
+-    DrawTmp->m_End.y = Cotation->TraitG_fy;
++    DrawTmp->m_Start.x = Dimension->TraitG_ox;
++    DrawTmp->m_Start.y = Dimension->TraitG_oy;
++    DrawTmp->m_End.x = Dimension->TraitG_fx;
++    DrawTmp->m_End.y = Dimension->TraitG_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->TraitD_ox;
+-    DrawTmp->m_Start.y = Cotation->TraitD_oy;
+-    DrawTmp->m_End.x = Cotation->TraitD_fx;
+-    DrawTmp->m_End.y = Cotation->TraitD_fy;
++    DrawTmp->m_Start.x = Dimension->TraitD_ox;
++    DrawTmp->m_Start.y = Dimension->TraitD_oy;
++    DrawTmp->m_End.x = Dimension->TraitD_fx;
++    DrawTmp->m_End.y = Dimension->TraitD_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->FlecheD1_ox;
+-    DrawTmp->m_Start.y = Cotation->FlecheD1_oy;
+-    DrawTmp->m_End.x = Cotation->FlecheD1_fx;
+-    DrawTmp->m_End.y = Cotation->FlecheD1_fy;
++    DrawTmp->m_Start.x = Dimension->FlecheD1_ox;
++    DrawTmp->m_Start.y = Dimension->FlecheD1_oy;
++    DrawTmp->m_End.x = Dimension->FlecheD1_fx;
++    DrawTmp->m_End.y = Dimension->FlecheD1_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->FlecheD2_ox;
+-    DrawTmp->m_Start.y = Cotation->FlecheD2_oy;
+-    DrawTmp->m_End.x = Cotation->FlecheD2_fx;
+-    DrawTmp->m_End.y = Cotation->FlecheD2_fy;
++    DrawTmp->m_Start.x = Dimension->FlecheD2_ox;
++    DrawTmp->m_Start.y = Dimension->FlecheD2_oy;
++    DrawTmp->m_End.x = Dimension->FlecheD2_fx;
++    DrawTmp->m_End.y = Dimension->FlecheD2_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->FlecheG1_ox;
+-    DrawTmp->m_Start.y = Cotation->FlecheG1_oy;
+-    DrawTmp->m_End.x = Cotation->FlecheG1_fx;
+-    DrawTmp->m_End.y = Cotation->FlecheG1_fy;
++    DrawTmp->m_Start.x = Dimension->FlecheG1_ox;
++    DrawTmp->m_Start.y = Dimension->FlecheG1_oy;
++    DrawTmp->m_End.x = Dimension->FlecheG1_fx;
++    DrawTmp->m_End.y = Dimension->FlecheG1_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+-    DrawTmp->m_Start.x = Cotation->FlecheG2_ox;
+-    DrawTmp->m_Start.y = Cotation->FlecheG2_oy;
+-    DrawTmp->m_End.x = Cotation->FlecheG2_fx;
+-    DrawTmp->m_End.y = Cotation->FlecheG2_fy;
++    DrawTmp->m_Start.x = Dimension->FlecheG2_ox;
++    DrawTmp->m_Start.y = Dimension->FlecheG2_oy;
++    DrawTmp->m_End.x = Dimension->FlecheG2_fx;
++    DrawTmp->m_End.y = Dimension->FlecheG2_fy;
+     PlotDrawSegment( plotter, DrawTmp, masque_layer, trace_mode );
+ 
+     delete DrawTmp;
+@@ -805,8 +805,8 @@
+             PlotTextePcb( aPlotter, (TEXTE_PCB*) item, aLayerMask, aPlotMode );
+             break;
+ 
+-        case TYPE_COTATION:
+-            PlotCotation( aPlotter, (COTATION*) item, aLayerMask, aPlotMode );
++        case TYPE_DIMENSION:
++            PlotDimension( aPlotter, (DIMENSION*) item, aLayerMask, aPlotMode );
+             break;
+ 
+         case TYPE_MIRE:
+diff -ru kicad-2010.04.06/pcbnew/print_board_functions.cpp kicad-2010.04.06-dimension/pcbnew/print_board_functions.cpp
+--- kicad-2010.04.06/pcbnew/print_board_functions.cpp	2010-05-02 14:36:47.000000000 +0200
++++ kicad-2010.04.06-dimension/pcbnew/print_board_functions.cpp	2010-05-02 17:10:13.000000000 +0200
+@@ -49,7 +49,7 @@
+ 
+     DisplayOpt.ContrastModeDisplay = false;
+     DisplayOpt.DisplayPadFill = true;
+-    DisplayOpt.DisplayViaFill = true;    
++    DisplayOpt.DisplayViaFill = true;
+ 
+     m_DisplayPadFill = DisplayOpt.DisplayPadFill;
+     m_DisplayViaFill = DisplayOpt.DisplayViaFill;
+@@ -148,7 +148,7 @@
+             // to the current printed layer
+             DisplayOpt.ContrastModeDisplay = true;
+             DisplayOpt.DisplayPadFill = true;
+-            
++
+             // Calculate the active layer number to print from its mask layer:
+             GetScreen()->m_Active_Layer = 0;
+             for(int kk = 0; kk < 32; kk ++ )
+@@ -159,19 +159,19 @@
+                     break;
+                 }
+             }
+-            
++
+             // pads on Silkscreen layer are usually plot in sketch mode:
+             if( (GetScreen()->m_Active_Layer == SILKSCREEN_N_BACK) ||
+                 (GetScreen()->m_Active_Layer == SILKSCREEN_N_FRONT) )
+                 DisplayOpt.DisplayPadFill = false;
+-            
++
+         }
+         else
+         {
+             DisplayOpt.DisplayPadFill = false;
+         }
+     }
+-    
++
+ 
+     m_DisplayPadFill = DisplayOpt.DisplayPadFill;
+     m_DisplayViaFill = DisplayOpt.DisplayViaFill;
+@@ -203,7 +203,7 @@
+         switch( item->Type() )
+         {
+         case TYPE_DRAWSEGMENT:
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+         case TYPE_TEXTE:
+         case TYPE_MIRE:
+             if( ( ( 1 << item->GetLayer() ) & aPrintMaskLayer ) == 0 )
+diff -ru kicad-2010.04.06/pcbnew/tool_onrightclick.cpp kicad-2010.04.06-dimension/pcbnew/tool_onrightclick.cpp
+--- kicad-2010.04.06/pcbnew/tool_onrightclick.cpp	2009-12-19 20:24:49.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/tool_onrightclick.cpp	2010-05-02 17:11:02.000000000 +0200
+@@ -36,7 +36,7 @@
+     case ID_PCB_CIRCLE_BUTT:
+     case ID_PCB_ARC_BUTT:
+     case ID_PCB_ADD_LINE_BUTT:
+-    case ID_PCB_COTATION_BUTT:
++    case ID_PCB_DIMENSION_BUTT:
+     case ID_PCB_ADD_TEXT_BUTT:
+         InstallPcbOptionsFrame( ID_PCB_DRAWINGS_WIDTHS_SETUP );
+         break;
+@@ -65,7 +65,7 @@
+     case ID_PCB_CIRCLE_BUTT:
+     case ID_PCB_ARC_BUTT:
+     case ID_PCB_ADD_LINE_BUTT:
+-    case ID_PCB_COTATION_BUTT:
++    case ID_PCB_DIMENSION_BUTT:
+     case ID_PCB_ADD_TEXT_BUTT:
+         InstallOptionsFrame( pos );
+         break;
+diff -ru kicad-2010.04.06/pcbnew/tool_pcb.cpp kicad-2010.04.06-dimension/pcbnew/tool_pcb.cpp
+--- kicad-2010.04.06/pcbnew/tool_pcb.cpp	2010-02-16 11:42:57.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/tool_pcb.cpp	2010-05-02 17:11:58.000000000 +0200
+@@ -454,7 +454,7 @@
+                          _( "Add text" ), wxITEM_CHECK );
+ 
+     m_VToolBar->AddSeparator();
+-    m_VToolBar->AddTool( ID_PCB_COTATION_BUTT, wxEmptyString,
++    m_VToolBar->AddTool( ID_PCB_DIMENSION_BUTT, wxEmptyString,
+                          wxBitmap( add_dimension_xpm ),
+                          _( "Add dimension" ), wxITEM_CHECK );
+ 
+diff -ru kicad-2010.04.06/pcbnew/tracepcb.cpp kicad-2010.04.06-dimension/pcbnew/tracepcb.cpp
+--- kicad-2010.04.06/pcbnew/tracepcb.cpp	2010-02-24 16:33:03.000000000 +0100
++++ kicad-2010.04.06-dimension/pcbnew/tracepcb.cpp	2010-05-02 17:12:17.000000000 +0200
+@@ -129,7 +129,7 @@
+ 
+         switch( item->Type() )
+         {
+-        case TYPE_COTATION:
++        case TYPE_DIMENSION:
+         case TYPE_TEXTE:
+         case TYPE_MIRE:
+         case TYPE_DRAWSEGMENT:

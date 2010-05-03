@@ -1,0 +1,2635 @@
+diff -ru kicad-2010.04.06/eeschema/class_libentry.cpp kicad-2010.04.06-new/eeschema/class_libentry.cpp
+--- kicad-2010.04.06/eeschema/class_libentry.cpp	2010-05-02 19:30:15.000000000 +0200
++++ kicad-2010.04.06-new/eeschema/class_libentry.cpp	2010-05-02 22:01:07.000000000 +0200
+@@ -241,7 +241,7 @@
+  #if defined(KICAD_GOST)
+     subRef.Printf( wxT(".%d" ), aUnit);
+ #else
+-    subRef.Append( aUnit + 'A' - 1 );
++    subRef.Append( wxChar(aUnit + 'A' - 1) );
+ #endif
+     return subRef;
+ }
+diff -ru kicad-2010.04.06/include/richio.h kicad-2010.04.06-new/include/richio.h
+--- kicad-2010.04.06/include/richio.h	2010-03-03 07:19:27.000000000 +0100
++++ kicad-2010.04.06-new/include/richio.h	2010-05-03 00:41:10.000000000 +0200
+@@ -144,6 +144,17 @@
+      * @throw IOError only when a line is too long.
+      */
+     int ReadLine() throw (IOError);
++
++    /**
++     * Function Rewind
++     * a wrapper to the standard function rewind.
++     * also clear the current line number 
++     */
++    void Rewind()
++    {
++        rewind( fp );
++        lineNum = 0;
++    }
+ };
+ 
+ 
+diff -ru kicad-2010.04.06/include/wxPcbStruct.h kicad-2010.04.06-new/include/wxPcbStruct.h
+--- kicad-2010.04.06/include/wxPcbStruct.h	2010-05-02 19:30:15.000000000 +0200
++++ kicad-2010.04.06-new/include/wxPcbStruct.h	2010-05-03 01:34:44.000000000 +0200
+@@ -8,6 +8,7 @@
+ 
+ #include "wxstruct.h"
+ #include "base_struct.h"
++#include "param_config.h"
+ 
+ #ifndef PCB_INTERNAL_UNIT
+ #define PCB_INTERNAL_UNIT 10000
+@@ -39,8 +40,7 @@
+ 
+ 
+ /**
+- * @info see also class WinEDA_BasePcbFrame: Basic class for pcbnew and
+- *gerbview
++ * @info see also class WinEDA_BasePcbFrame: Basic class for pcbnew and gerbview.
+  */
+ 
+ 
+@@ -57,6 +57,11 @@
+ 
+     DRC* m_drc;                     ///< the DRC controller, see drc.cpp
+ 
++    PARAM_CFG_ARRAY   m_projectFileParams;   ///< List of PCBNew project file settings.
++    PARAM_CFG_ARRAY   m_configSettings;      ///< List of PCBNew configuration settings.
++
++    wxString          m_lastNetListRead;     ///< Last net list read with relative path.
++
+     // we'll use lower case function names for private member functions.
+     void createPopUpMenuForZones( ZONE_CONTAINER* edge_zone, wxMenu* aPopMenu );
+     void createPopUpMenuForFootprints( MODULE* aModule, wxMenu* aPopMenu );
+@@ -156,8 +161,8 @@
+      * @param aData = a pointer on an auxiliary data (NULL if not used)
+      */
+     virtual void PrintPage( wxDC* aDC, bool aPrint_Sheet_Ref,
+-                    int aPrintMask, bool aPrintMirrorMode,
+-                    void * aData = NULL);
++                            int aPrintMask, bool aPrintMirrorMode,
++                            void * aData = NULL );
+ 
+     void             GetKicadAbout( wxCommandEvent& event );
+ 
+@@ -168,7 +173,7 @@
+ 
+     /** Function SetGridVisibility() , virtual
+      * It may be overloaded by derived classes
+-     * if you want to store/retrieve the grid visiblity in configuration.
++     * if you want to store/retrieve the grid visibility in configuration.
+      * @param aVisible = true if the grid must be shown
+      */
+     virtual void     SetGridVisibility(bool aVisible);
+@@ -186,16 +191,67 @@
+     // Configurations:
+     void             InstallConfigFrame( const wxPoint& pos );
+     void             Process_Config( wxCommandEvent& event );
+-    void             Update_config( wxWindow* displayframe );
+ 
+-    /** Function Read_Config
+-     * Read the project configuration file
+-     * @param projectFileName = the config filename
+-     *  if not found use kicad.pro
+-     *  if not found : initialize default values
+-     * @return true if the current config is modified, false if no change
++    PARAM_CFG_ARRAY& GetProjectFileParameters();
++    void             SaveProjectSettings();
++
++    /**
++     * Load the project file configuration settings.
++     *
++     * @param aProjectFileName = The project filename.
++     *  if not found use kicad.pro and initialize default values
++     * @return always returns true.
+      */
+-    bool             Read_Config( const wxString& projectFileName );
++    bool             LoadProjectSettings( const wxString& aProjectFileName );
++
++    /**
++     * Get the list of application specific settings.
++     *
++     * @return - Reference to the list of applications settings.
++     */
++    PARAM_CFG_ARRAY& GetConfigurationSettings();
++
++    /**
++     * Load applications settings specific to PCBNew.
++     *
++     * This overrides the base class WinEDA_BasePcbFrame::LoadSettings() to
++     * handle settings specific common to the PCB layout application.  It
++     * calls down to the base class to load settings common to all PCB type
++     * drawing frames.  Please put your application settings for PCBNew here
++     * to avoid having application settings loaded all over the place.
++     */
++    virtual void LoadSettings();
++
++    /**
++     * Save applications settings common to PCBNew.
++     *
++     * This overrides the base class WinEDA_BasePcbFrame::SaveSettings() to
++     * save settings specific to the PCB layout application main window.  It
++     * calls down to the base class to save settings common to all PCB type
++     * drawing frames.  Please put your application settings for PCBNew here
++     * to avoid having application settings saved all over the place.
++     */
++    virtual void SaveSettings();
++
++    /**
++     * Get the last net list read with the net list dialog box.
++     *
++     * @return - Absolute path and file name of the last net list file successfully read.
++     */
++    wxString         GetLastNetListRead();
++
++    /**
++     * Set the last net list successfully read by the net list dialog box.
++     *
++     * Note: the file path is converted to a path relative to the project file path.  If
++     *       the path cannot be made relative, than m_lastNetListRead is set to and empty
++     *       string.  This could happen when the net list file is on a different drive than
++     *       the project file.  The advantage of relative paths is that is more likely to
++     *       work when opening the same project from both Windows and Linux.
++     *
++     * @param aNetListFile - The last net list file with full path successfully read.
++     */
++    void             SetLastNetListRead( const wxString& aNetListFile );
+ 
+     void             OnHotKey( wxDC*           DC,
+                                int             hotkey,
+@@ -287,7 +343,7 @@
+      * Function OnRightClick
+      * populates a popup menu with the choices appropriate for the current
+      *context.
+-     * The caller will add the ZOOM menu choices afterwards.
++     * The caller will add the ZOOM menu choices afterward.
+      * @param aMousePos The current mouse position
+      * @param aPopMenu The menu to add to.
+      */
+@@ -331,7 +387,7 @@
+      * @param aRedoCommand = a bool: true for redo, false for undo
+      * @param aRebuildRatsnet = a bool: true to rebuild ratsnet (normal use),
+      *                          false
+-     * to just retrieve las state (used in abort commands that do not need to
++     * to just retrieve last		 state (used in abort commands that do not need to
+      * rebuild ratsnest)
+      */
+     void PutDataInPreviousState( PICKED_ITEMS_LIST* aList,
+@@ -420,7 +476,7 @@
+ 
+     void SetToolbars();
+     void Process_Settings( wxCommandEvent& event );
+-    void InstallPcbOptionsFrame( int id );
++    void OnConfigurePcbOptions( wxCommandEvent& aEvent );
+     void InstallDisplayOptionsDialog( wxCommandEvent& aEvent );
+     void InstallPcbGlobalDeleteFrame( const wxPoint& pos );
+ 
+@@ -845,6 +901,50 @@
+     // netlist  handling:
+     void         InstallNetlistFrame( wxDC* DC, const wxPoint& pos );
+ 
++    /** Function ReadPcbNetlist
++     * Update footprints (load missing footprints and delete on request extra
++     * footprints)
++     * Update connectivity info ( Net Name list )
++     * Update Reference, value and "TIME STAMP"
++     * @param aNetlistFullFilename = netlist file name (*.net)
++     * @param aCmpFullFileName = cmp/footprint list file name (*.cmp) if not found,
++     * only the netlist will be used
++     * @return true if Ok
++     *
++     *  the format of the netlist is something like:
++     # EESchema Netlist Version 1.0 generee le  18/5/2005-12:30:22
++     *  (
++     *  ( 40C08647 $noname R20 4,7K {Lib=R}
++     *  (    1 VCC )
++     *  (    2 MODB_1 )
++     *  )
++     *  ( 40C0863F $noname R18 4,7_k {Lib=R}
++     *  (    1 VCC )
++     *  (    2 MODA_1 )
++     *  )
++     *  }
++     * #End
++     */
++    bool ReadPcbNetlist(
++                         const wxString&  aNetlistFullFilename,
++                         const wxString&  aCmpFullFileName,
++                         wxTextCtrl*      aMessageWindow,
++                         bool             aChangeFootprint,
++                         bool             aDeleteBadTracks,
++                         bool             aDeleteExtraFootprints,
++                         bool             aSelect_By_Timestamp );
++
++    /** Function RemoveMisConnectedTracks
++     * finds all track segments which are mis-connected (to more than one net).
++     * When such a bad segment is found, mark it as needing to be removed.
++     * and remove all tracks having at least one flagged segment.
++     * @param aDC = the current device context (can be NULL)
++     * @param aDisplayActivity = true to display activity on the frame status bar and message panel
++     * @return true if any change is made
++     */
++    bool RemoveMisConnectedTracks( wxDC* aDC, bool aDisplayActivity );
++
++
+     // Autoplacement:
+     void         AutoPlace( wxCommandEvent& event );
+ 
+@@ -900,28 +1000,6 @@
+     void         Begin_Self( wxDC* DC );
+     MODULE*      Genere_Self( wxDC* DC );
+ 
+-    /**
+-     * Load applications settings specific to the PCBNew.
+-     *
+-     * This overrides the base class WinEDA_BasePcbFrame::LoadSettings() to
+-     * handle settings specific common to the PCB layout application.  It
+-     * calls down to the base class to load settings common to all PCB type
+-     * drawing frames.  Please put your application settings for PCBNew here
+-     * to avoid having application settings loaded all over the place.
+-     */
+-    virtual void LoadSettings();
+-
+-    /**
+-     * Save applications settings common to PCB draw frame objects.
+-     *
+-     * This overrides the base class WinEDA_BasePcbFrame::SaveSettings() to
+-     * save settings specific to the PCB layout application main window.  It
+-     * calls down to the base class to save settings common to all PCB type
+-     * drawing frames.  Please put your application settings for PCBNew here
+-     * to avoid having application settings saved all over the place.
+-     */
+-    virtual void SaveSettings();
+-
+     /** function SetLanguage
+      * called on a language menu selection
+      */
+Seulement dans kicad-2010.04.06-new/include: wxPcbStruct.h~
+diff -ru kicad-2010.04.06/pcbnew/clean.cpp kicad-2010.04.06-new/pcbnew/clean.cpp
+--- kicad-2010.04.06/pcbnew/clean.cpp	2010-02-19 14:23:58.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/clean.cpp	2010-05-02 21:09:25.000000000 +0200
+@@ -731,54 +731,57 @@
+ }
+ 
+ 
+-/***************************************************************************/
+-int Netliste_Controle_piste( WinEDA_PcbFrame* frame, wxDC* DC, int affiche )
+-/***************************************************************************/
+-
+-/**
+- * Function Netliste_Controle_piste
++/** Function RemoveMisConnectedTracks
+  * finds all track segments which are mis-connected (to more than one net).
+- * When such a bad segment is found, mark it as needing to be removed (supression).
++ * When such a bad segment is found, mark it as needing to be removed.
++ * and remove all tracks having at least one flagged segment.
++ * @param aDC = the current device context (can be NULL)
++ * @param aDisplayActivity = true to display activity on the frame status bar and message panel
++ * @return true if any change is made
+  */
++bool WinEDA_PcbFrame::RemoveMisConnectedTracks( wxDC* aDC, bool aDisplayActivity )
+ {
+     TRACK*          segment;
+     TRACK*          other;
+     TRACK*          next;
+     int             net_code_s, net_code_e;
+     int             nbpoints_modifies = 0;
+-    int             flag = 0;
++    bool            flag = false;
+     wxString        msg;
+     int             percent = 0;
+     int             oldpercent = -1;
+ 
+     a_color = RED;
+ 
+-    frame->Affiche_Message( _( "DRC Control:" ) );
++    if( aDisplayActivity )
++        Affiche_Message( _( "DRC Control:" ) );
+ 
+-    frame->DrawPanel->m_AbortRequest = FALSE;
++    DrawPanel->m_AbortRequest = FALSE;
+ 
+-    if( affiche )
+-        Affiche_1_Parametre( frame, POS_AFF_VAR, _( "NetCtr" ), wxT( "0 " ), a_color );
++    if( aDisplayActivity )
++        Affiche_1_Parametre( this, POS_AFF_VAR, _( "NetCtr" ), wxT( "0 " ), a_color );
+ 
+     int ii = 0;
+-    for( segment = frame->GetBoard()->m_Track;  segment;  segment = (TRACK*) segment->Next() )
++    for( segment = GetBoard()->m_Track;  segment;  segment = (TRACK*) segment->Next() )
+     {
+-        // display activity
+         ii++;
+-        percent = (100 * ii) / frame->GetBoard()->m_Track.GetCount();
+-        if( percent != oldpercent )
++        if( aDisplayActivity )  // display activity
+         {
+-            frame->DisplayActivity( percent, wxT( "Drc: " ) );
+-            oldpercent = percent;
++            percent = (100 * ii) / GetBoard()->m_Track.GetCount();
++            if( percent != oldpercent )
++            {
++                DisplayActivity( percent, wxT( "Drc: " ) );
++                oldpercent = percent;
+ 
+-            msg.Printf( wxT( "%d" ), frame->GetBoard()->m_Track.GetCount() );
+-            Affiche_1_Parametre( frame, POS_AFF_MAX, wxT( "Max" ), msg, GREEN );
++                msg.Printf( wxT( "%d" ), GetBoard()->m_Track.GetCount() );
++                Affiche_1_Parametre( this, POS_AFF_MAX, wxT( "Max" ), msg, GREEN );
+ 
+-            msg.Printf( wxT( "%d" ), frame->GetBoard()->m_Track.GetCount() );
+-            Affiche_1_Parametre( frame, POS_AFF_NUMSEGM, wxT( "Segm" ), msg, CYAN );
++                msg.Printf( wxT( "%d" ), GetBoard()->m_Track.GetCount() );
++                Affiche_1_Parametre( this, POS_AFF_NUMSEGM, wxT( "Segm" ), msg, CYAN );
+ 
+-            if( frame->DrawPanel->m_AbortRequest )
+-                return flag;
++                if( DrawPanel->m_AbortRequest )
++                    return flag;
++            }
+         }
+ 
+         segment->SetState( FLAG0, OFF );
+@@ -792,7 +795,7 @@
+         }
+         else
+         {
+-            other = Locate_Piste_Connectee( segment, frame->GetBoard()->m_Track,
++            other = Locate_Piste_Connectee( segment, GetBoard()->m_Track,
+                                              NULL, START );
+             if( other )
+                 net_code_s = other->GetNet();
+@@ -809,7 +812,7 @@
+         }
+         else
+         {
+-            other = Locate_Piste_Connectee( segment, frame->GetBoard()->m_Track,
++            other = Locate_Piste_Connectee( segment, GetBoard()->m_Track,
+                                              NULL, END );
+             if( other )
+                 net_code_e = other->GetNet();
+@@ -826,7 +829,7 @@
+     }
+ 
+     // Removal of flagged segments
+-    for( segment = frame->GetBoard()->m_Track;  segment;  segment = next )
++    for( segment = GetBoard()->m_Track;  segment;  segment = next )
+     {
+         next = (TRACK*) segment->Next();
+ 
+@@ -834,18 +837,18 @@
+         {
+             segment->SetState( FLAG0, OFF );
+ 
+-            flag = 1;
++            flag = true;
+             oldpercent = -1;
+-            frame->GetBoard()->m_Status_Pcb = 0;
++            GetBoard()->m_Status_Pcb = 0;
+ 
+-            frame->Remove_One_Track( DC, segment );
++            Remove_One_Track( aDC, segment );
+ 
+-            next = frame->GetBoard()->m_Track;  /* NextS a peut etre ete efface */
+-            if( affiche )
++            next = GetBoard()->m_Track;  /* the current segment can be deleted, so restart to the beginning */
++            if( aDisplayActivity )
+             {
+                 nbpoints_modifies++;
+                 msg.Printf( wxT( "%d " ), nbpoints_modifies );
+-                Affiche_1_Parametre( frame, POS_AFF_VAR, wxEmptyString, msg, a_color );
++                Affiche_1_Parametre( this, POS_AFF_VAR, wxEmptyString, msg, a_color );
+             }
+         }
+     }
+diff -ru kicad-2010.04.06/pcbnew/dialog_general_options.cpp kicad-2010.04.06-new/pcbnew/dialog_general_options.cpp
+--- kicad-2010.04.06/pcbnew/dialog_general_options.cpp	2010-02-24 16:33:03.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/dialog_general_options.cpp	2010-05-02 21:10:18.000000000 +0200
+@@ -99,7 +99,7 @@
+     g_MagneticPadOption   = m_MagneticPadOptCtrl->GetSelection();
+     g_MagneticTrackOption = m_MagneticTrackOptCtrl->GetSelection();
+ 
+-    EndModal( 1 );
++    EndModal( wxID_OK );
+ }
+ 
+ 
+diff -ru kicad-2010.04.06/pcbnew/dialog_graphic_items_options.cpp kicad-2010.04.06-new/pcbnew/dialog_graphic_items_options.cpp
+--- kicad-2010.04.06/pcbnew/dialog_graphic_items_options.cpp	2010-02-24 21:38:55.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/dialog_graphic_items_options.cpp	2010-05-02 21:11:45.000000000 +0200
+@@ -16,21 +16,11 @@
+ extern int g_DrawDefaultLineThickness;
+ 
+ 
+-void WinEDA_PcbFrame::InstallPcbOptionsFrame( int id )
++void WinEDA_PcbFrame::OnConfigurePcbOptions( wxCommandEvent& aEvent )
+ {
+-    switch( id )
+-    {
+-    case ID_PCB_DRAWINGS_WIDTHS_SETUP:
+-    {
+-        DIALOG_GRAPHIC_ITEMS_OPTIONS dlg( this );
+-        dlg.ShowModal();
+-    }
+-    break;
+-
+-    default:
+-        wxMessageBox( wxT( "InstallPcbOptionsFrame() id error" ) );
+-        break;
+-    }
++    DIALOG_GRAPHIC_ITEMS_OPTIONS dlg( this );
++
++    dlg.ShowModal();
+ }
+ 
+ 
+@@ -143,7 +133,7 @@
+     if( g_DrawDefaultLineThickness < 0 )
+         g_DrawDefaultLineThickness = 0;
+ 
+-    EndModal( 1 );
++    EndModal( wxID_OK );
+ }
+ 
+ 
+diff -ru kicad-2010.04.06/pcbnew/dialog_netlist.cpp kicad-2010.04.06-new/pcbnew/dialog_netlist.cpp
+--- kicad-2010.04.06/pcbnew/dialog_netlist.cpp	2009-07-30 14:04:07.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/dialog_netlist.cpp	2010-05-02 21:15:31.000000000 +0200
+@@ -12,29 +12,24 @@
+ 
+ #include "dialog_netlist.h"
+ 
+-extern void ReadPcbNetlist( WinEDA_PcbFrame* aFrame,
+-                            const wxString&  aNetlistFullFilename,
+-                            const wxString&  aCmpFullFileName,
+-                            wxTextCtrl*      aMessageWindow,
+-                            bool             aChangeFootprint,
+-                            bool             aDeleteBadTracks,
+-                            bool             aDeleteExtraFootprints,
+-                            bool             aSelect_By_Timestamp );
+-
+ extern void TestFor_Duplicate_Missing_And_Extra_Footprints( wxWindow*       frame,
+                                                             const wxString& NetlistFullFilename,
+                                                             BOARD*          Pcb );
+ 
+ 
+ 
+-/*************************************************************************/
+ void WinEDA_PcbFrame::InstallNetlistFrame( wxDC* DC, const wxPoint& pos )
+-/*************************************************************************/
+ {
+-    /* Setup the default netlist file name according to the board file name */
+-    wxFileName fn = GetScreen()->m_FileName;
+-
+-    fn.SetExt( NetExtBuffer );
++    /* Setup the netlist file name to the last net list file read or the board file
++     * name if no last file read is not set.
++     */
++    wxFileName fn = GetLastNetListRead();
++
++    if( !fn.FileExists() )
++    {
++        fn = GetScreen()->m_FileName;
++        fn.SetExt( NetExtBuffer );
++    }
+ 
+     DIALOG_NETLIST frame( this, DC, fn.GetFullPath() );
+ 
+@@ -42,12 +37,13 @@
+ }
+ 
+ 
+-DIALOG_NETLIST::DIALOG_NETLIST( WinEDA_PcbFrame* aParent, wxDC * aDC, const wxString & aNetlistFull_Filename )
+-    : DIALOG_NETLIST_FBP(aParent)
++DIALOG_NETLIST::DIALOG_NETLIST( WinEDA_PcbFrame* aParent, wxDC * aDC,
++                                const wxString & aNetlistFull_Filename )
++    : DIALOG_NETLIST_FBP( aParent )
+ {
+     m_Parent = aParent;
+     m_DC = aDC;
+-    m_NetlistFilenameCtrl->SetValue(aNetlistFull_Filename);
++    m_NetlistFilenameCtrl->SetValue( aNetlistFull_Filename );
+ 
+     Init();
+ 
+@@ -63,18 +59,30 @@
+ 
+ void DIALOG_NETLIST::OnOpenNelistClick( wxCommandEvent& event )
+ {
+-    wxString fullfilename;
++    wxString lastPath = wxFileName::GetCwd();
++    wxString lastNetlistRead = m_Parent->GetLastNetListRead();
++
++    if( !lastNetlistRead.IsEmpty() && !wxFileName::FileExists( lastNetlistRead ) )
++    {
++        lastNetlistRead = wxEmptyString;
++    }
++    else
++    {
++        wxFileName fn = lastNetlistRead;
++        lastPath = fn.GetPath();
++        lastNetlistRead = fn.GetFullName();
++    }
+ 
+-    wxFileDialog FilesDialog( this, _( "Netlist Selection:" ), wxGetCwd(),
+-                              wxEmptyString, NetlistFileWildcard,
+-                              wxFD_DEFAULT_STYLE | wxFD_FILE_MUST_EXIST );
++    wxLogDebug( wxT( "Last net list read path <%s>, file name <%s>." ),
++                GetChars( lastPath ), GetChars( lastNetlistRead ) );
++
++    wxFileDialog FilesDialog( this, _( "Select Netlist" ), lastPath, lastNetlistRead,
++                              NetlistFileWildcard, wxFD_DEFAULT_STYLE | wxFD_FILE_MUST_EXIST );
+ 
+     if( FilesDialog.ShowModal() != wxID_OK )
+         return;
+ 
+-    fullfilename = FilesDialog.GetPath( );
+-
+-    m_NetlistFilenameCtrl->SetValue( fullfilename );
++    m_NetlistFilenameCtrl->SetValue( FilesDialog.GetPath() );
+ }
+ 
+ 
+@@ -83,18 +91,19 @@
+     wxFileName fn = m_NetlistFilenameCtrl->GetValue();
+     fn.SetExt( NetCmpExtBuffer );
+ 
+-    ReadPcbNetlist( m_Parent, m_NetlistFilenameCtrl->GetValue(),
+-                    fn.GetFullPath(), m_MessageWindow,
+-                    m_ChangeExistingFootprintCtrl->GetSelection() == 1 ? TRUE : FALSE,
+-                    m_DeleteBadTracks->GetSelection() == 1 ? TRUE : FALSE,
+-                    m_RemoveExtraFootprintsCtrl->GetSelection() == 1 ? TRUE : FALSE,
+-                    m_Select_By_Timestamp->GetSelection() == 1 ? TRUE : FALSE );
++    m_Parent->ReadPcbNetlist( m_NetlistFilenameCtrl->GetValue(),
++                              fn.GetFullPath(), m_MessageWindow,
++                              m_ChangeExistingFootprintCtrl->GetSelection() == 1 ? TRUE : FALSE,
++                              m_DeleteBadTracks->GetSelection() == 1 ? TRUE : FALSE,
++                              m_RemoveExtraFootprintsCtrl->GetSelection() == 1 ? TRUE : FALSE,
++                              m_Select_By_Timestamp->GetSelection() == 1 ? TRUE : FALSE );
+ }
+ 
+ 
+ void DIALOG_NETLIST::OnTestFootprintsClick( wxCommandEvent& event )
+ {
+-    TestFor_Duplicate_Missing_And_Extra_Footprints( this, m_NetlistFilenameCtrl->GetValue(), m_Parent->GetBoard() );
++    TestFor_Duplicate_Missing_And_Extra_Footprints( this, m_NetlistFilenameCtrl->GetValue(),
++                                                    m_Parent->GetBoard() );
+ }
+ 
+ 
+diff -ru kicad-2010.04.06/pcbnew/dialog_pad_properties.cpp kicad-2010.04.06-new/pcbnew/dialog_pad_properties.cpp
+--- kicad-2010.04.06/pcbnew/dialog_pad_properties.cpp	2010-04-05 21:34:48.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/dialog_pad_properties.cpp	2010-05-02 21:17:24.000000000 +0200
+@@ -97,11 +97,10 @@
+ }
+ 
+ 
+-/*************************************************************/
+ void WinEDA_BasePcbFrame::InstallPadOptionsFrame( D_PAD* Pad )
+-/*************************************************************/
+ {
+     DIALOG_PAD_PROPERTIES dlg( this, Pad );
++
+     dlg.ShowModal();
+ }
+ 
+@@ -441,9 +440,12 @@
+     g_Pad_Master.m_PadShape = CodeShape[m_PadShape->GetSelection()];
+ 
+     // Read pad clearances values:
+-    g_Pad_Master.m_LocalClearance = ReturnValueFromTextCtrl( *m_NetClearanceValueCtrl, internalUnits );
+-    g_Pad_Master.m_LocalSolderMaskMargin = ReturnValueFromTextCtrl( *m_SolderMaskMarginCtrl, internalUnits );
+-    g_Pad_Master.m_LocalSolderPasteMargin = ReturnValueFromTextCtrl( *m_SolderPasteMarginCtrl, internalUnits );
++    g_Pad_Master.m_LocalClearance = ReturnValueFromTextCtrl( *m_NetClearanceValueCtrl,
++                                                             internalUnits );
++    g_Pad_Master.m_LocalSolderMaskMargin = ReturnValueFromTextCtrl( *m_SolderMaskMarginCtrl,
++                                                                    internalUnits );
++    g_Pad_Master.m_LocalSolderPasteMargin = ReturnValueFromTextCtrl( *m_SolderPasteMarginCtrl,
++                                                                     internalUnits );
+     double   dtmp = 0.0;
+     msg = m_SolderPasteMarginRatioCtrl->GetValue();
+     msg.ToDouble( &dtmp );
+@@ -664,7 +666,7 @@
+         m_Parent->OnModify();
+     }
+ 
+-    EndModal(1);
++    EndModal( wxID_OK );
+ 
+     if( RastnestIsChanged )  // The net ratsnest must be recalculated
+         m_Parent->GetBoard()->m_Status_Pcb = 0;
+@@ -674,6 +676,6 @@
+ void DIALOG_PAD_PROPERTIES::OnCancelButtonClick( wxCommandEvent& event )
+ /*********************************************************************/
+ {
+-    EndModal(0);
++    EndModal( wxID_CANCEL );
+ }
+ 
+diff -ru kicad-2010.04.06/pcbnew/dialog_pcbnew_config_libs_and_paths.cpp kicad-2010.04.06-new/pcbnew/dialog_pcbnew_config_libs_and_paths.cpp
+--- kicad-2010.04.06/pcbnew/dialog_pcbnew_config_libs_and_paths.cpp	2010-04-02 17:26:27.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/dialog_pcbnew_config_libs_and_paths.cpp	2010-05-02 21:18:00.000000000 +0200
+@@ -128,7 +128,7 @@
+             g_LibName_List.Add(m_ListLibr->GetString(ii) );
+     }
+ 
+-    m_Parent->Update_config( this );
++    m_Parent->SaveProjectSettings();
+     EndModal( wxID_OK );
+ }
+ 
+diff -ru kicad-2010.04.06/pcbnew/files.cpp kicad-2010.04.06-new/pcbnew/files.cpp
+--- kicad-2010.04.06/pcbnew/files.cpp	2010-04-07 08:40:11.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/files.cpp	2010-05-02 22:00:26.000000000 +0200
+@@ -15,6 +15,7 @@
+ 
+ #define BACKUP_FILE_EXT wxT( "000" )
+ 
++
+ void WinEDA_PcbFrame::OnFileHistory( wxCommandEvent& event )
+ {
+     wxString fn;
+@@ -31,17 +32,14 @@
+     }
+ }
+ 
+-/****************************************************/
+-void WinEDA_PcbFrame::Files_io( wxCommandEvent& event )
+-/****************************************************/
+ 
+ /* Handle the read/write file commands
+  */
++void WinEDA_PcbFrame::Files_io( wxCommandEvent& event )
+ {
+     int        id = event.GetId();
+     wxString   msg;
+ 
+-
+     // If an edition is in progress, stop it
+     DrawPanel->UnManageCursor( 0, wxCURSOR_ARROW );
+ 
+@@ -69,13 +67,13 @@
+ 
+         if( !fn.FileExists() )
+         {
+-            msg = _( "Recovery file " ) + fn.GetFullPath() + _( " not found" );
++            msg = _( "Recovery file " ) + fn.GetFullPath() + _( " not found." );
+             DisplayInfoMessage( this, msg );
+             break;
+         }
+         else
+         {
+-            msg = _( "Ok to load Recovery file " ) + fn.GetFullPath();
++            msg = _( "OK to load recovery file " ) + fn.GetFullPath();
+             if( !IsOK( this, msg ) )
+                 break;
+         }
+@@ -131,7 +129,8 @@
+ 
+     if( GetScreen()->IsModify() && !Append )
+     {
+-        if( !IsOK( this, _( "Board Modified: Continue ?" ) ) )
++        if( !IsOK( this, _( "The current board has been modified.  Do you wish to discard \
++the changes?" ) ) )
+             return false;
+     }
+ 
+@@ -150,9 +149,8 @@
+     {
+         wxFileName fn = GetScreen()->m_FileName;
+ 
+-        wxFileDialog dlg( this, _( "Open Board File" ), wxEmptyString,
+-                          fn.GetFullName(), PcbFileWildcard,
+-                          wxFD_OPEN | wxFD_FILE_MUST_EXIST );
++        wxFileDialog dlg( this, _( "Open Board File" ), wxEmptyString, fn.GetFullName(),
++                          PcbFileWildcard, wxFD_OPEN | wxFD_FILE_MUST_EXIST );
+ 
+         if( dlg.ShowModal() == wxID_CANCEL )
+             return false;
+@@ -173,8 +171,7 @@
+     source = wxFopen( GetScreen()->m_FileName, wxT( "rt" ) );
+     if( source == NULL )
+     {
+-        msg.Printf( _( "File <%s> not found" ),
+-                    GetChars( GetScreen()->m_FileName ) );
++        msg.Printf( _( "File <%s> not found" ), GetChars( GetScreen()->m_FileName ) );
+         DisplayError( this, msg );
+         return false;
+     }
+@@ -194,13 +191,13 @@
+     if ( ver > g_CurrentVersionPCB )
+     {
+         DisplayInfoMessage( this, _( "This file was created by a more recent \
+-version of PCBnew and may not load correctly. Please consider updating!"));
++version of PCBnew and may not load correctly. Please consider updating!" ) );
+     }
+     else if ( ver < g_CurrentVersionPCB )
+     {
+         DisplayInfoMessage( this, _( "This file was created by an older \
+ version of PCBnew. It will be stored in the new file format when you save \
+-this file again."));
++this file again." ) );
+     }
+ 
+     // Reload the corresponding configuration file:
+@@ -209,8 +206,6 @@
+         ReadPcbFile( source, true );
+     else
+     {
+-        Read_Config( GetScreen()->m_FileName );
+-
+         // Update the option toolbar
+         m_DisplayPcbTrackFill = DisplayOpt.DisplayPcbTrackFill;
+         m_DisplayModText = DisplayOpt.DisplayModText;
+@@ -219,6 +214,7 @@
+         m_DisplayViaFill = DisplayOpt.DisplayViaFill;
+ 
+         ReadPcbFile( source, false );
++        LoadProjectSettings( GetScreen()->m_FileName );
+     }
+ 
+     fclose( source );
+@@ -228,11 +224,11 @@
+     /* If append option: change the initial board name to <oldname>-append.brd */
+     if( Append )
+     {
+-        wxString new_filename = GetScreen()->m_FileName.BeforeLast('.');
+-        if ( ! new_filename.EndsWith(wxT("-append")) )
+-            new_filename += wxT("-append");
++        wxString new_filename = GetScreen()->m_FileName.BeforeLast( '.' );
++        if ( ! new_filename.EndsWith( wxT( "-append" ) ) )
++            new_filename += wxT( "-append" );
+ 
+-        new_filename += wxT(".") + PcbExtBuffer;
++        new_filename += wxT( "." ) + PcbExtBuffer;
+ 
+         OnModify();
+         GetScreen()->m_FileName = new_filename;
+@@ -251,11 +247,11 @@
+      * if board items are not visible after loading a board...
+      * Grid and ratsnest can be left to their previous state
+      */
+-    bool showGrid = IsElementVisible(GRID_VISIBLE);
+-    bool showRats = IsElementVisible(RATSNEST_VISIBLE);
+-    SetVisibleAlls( );
+-    SetElementVisibility(GRID_VISIBLE, showGrid);
+-    SetElementVisibility(RATSNEST_VISIBLE, showRats);
++    bool showGrid = IsElementVisible( GRID_VISIBLE );
++    bool showRats = IsElementVisible( RATSNEST_VISIBLE );
++    SetVisibleAlls();
++    SetElementVisibility( GRID_VISIBLE, showGrid );
++    SetElementVisibility( RATSNEST_VISIBLE, showRats );
+ 
+     // Update info shown by the horizontal toolbars
+     GetBoard()->SetCurrentNetClass( NETCLASS::Default );
+@@ -265,13 +261,13 @@
+ 
+     ReCreateLayerBox( NULL );
+     AuxiliaryToolBar_Update_UI();
+-    syncLayerWidget( );
++    syncLayerWidget();
+ 
+     // Display the loaded board:
+     Zoom_Automatique( false );
+     wxSafeYield();      // Needed if we want to see the board now.
+ 
+-    // Compile rastnest and displays net info
++    // Compile ratsnest and displays net info
+     Compile_Ratsnest( NULL, true );
+     GetBoard()->DisplayInfo( this );
+ 
+@@ -294,12 +290,9 @@
+ }
+ 
+ 
+-/***********************************************************/
+-bool WinEDA_PcbFrame::SavePcbFile( const wxString& FileName )
+-/************************************************************/
+-
+ /* Write the board file
+  */
++bool WinEDA_PcbFrame::SavePcbFile( const wxString& FileName )
+ {
+     wxFileName  backupFileName;
+     wxFileName  pcbFileName;
+@@ -337,18 +330,16 @@
+     backupFileName.SetExt( BACKUP_FILE_EXT );
+ 
+     /* If an old backup file exists, delete it.
+-    if an old board file existes, rename it to the backup file name
++    if an old board file exists, rename it to the backup file name
+     */
+     if( pcbFileName.FileExists() )
+     {
+         /* rename the "old" file" from xxx.brd to xxx.000 */
+         if( backupFileName.FileExists() )    /* Remove the old file xxx.000 (if exists) */
+             wxRemoveFile( backupFileName.GetFullPath() );
+-        if( !wxRenameFile( pcbFileName.GetFullPath(),
+-                           backupFileName.GetFullPath() ) )
++        if( !wxRenameFile( pcbFileName.GetFullPath(), backupFileName.GetFullPath() ) )
+         {
+-            msg = _( "Warning: unable to create backup file " ) +
+-                backupFileName.GetFullPath();
++            msg = _( "Warning: unable to create backup file " ) + backupFileName.GetFullPath();
+             DisplayError( this, msg, 15 );
+             saveok = false;
+         }
+@@ -392,7 +383,8 @@
+         lowerTxt = _( "Failed to create " );
+     lowerTxt += pcbFileName.GetFullPath();
+ 
+-    Affiche_1_Parametre( this, 1, upperTxt, lowerTxt, CYAN );
++    ClearMsgPanel();
++    AppendMsgPanel( upperTxt, lowerTxt, CYAN );
+ 
+     g_SaveTime = time( NULL );    /* Reset timer for the automatic saving */
+ 
+diff -ru kicad-2010.04.06/pcbnew/netlist.cpp kicad-2010.04.06-new/pcbnew/netlist.cpp
+--- kicad-2010.04.06/pcbnew/netlist.cpp	2010-03-11 09:49:03.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/netlist.cpp	2010-05-02 21:33:25.000000000 +0200
+@@ -35,6 +35,7 @@
+ #include "gestfich.h"
+ #include "pcbnew.h"
+ #include "wxPcbStruct.h"
++#include "richio.h"
+ 
+ #include "dialog_netlist.h"
+ 
+@@ -75,7 +76,7 @@
+ static int     BuildFootprintsListFromNetlistFile(
+     const wxString& aNetlistFullFilename,
+     wxArrayString&  aBufName );
+-static bool    OpenNetlistFile( const wxString& aFullFileName );
++static FILE *  OpenNetlistFile( const wxString& aFullFileName );
+ static void    AddToList( const wxString& NameLibCmp,
+                           const wxString& NameCmp,
+                           const wxString& TimeStampPath );
+@@ -100,28 +101,26 @@
+ 
+ static int           s_NbNewModules;
+ static MODULEtoLOAD* s_ModuleToLoad_List;
+-FILE* source;
+ 
++#define BUFFER_CHAR_SIZE 2048
+ 
+ /** function OpenNetlistFile
+  *  used to open a netlist file
+  */
+-bool OpenNetlistFile( const wxString& aFullFileName )
++FILE * OpenNetlistFile( const wxString& aFullFileName )
+ {
+     if( aFullFileName.IsEmpty() )
+         return FALSE;  /* No filename: exit */
+ 
+-    source = wxFopen( aFullFileName, wxT( "rt" ) );
+-    if( source == 0 )
++    FILE * netfile = wxFopen( aFullFileName, wxT( "rt" ) );
++    if( netfile == NULL )
+     {
+         wxString msg;
+-        msg.Printf( _( "Netlist file %s not found" ),
+-                    GetChars( aFullFileName ) );
++        msg.Printf( _( "Netlist file %s not found" ), GetChars( aFullFileName ) );
+         DisplayError( NULL, msg );
+-        return FALSE;
+     }
+ 
+-    return true;
++    return netfile;
+ }
+ 
+ 
+@@ -132,6 +131,7 @@
+  * Update Reference, value and "TIME STAMP"
+  * @param aNetlistFullFilename = netlist file name (*.net)
+  * @param aCmpFullFileName = cmp/footprint list file name (*.cmp) if not found,
++ * @return true if Ok
+  * only the netlist will be used
+  *
+  *  the format of the netlist is something like:
+@@ -148,47 +148,50 @@
+  *  }
+  * #End
+  */
+-void ReadPcbNetlist( WinEDA_PcbFrame* aFrame,
+-                     const wxString&  aNetlistFullFilename,
+-                     const wxString&  aCmpFullFileName,
+-                     wxTextCtrl*      aMessageWindow,
+-                     bool             aChangeFootprint,
+-                     bool             aDeleteBadTracks,
+-                     bool             aDeleteExtraFootprints,
+-                     bool             aSelect_By_Timestamp )
++bool WinEDA_PcbFrame::ReadPcbNetlist( const wxString&  aNetlistFullFilename,
++                                      const wxString&  aCmpFullFileName,
++                                      wxTextCtrl*      aMessageWindow,
++                                      bool             aChangeFootprint,
++                                      bool             aDeleteBadTracks,
++                                      bool             aDeleteExtraFootprints,
++                                      bool             aSelect_By_Timestamp )
+ {
+-    int     LineNum, State, Comment;
++    int     State, Comment;
+     MODULE* Module = NULL;
+     D_PAD*  PtPad;
+-    char    Line[256];
+     char*   Text;
+     int     UseFichCmp = 1;
+ 
+-    if( !OpenNetlistFile( aNetlistFullFilename ) )
+-        return;
++    FILE * netfile = OpenNetlistFile( aNetlistFullFilename );
++    if( !netfile )
++        return false;
++
++    SetLastNetListRead( aNetlistFullFilename );
+ 
+     if( aMessageWindow )
+     {
+         wxString msg;
+-        msg.Printf( _( "Reading Netlist \"%s\"" ),
+-                    GetChars( aNetlistFullFilename ) );
++        msg.Printf( _( "Reading Netlist \"%s\"" ), GetChars( aNetlistFullFilename ) );
+         aMessageWindow->AppendText( msg + wxT( "\n" ) );
+     }
+ 
+     // Clear undo and redo lists to avoid inconsistencies between lists
+-    aFrame->GetScreen()->ClearUndoRedoList();
++    GetScreen()->ClearUndoRedoList();
+ 
+-    aFrame->OnModify();
+-    aFrame->GetBoard()->m_Status_Pcb = 0;
+-    State = 0; LineNum = 0; Comment = 0;
++    OnModify();
++    GetBoard()->m_Status_Pcb = 0;
++    State = 0;
++    Comment = 0;
+     s_NbNewModules = 0;
+ 
+     wxBusyCursor dummy;        // Shows an hourglass while calculating
+ 
++    FILE_LINE_READER netlistReader( netfile,  BUFFER_CHAR_SIZE );
++    char* Line = netlistReader;
+     /* First, read the netlist: Build the list of footprints to load (new
+      * footprints)
+      */
+-    while( GetLine( source, Line, &LineNum ) )
++    while( netlistReader.ReadLine( ) )
+     {
+         Text = StrPurge( Line );
+ 
+@@ -213,7 +216,7 @@
+ 
+         if( State == 2 )
+         {
+-            Module = ReadNetModule( aFrame,
++            Module = ReadNetModule( this,
+                                     aMessageWindow,
+                                     aCmpFullFileName,
+                                     Text,
+@@ -233,7 +236,7 @@
+     /* Load new footprints */
+     if( s_NbNewModules )
+     {
+-        LoadListeModules( aFrame );
++        LoadListeModules( this );
+ 
+         // Free module list:
+         MODULEtoLOAD* item, * next_item;
+@@ -248,8 +251,8 @@
+ 
+     /* Second read , All footprints are on board, one must update the schematic
+      * info (pad netnames) */
+-    fseek( source, 0, SEEK_SET ); LineNum = 0;
+-    while( GetLine( source, Line, &LineNum ) )
++    netlistReader.Rewind( );
++    while( netlistReader.ReadLine( ) )
+     {
+         Text = StrPurge( Line );
+ 
+@@ -275,7 +278,7 @@
+ 
+         if( State == 2 )
+         {
+-            Module = ReadNetModule( aFrame,
++            Module = ReadNetModule( this,
+                                     aMessageWindow,
+                                     aCmpFullFileName,
+                                     Text,
+@@ -309,7 +312,7 @@
+         }
+     }
+ 
+-    fclose( source );
++    fclose( netfile );
+ 
+     // Delete footprints not found in netlist:
+     if( aDeleteExtraFootprints )
+@@ -322,7 +325,7 @@
+         if( NbModulesNetListe  )
+         {
+             MODULE* NextModule;
+-            Module = aFrame->GetBoard()->m_Modules;
++            Module = GetBoard()->m_Modules;
+             bool    ask_for_confirmation = true;
+             for( ; Module != NULL; Module = NextModule )
+             {
+@@ -356,19 +359,21 @@
+     }
+ 
+     /* Rebuild the connectivity */
+-    aFrame->Compile_Ratsnest( NULL, true );
++    Compile_Ratsnest( NULL, true );
+ 
+-    if( aFrame->GetBoard()->m_Track )
++    if( GetBoard()->m_Track )
+     {
+         if( aDeleteBadTracks )    // Remove erroneous tracks
+         {
+-            Netliste_Controle_piste( aFrame, NULL, true );
+-            aFrame->Compile_Ratsnest( NULL, true );
++            RemoveMisConnectedTracks( NULL, true );
++            Compile_Ratsnest( NULL, true );
+         }
+     }
+ 
+-    aFrame->DrawPanel->Refresh();
+-    aFrame->GetBoard()->DisplayInfo( aFrame );
++    GetBoard()->DisplayInfo( this );
++    DrawPanel->Refresh();
++
++    return true;
+ }
+ 
+ 
+@@ -781,19 +786,21 @@
+ int BuildFootprintsListFromNetlistFile( const wxString& aNetlistFullFilename,
+                                         wxArrayString&  aBufName )
+ {
+-    int  textlen;
+     int  nb_modules_lus;
+-    int  State, LineNum, Comment;
+-    char Line[1024], * Text, * LibModName;
++    int  State, Comment;
++    char * Text, * LibModName;
+ 
+-    if( !OpenNetlistFile( aNetlistFullFilename ) )
++    FILE * netfile = OpenNetlistFile( aNetlistFullFilename );
++    if( !netfile )
+         return -1;
+ 
+-    State = 0; LineNum = 0; Comment = 0;
++    FILE_LINE_READER netlistReader( netfile,  BUFFER_CHAR_SIZE );
++    char* Line = netlistReader;
++
++    State = 0; Comment = 0;
+     nb_modules_lus = 0;
+-    textlen = MAX_LEN_TXT;
+ 
+-    while( GetLine( source, Line, &LineNum ) )
++    while( netlistReader.ReadLine( ) )
+     {
+         Text = StrPurge( Line );
+         if( Comment )
+@@ -835,7 +842,7 @@
+         }
+     }
+ 
+-    fclose( source );
++    fclose( netfile );
+ 
+     return nb_modules_lus;
+ }
+@@ -876,7 +883,6 @@
+                       const wxString* TimeStamp, wxString& NameModule )
+ {
+     wxString refcurrcmp, timestamp, idmod;
+-    char     ia[1024];
+     char*    ptcar;
+     FILE*    FichCmp;
+ 
+@@ -893,40 +899,43 @@
+         return 0;
+     }
+ 
+-    while( fgets( ia, sizeof(ia), FichCmp ) != NULL )
++    FILE_LINE_READER netlistReader( FichCmp,  BUFFER_CHAR_SIZE );
++    char* Line = netlistReader;
++
++    while( netlistReader.ReadLine() )
+     {
+-        if( strnicmp( ia, "BeginCmp", 8 ) != 0 )
++        if( strnicmp( Line, "BeginCmp", 8 ) != 0 )
+             continue;
+ 
+         /* Begin component description. */
+         refcurrcmp.Empty();
+         idmod.Empty();
+         timestamp.Empty();
+-        while( fgets( ia, sizeof(ia), FichCmp ) != NULL )
++        while( netlistReader.ReadLine() )
+         {
+-            if( strnicmp( ia, "EndCmp", 6 ) == 0 )
++            if( strnicmp( Line, "EndCmp", 6 ) == 0 )
+                 break;
+ 
+-            if( strnicmp( ia, "Reference =", 11 ) == 0 )
++            if( strnicmp( Line, "Reference =", 11 ) == 0 )
+             {
+-                ptcar = ia + 11;
++                ptcar = Line + 11;
+                 ptcar = strtok( ptcar, " =;\t\n" );
+                 if( ptcar )
+                     refcurrcmp = CONV_FROM_UTF8( ptcar );
+                 continue;
+             }
+ 
+-            if( strnicmp( ia, "IdModule  =", 11 ) == 0 )
++            if( strnicmp( Line, "IdModule  =", 11 ) == 0 )
+             {
+-                ptcar = ia + 11;
++                ptcar = Line + 11;
+                 ptcar = strtok( ptcar, " =;\t\n" );
+                 if( ptcar )
+                     idmod = CONV_FROM_UTF8( ptcar );
+                 continue;
+             }
+-            if( strnicmp( ia, "TimeStamp =", 11 ) == 0 )
++            if( strnicmp( Line, "TimeStamp =", 11 ) == 0 )
+             {
+-                ptcar = ia + 11;
++                ptcar = Line + 11;
+                 ptcar = strtok( ptcar, " =;\t\n" );
+                 if( ptcar )
+                     timestamp = CONV_FROM_UTF8( ptcar );
+diff -ru kicad-2010.04.06/pcbnew/pcbframe.cpp kicad-2010.04.06-new/pcbnew/pcbframe.cpp
+--- kicad-2010.04.06/pcbnew/pcbframe.cpp	2010-05-02 19:30:15.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/pcbframe.cpp	2010-05-02 21:39:06.000000000 +0200
+@@ -47,6 +47,8 @@
+ #include "dialog_design_rules.h"
+ #include "class_pcb_layer_widget.h"
+ #include "hotkeys.h"
++#include "pcbnew_config.h"
++
+ 
+ extern int g_DrawDefaultLineThickness;
+ 
+@@ -108,30 +110,24 @@
+     EVT_MENU( wxID_EXIT, WinEDA_PcbFrame::OnQuit )
+ 
+     // menu Config
+-    EVT_MENU( ID_CONFIG_REQ,
+-                    WinEDA_PcbFrame::Process_Config )
+-    EVT_MENU( ID_CONFIG_SAVE,
+-                    WinEDA_PcbFrame::Process_Config )
+-    EVT_MENU( ID_CONFIG_READ,
+-                    WinEDA_PcbFrame::Process_Config )
++    EVT_MENU( ID_PCB_DRAWINGS_WIDTHS_SETUP, WinEDA_PcbFrame::OnConfigurePcbOptions )
++    EVT_MENU( ID_CONFIG_REQ, WinEDA_PcbFrame::Process_Config )
++    EVT_MENU( ID_CONFIG_SAVE, WinEDA_PcbFrame::Process_Config )
++    EVT_MENU( ID_CONFIG_READ, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU_RANGE( ID_PREFERENCES_HOTKEY_START,
+                     ID_PREFERENCES_HOTKEY_END,
+                     WinEDA_PcbFrame::Process_Config )
+-
+     EVT_MENU( ID_MENU_PCB_SHOW_HIDE_LAYERS_MANAGER_DIALOG,
+-                WinEDA_PcbFrame::Process_Config )
++              WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_OPTIONS_SETUP, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_PCB_LAYERS_SETUP, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_PCB_MASK_CLEARANCE, WinEDA_PcbFrame::Process_Config )
+-    EVT_MENU( ID_PCB_DRAWINGS_WIDTHS_SETUP, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_PCB_PAD_SETUP, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_CONFIG_SAVE, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_CONFIG_READ, WinEDA_PcbFrame::Process_Config )
+     EVT_MENU( ID_PCB_DISPLAY_OPTIONS_SETUP,
+               WinEDA_PcbFrame::InstallDisplayOptionsDialog )
+-
+-    EVT_MENU( ID_PCB_USER_GRID_SETUP,
+-              WinEDA_PcbFrame::Process_Special_Functions )
++    EVT_MENU( ID_PCB_USER_GRID_SETUP, WinEDA_PcbFrame::Process_Special_Functions )
+ 
+     EVT_MENU_RANGE( ID_LANGUAGE_CHOICE, ID_LANGUAGE_CHOICE_END,
+                     WinEDA_PcbFrame::SetLanguage )
+@@ -389,9 +385,6 @@
+ 
+ WinEDA_PcbFrame::~WinEDA_PcbFrame()
+ {
+-    extern PARAM_CFG_BASE* ParamCfgList[];
+-
+-    wxGetApp().SaveCurrentSetupValues( ParamCfgList );
+     delete m_drc;
+ }
+ 
+@@ -416,7 +409,7 @@
+ 
+ void WinEDA_PcbFrame::OnQuit( wxCommandEvent & WXUNUSED(event) )
+ {
+-    Close(true);
++    Close( true );
+ }
+ 
+ void WinEDA_PcbFrame::OnCloseWindow( wxCloseEvent& Event )
+@@ -449,6 +442,13 @@
+         }
+     }
+ 
++    if( !GetScreen()->m_FileName.IsEmpty() )
++    {
++        wxFileName fn = GetScreen()->m_FileName;
++        fn.SetExt( ProjectFileExtension );
++        wxGetApp().WriteProjectConfig( fn.GetFullPath(), GROUP, GetProjectFileParameters() );
++    }
++
+     SaveSettings();
+ 
+     // do not show the window because ScreenPcb will be deleted and we do not
+@@ -498,6 +498,11 @@
+     if( config == NULL )
+         return;
+ 
++    /* The configuration setting that used to be mixed in with the project
++     * file settings.
++     */
++    wxGetApp().ReadCurrentSetupValues( GetConfigurationSettings() );
++
+     WinEDA_BasePcbFrame::LoadSettings();
+ 
+     long tmp;
+@@ -518,6 +523,11 @@
+     if( config == NULL )
+         return;
+ 
++    /* The configuration setting that used to be mixed in with the project
++     * file settings.
++     */
++    wxGetApp().SaveCurrentSetupValues( GetConfigurationSettings() );
++
+     WinEDA_BasePcbFrame::SaveSettings();
+ 
+     wxRealPoint GridSize = GetScreen()->GetGridSize();
+@@ -638,3 +648,32 @@
+     if( m_ModuleEditFrame )
+         m_ModuleEditFrame->WinEDA_DrawFrame::SetLanguage( event );
+ }
++
++
++wxString WinEDA_PcbFrame::GetLastNetListRead()
++{
++    wxFileName absoluteFileName = m_lastNetListRead;
++    wxFileName pcbFileName = GetScreen()->m_FileName;
++
++    if( !absoluteFileName.MakeAbsolute( pcbFileName.GetPath() )
++        || !absoluteFileName.FileExists() )
++    {
++        absoluteFileName.Clear();
++        m_lastNetListRead = wxEmptyString;
++    }
++
++    return absoluteFileName.GetFullPath();
++}
++
++
++void WinEDA_PcbFrame::SetLastNetListRead( const wxString& aLastNetListRead )
++{
++    wxFileName relativeFileName = aLastNetListRead;
++    wxFileName pcbFileName = GetScreen()->m_FileName;
++
++    if( relativeFileName.MakeRelativeTo( pcbFileName.GetPath() )
++        && relativeFileName.GetFullPath() != aLastNetListRead )
++    {
++        m_lastNetListRead = relativeFileName.GetFullPath();
++    }
++}
+diff -ru kicad-2010.04.06/pcbnew/pcbnew_config.cpp kicad-2010.04.06-new/pcbnew/pcbnew_config.cpp
+--- kicad-2010.04.06/pcbnew/pcbnew_config.cpp	2010-01-30 21:17:56.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/pcbnew_config.cpp	2010-05-02 21:48:43.000000000 +0200
+@@ -42,8 +42,10 @@
+         if( m_OptionsToolBar )
+         {   //This command is same as the Options Vertical Toolbar
+             // tool Show/hide layers manager
+-            bool state = m_OptionsToolBar->GetToolState(ID_TB_OPTIONS_SHOW_MANAGE_LAYERS_VERTICAL_TOOLBAR);
+-            m_OptionsToolBar->ToggleTool(ID_TB_OPTIONS_SHOW_MANAGE_LAYERS_VERTICAL_TOOLBAR, !state);
++            bool state =
++                m_OptionsToolBar->GetToolState( ID_TB_OPTIONS_SHOW_MANAGE_LAYERS_VERTICAL_TOOLBAR );
++            m_OptionsToolBar->ToggleTool( ID_TB_OPTIONS_SHOW_MANAGE_LAYERS_VERTICAL_TOOLBAR,
++                                          !state );
+             wxCommandEvent event( wxEVT_COMMAND_TOOL_CLICKED,
+                                   ID_TB_OPTIONS_SHOW_MANAGE_LAYERS_VERTICAL_TOOLBAR );
+             wxPostEvent( this, event );
+@@ -72,16 +74,12 @@
+         }
+         break;
+ 
+-    case ID_PCB_DRAWINGS_WIDTHS_SETUP:
+-        InstallPcbOptionsFrame( id );
+-        break;
+-
+     case ID_PCB_PAD_SETUP:
+         InstallPadOptionsFrame( NULL );
+         break;
+ 
+     case ID_CONFIG_SAVE:
+-        Update_config( this );
++        SaveProjectSettings();
+         break;
+ 
+     case ID_CONFIG_READ:
+@@ -104,15 +102,14 @@
+             break;
+         }
+ 
+-        Read_Config( dlg.GetPath() );
++        LoadProjectSettings( dlg.GetPath() );
+         break;
+     }
+     case ID_PREFERENCES_HOTKEY_CREATE_CONFIG:
+         fn.SetPath( ReturnHotkeyConfigFilePath( g_ConfigFileLocationChoice ) );
+         fn.SetName( HOTKEY_FILENAME );
+         fn.SetExt( DEFAULT_HOTKEY_FILENAME_EXT );
+-        WriteHotkeyConfigFile( fn.GetFullPath(), s_Pcbnew_Editor_Hokeys_Descr,
+-                               true );
++        WriteHotkeyConfigFile( fn.GetFullPath(), s_Pcbnew_Editor_Hokeys_Descr, true );
+         break;
+ 
+     case ID_PREFERENCES_HOTKEY_READ_CONFIG:
+@@ -141,8 +138,7 @@
+         break;
+ 
+     default:
+-        DisplayError( this,
+-                      wxT( "WinEDA_PcbFrame::Process_Config internal error" ) );
++        DisplayError( this, wxT( "WinEDA_PcbFrame::Process_Config internal error" ) );
+     }
+ }
+ 
+@@ -152,28 +148,26 @@
+  */
+ bool Read_Hotkey_Config( WinEDA_DrawFrame* frame, bool verbose )
+ {
+-    wxString FullFileName = ReturnHotkeyConfigFilePath(
+-        g_ConfigFileLocationChoice );
++    wxString FullFileName = ReturnHotkeyConfigFilePath( g_ConfigFileLocationChoice );
+ 
+     FullFileName += HOTKEY_FILENAME;
+-    FullFileName += wxT(".");
++    FullFileName += wxT( "." );
+     FullFileName += DEFAULT_HOTKEY_FILENAME_EXT;
+-    return frame->ReadHotkeyConfigFile( FullFileName,
+-                                        s_Pcbnew_Editor_Hokeys_Descr,
+-                                        verbose );
++    return frame->ReadHotkeyConfigFile( FullFileName, s_Pcbnew_Editor_Hokeys_Descr, verbose );
+ }
+ 
+ 
+-/** Function Read_Config
+- * Read the project configuration file
+- * @param projectFileName = the config filename
+- *  if not found use kicad.pro
+- *  if not found : initialize default values
+- * @return true if the current config is modified, false if no change
++/**
++ * Read the project configuration file settings.
++ *
++ * @param aProjectFileName = The project file name to load.  If aProjectFileName
++ *                           is not found load the default project file kicad.pro
++ *                           and initialize setting to their default value.
++ * @return Always returns true.
+  */
+-bool WinEDA_PcbFrame::Read_Config( const wxString& projectFileName )
++bool WinEDA_PcbFrame::LoadProjectSettings( const wxString& aProjectFileName )
+ {
+-    wxFileName fn = projectFileName;
++    wxFileName fn = aProjectFileName;
+ 
+     if( fn.GetExt() != ProjectFileExtension )
+         fn.SetExt( ProjectFileExtension );
+@@ -183,8 +177,7 @@
+     /* Initialize default values. */
+     g_LibName_List.Clear();
+ 
+-    wxGetApp().ReadProjectConfig( fn.GetFullPath(),
+-                                  GROUP, ParamCfgList, FALSE );
++    wxGetApp().ReadProjectConfig( fn.GetFullPath(), GROUP, GetProjectFileParameters(), FALSE );
+ 
+     /* User library path takes precedent over default library search paths. */
+     wxGetApp().InsertLibraryPath( g_UserLibDirBuffer, 1 );
+@@ -194,29 +187,254 @@
+      * if board items are not visible after loading a board...
+      * Grid and ratsnest can be left to their previous state
+      */
+-    bool showGrid = IsElementVisible(GRID_VISIBLE);
+-    bool showRats = IsElementVisible(RATSNEST_VISIBLE);
+-    SetVisibleAlls( );
+-    SetElementVisibility(GRID_VISIBLE, showGrid);
+-    SetElementVisibility(RATSNEST_VISIBLE, showRats);
++    bool showGrid = IsElementVisible( GRID_VISIBLE );
++    bool showRats = IsElementVisible( RATSNEST_VISIBLE );
++    SetVisibleAlls();
++    SetElementVisibility( GRID_VISIBLE, showGrid );
++    SetElementVisibility( RATSNEST_VISIBLE, showRats );
+     return TRUE;
+ }
+ 
+ 
+-void WinEDA_PcbFrame::Update_config( wxWindow* displayframe )
++void WinEDA_PcbFrame::SaveProjectSettings()
+ {
+     wxFileName fn;
+ 
+     fn = GetScreen()->m_FileName;
+     fn.SetExt( ProjectFileExtension );
+ 
+-    wxFileDialog dlg( this, _( "Save Project File" ), fn.GetPath(),
+-                      fn.GetFullName(), ProjectFileWildcard,
+-                      wxFD_SAVE | wxFD_CHANGE_DIR );
++    wxFileDialog dlg( this, _( "Save Project File" ), fn.GetPath(), fn.GetFullName(),
++                      ProjectFileWildcard, wxFD_SAVE | wxFD_CHANGE_DIR );
+ 
+     if( dlg.ShowModal() == wxID_CANCEL )
+         return;
+ 
+-    wxGetApp().WriteProjectConfig( fn.GetFullPath(), wxT( "/pcbnew" ),
+-                                   ParamCfgList );
++    wxGetApp().WriteProjectConfig( dlg.GetPath(), GROUP, GetProjectFileParameters() );
++}
++
++
++/**
++ * Return project file parameter list for PCBNew.
++ *
++ * Populate the project file parameter array specific to PCBNew if it hasn't
++ * already been populated and return a reference to the array to the caller.
++ * Creating the parameter list at run time has the advantage of being able
++ * to define local variables.  The old method of statically building the array
++ * at compile time requiring global variable definitions by design.
++ */
++PARAM_CFG_ARRAY& WinEDA_PcbFrame::GetProjectFileParameters()
++{
++    if( !m_projectFileParams.empty() )
++        return m_projectFileParams;
++
++    m_projectFileParams.push_back( new PARAM_CFG_WXSTRING( wxT( "LibDir" ),&g_UserLibDirBuffer,
++                                                           GROUPLIB ) );
++    m_projectFileParams.push_back( new PARAM_CFG_LIBNAME_LIST( wxT( "LibName" ), &g_LibName_List,
++                                                               GROUPLIB ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "PadDrlX" ), &g_Pad_Master.m_Drill.x,
++                                                      320, 0, 0x7FFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "PadDimH" ), &g_Pad_Master.m_Size.x,
++                                                      550, 0, 0x7FFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "PadDimV" ), &g_Pad_Master.m_Size.y,
++                                                      550, 0, 0x7FFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "BoardThickness" ),
++                                                      &boardDesignSettings.m_BoardThickness,
++                                                      630, 0, 0xFFFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_BOOL( wxT( "SgPcb45" ), &Segments_45_Only,
++                                                       TRUE ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtPcbV" ),
++                                                      &boardDesignSettings.m_PcbTextSize.y,
++                                                      600, TEXTS_MIN_SIZE, TEXTS_MAX_SIZE ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtPcbH" ),
++                                                      &boardDesignSettings.m_PcbTextSize.x,
++                                                      600, TEXTS_MIN_SIZE, TEXTS_MAX_SIZE ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtModV" ), &ModuleTextSize.y,
++                                                      500, TEXTS_MIN_SIZE, TEXTS_MAX_SIZE ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtModH" ), &ModuleTextSize.x,
++                                                      500, TEXTS_MIN_SIZE, TEXTS_MAX_SIZE ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtModW" ), &ModuleTextWidth,
++                                                      100, 1, TEXTS_MAX_WIDTH ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "VEgarde" ),
++                                                      &boardDesignSettings.m_SolderMaskMargin,
++                                                      100, 0, 10000 ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "DrawLar" ),
++                                                      &boardDesignSettings.m_DrawSegmentWidth,
++                                                      120, 0, 0xFFFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "EdgeLar" ),
++                                                      &boardDesignSettings.m_EdgeSegmentWidth,
++                                                      120, 0, 0xFFFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "TxtLar" ),
++                                                      &boardDesignSettings.m_PcbTextWidth,
++                                                      120, 0, 0xFFFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_INT( wxT( "MSegLar" ), &ModuleSegmentWidth,
++                                                      120, 0, 0xFFFF ) );
++    m_projectFileParams.push_back( new PARAM_CFG_WXSTRING( wxT( "LastNetListRead" ),
++                                                           &m_lastNetListRead ) );
++    return m_projectFileParams;
++}
++
++
++
++/*
++ * Return the PCBNew applications settings list.
++ *
++ * This replaces the old statically define list that had the project
++ * file settings and the application settings mixed together.  This
++ * was confusing and caused some settings to get saved and loaded
++ * incorrectly.  Currently, only the settings that are needed at start
++ * up by the main window are defined here.  There are other locally used
++ * settings are scattered throughout the PCBNew source code.  If you need
++ * to define a configuration setting that need to be loaded at run time,
++ * this is the place to define it.
++ *
++ * @todo: Define the configuration variables as member variables instead of
++ *        global variables or move them to the object class where they are
++ *        used.
++ */
++PARAM_CFG_ARRAY& WinEDA_PcbFrame::GetConfigurationSettings()
++{
++    if( !m_configSettings.empty() )
++        return m_configSettings;
++
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "ViaSHole" ),
++                                                   &DisplayOpt.m_DisplayViaMode,
++                                                   VIA_SPECIAL_HOLE_SHOW, VIA_HOLE_NOT_SHOW,
++                                                   OPT_VIA_HOLE_END - 1 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "ShowNetNamesMode" ),
++                                                   &DisplayOpt.DisplayNetNamesMode, 3, 0, 3 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "Unite" ), &g_UnitMetric, FALSE ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "SegFill" ),
++                                                    &DisplayOpt.DisplayPcbTrackFill, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "TrackDisplayClearance" ),
++                                                   &DisplayOpt.ShowTrackClearanceMode,
++                                                   SHOW_CLEARANCE_NEW_TRACKS_AND_VIA_AREAS ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "PadFill" ),
++                                                    &DisplayOpt.DisplayPadFill, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "ViaFill" ),
++                                                    &DisplayOpt.DisplayViaFill, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "PadAffG" ),
++                                                    &DisplayOpt.DisplayPadIsol, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "PadSNum" ),
++                                                    &DisplayOpt.DisplayPadNum, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "ModAffC" ),
++                                                   &DisplayOpt.DisplayModEdge, FILLED, 0, 2 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "ModAffT" ),
++                                                   &DisplayOpt.DisplayModText, FILLED, 0, 2 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "PcbAffT" ),
++                                                   &DisplayOpt.DisplayDrawItems, FILLED, 0, 2 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay0" ), LOC_COLOR( 0 ),
++                                                        GREEN ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay1" ), LOC_COLOR( 1 ),
++                                                        BLUE ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay2" ), LOC_COLOR( 2 ),
++                                                        LIGHTGRAY ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay3" ), LOC_COLOR( 3 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay4" ), LOC_COLOR( 4 ),
++                                                        4 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay5" ), LOC_COLOR( 5 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay6" ), LOC_COLOR( 6 ),
++                                                        6 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay7" ), LOC_COLOR( 7 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay8" ), LOC_COLOR( 8 ),
++                                                        7 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLay9" ), LOC_COLOR( 9 ),
++                                                        1 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayA" ), LOC_COLOR( 10 ),
++                                                        2 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayB" ), LOC_COLOR( 11 ),
++                                                        3 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayC" ), LOC_COLOR( 12 ),
++                                                        12 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayD" ), LOC_COLOR( 13 ),
++                                                        13 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayE" ), LOC_COLOR( 14 ),
++                                                        14 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayF" ), LOC_COLOR( 15 ),
++                                                        RED ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayG" ), LOC_COLOR( 16 ),
++                                                        1 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayH" ), LOC_COLOR( 17 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayI" ), LOC_COLOR( 18 ),
++                                                        11 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayJ" ), LOC_COLOR( 19 ),
++                                                        4 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayK" ), LOC_COLOR( 20 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayL" ), LOC_COLOR( 21 ),
++                                                        3 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayM" ), LOC_COLOR( 22 ),
++                                                        6 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayN" ), LOC_COLOR( 23 ),
++                                                        5 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayO" ), LOC_COLOR( 24 ),
++                                                        LIGHTGRAY ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayP" ), LOC_COLOR( 25 ),
++                                                        1 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayQ" ), LOC_COLOR( 26 ),
++                                                        2 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayR" ), LOC_COLOR( 27 ),
++                                                        14 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayS" ), LOC_COLOR( 28 ),
++                                                        YELLOW ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayT" ), LOC_COLOR( 29 ),
++                                                        13 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayU" ), LOC_COLOR( 30 ),
++                                                        14 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "ColLayV" ), LOC_COLOR( 31 ),
++                                                        7 ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CTxtMoC" ),
++                                                        ITEM_COLOR( MOD_TEXT_FR_VISIBLE ),
++                                                        LIGHTGRAY ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CTxtMoS" ),
++                                                        ITEM_COLOR( MOD_TEXT_BK_VISIBLE ),
++                                                        BLUE ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CTxtVis" ),
++                                                        ITEM_COLOR( MOD_TEXT_INVISIBLE ),
++                                                        DARKGRAY ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CAncreM" ),
++                                                        ITEM_COLOR( ANCHOR_VISIBLE ), BLUE ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoPadCu" ),
++                                                        ITEM_COLOR( PAD_BK_VISIBLE ), GREEN ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoPadCm" ),
++                                                        ITEM_COLOR( PAD_FR_VISIBLE ), RED ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoViaTh" ),
++                                                        ITEM_COLOR( VIA_THROUGH_VISIBLE ),
++                                                        LIGHTGRAY ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoViaBu" ),
++                                                        ITEM_COLOR( VIA_BBLIND_VISIBLE ),
++                                                        BROWN ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoViaMi" ),
++                                                        ITEM_COLOR( VIA_MICROVIA_VISIBLE ),
++                                                        CYAN ) );
++    m_configSettings.push_back( new PARAM_CFG_SETCOLOR( true, wxT( "CoRatsN" ),
++                                                        ITEM_COLOR( RATSNEST_VISIBLE ),
++                                                        WHITE ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "HPGLnum" ),
++                                                   &g_pcb_plot_options.HPGL_Pen_Num,
++                                                   1, 1, 16 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "HPGdiam" ),
++                                                   &g_pcb_plot_options.HPGL_Pen_Diam,
++                                                   15, 0, 100 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "HPGLSpd" ),
++                                                   &g_pcb_plot_options.HPGL_Pen_Speed,
++                                                   20, 0, 1000 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "HPGLrec" ),
++                                                   &g_pcb_plot_options.HPGL_Pen_Recouvrement,
++                                                   2, 0, 0x100 ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "TimeOut" ), &g_TimeOut,
++                                                   600, 0, 60000 ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "DPolair" ),
++                                                    &DisplayOpt.DisplayPolarCood, FALSE ) );
++    m_configSettings.push_back( new PARAM_CFG_INT( true, wxT( "MaxLnkS" ), &g_MaxLinksShowed,
++                                                   3, 0, 15 ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "ShowMRa" ),
++                                                    &g_Show_Module_Ratsnest, TRUE ) );
++    m_configSettings.push_back( new PARAM_CFG_BOOL( true, wxT( "TwoSegT" ),
++                                                    &g_TwoSegmentTrackBuild, TRUE ) );
++
++    return m_configSettings;
+ }
+diff -ru kicad-2010.04.06/pcbnew/pcbnew_config.h kicad-2010.04.06-new/pcbnew/pcbnew_config.h
+--- kicad-2010.04.06/pcbnew/pcbnew_config.h	2010-02-01 22:23:27.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/pcbnew_config.h	2010-05-02 21:50:21.000000000 +0200
+@@ -1,6 +1,6 @@
+-/*****************************************************/
+-/** pcbcfg.h : configuration parameters for PCBNew  **/
+-/*****************************************************/
++/************************************************************/
++/** pcbnew_config.h : configuration parameters for PCBNew  **/
++/************************************************************/
+ 
+ #include "param_config.h"
+ #include "colors_selection.h"
+@@ -9,800 +9,9 @@
+ #define GROUPLIB    wxT( "/pcbnew/libraries" )
+ #define GROUPCOMMON wxT( "/common" )
+ 
+-// Flag for member .m_Setup
+-// .m_Setup = TRUE: write info in user config
+-//      (i.e. for all project, in registry base or equivalent)
+-// .m_Setup = FALSE: write info in project config (i.e. only for this
+-//  project, in .pro file)
+-#define INSETUP TRUE
+-
+ /* Useful macro : */
+ #define LOC_COLOR(layer) &g_ColorsSettings.m_LayersColors[layer]
+ #define ITEM_COLOR(item_visible) &g_ColorsSettings.m_ItemsColors[item_visible]
+ 
+ /* Configuration parameters. */
+ extern BOARD_DESIGN_SETTINGS boardDesignSettings;
+-
+-static PARAM_CFG_WXSTRING UserLibDirBufCfg
+-(
+-    wxT( "LibDir" ),
+-    &g_UserLibDirBuffer,
+-    GROUPLIB
+-);
+-
+-static PARAM_CFG_LIBNAME_LIST LibNameBufCfg
+-(
+-    wxT( "LibName" ),
+-    &g_LibName_List,
+-    GROUPLIB
+-);
+-
+-static PARAM_CFG_INT PadDrillCfg
+-(
+-    wxT( "PadDrlX" ),
+-    &g_Pad_Master.m_Drill.x,
+-    320,
+-    0, 0x7FFF
+-);
+-
+-static PARAM_CFG_INT PadDimHCfg     //Pad Diameter / H Size
+-(
+-    wxT( "PadDimH" ),
+-    &g_Pad_Master.m_Size.x,
+-    550,
+-    0, 0x7FFF
+-);
+-
+-static PARAM_CFG_INT PadDimVCfg
+-(
+-    wxT( "PadDimV" ),
+-    &g_Pad_Master.m_Size.y,
+-    550,
+-    0, 0x7FFF
+-);
+-
+-
+-static PARAM_CFG_INT BoardThicknessCfg
+-(
+-    wxT( "BoardThickness" ),
+-    &boardDesignSettings.m_BoardThickness,
+-    630,
+-    0, 0xFFFF
+-);
+-
+-static PARAM_CFG_INT ViaShowHoleCfg
+-(
+-    INSETUP,
+-    wxT( "ViaSHole" ),
+-    &DisplayOpt.m_DisplayViaMode,
+-    VIA_SPECIAL_HOLE_SHOW,
+-    VIA_HOLE_NOT_SHOW,
+-    OPT_VIA_HOLE_END - 1
+-);
+-
+-static PARAM_CFG_INT ShowNetNamesModeCfg
+-(
+-    INSETUP,
+-    wxT( "ShowNetNamesMode" ),
+-    &DisplayOpt.DisplayNetNamesMode,
+-    3,
+-    0,
+-    3
+-);
+-
+-static PARAM_CFG_INT RouteLayTopCfg     // First current working layer
+-(
+-    wxT( "RouteTo" ),
+-    &Route_Layer_TOP,
+-    15,
+-    0, 15
+-);
+-
+-static PARAM_CFG_INT RouteLayBotCfg     // second current working layer
+-(
+-    wxT( "RouteBo" ),
+-    &Route_Layer_BOTTOM,
+-    0,
+-    0, 15
+-);
+-
+-static PARAM_CFG_BOOL Segm45Cfg     // 0, 90, and 45 degrees are the only
+-(                                   // valid segment orientations.
+-    wxT( "Segm45" ),
+-    &Track_45_Only,
+-    TRUE
+-);
+-
+-static PARAM_CFG_BOOL Raccord45Cfg  // Generate connections at 45 degrees
+-(                                   // only.
+-    wxT( "Racc45" ),
+-    &g_Raccord_45_Auto,
+-    TRUE
+-);
+-
+-static PARAM_CFG_INT UnitCfg        // Units: 0 inch, 1 mm
+-(
+-    INSETUP,
+-    wxT( "Unite" ),
+-    &g_UnitMetric,
+-    FALSE
+-);
+-
+-static PARAM_CFG_BOOL SegmFillCfg
+-(
+-    INSETUP,
+-    wxT( "SegFill" ),
+-    &DisplayOpt.DisplayPcbTrackFill,
+-    TRUE
+-);
+-
+-
+-static PARAM_CFG_INT TrackDisplayClearanceCfg
+-(
+-    INSETUP,
+-    wxT( "TrackDisplayClearance" ),
+-    &DisplayOpt.ShowTrackClearanceMode,
+-    SHOW_CLEARANCE_NEW_TRACKS_AND_VIA_AREAS
+-);
+-
+-static PARAM_CFG_BOOL PadFillCfg
+-(
+-    INSETUP,
+-    wxT( "PadFill" ),
+-    &DisplayOpt.DisplayPadFill,
+-    TRUE
+-);
+-
+-static PARAM_CFG_BOOL ViaFillCfg
+-(
+-    INSETUP,
+-    wxT( "ViaFill" ),
+-    &DisplayOpt.DisplayViaFill,
+-    TRUE
+-);
+-
+-static PARAM_CFG_BOOL PadAfficheGardeCfg
+-(
+-    INSETUP,
+-    wxT( "PadAffG" ),
+-    &DisplayOpt.DisplayPadIsol,
+-    TRUE
+-);
+-
+-static PARAM_CFG_BOOL PadShowNumCfg
+-(
+-    INSETUP,
+-    wxT( "PadSNum" ),
+-    &DisplayOpt.DisplayPadNum,
+-    TRUE
+-);
+-
+-static PARAM_CFG_INT AfficheContourModuleCfg    // Module Edges: fill/line/sketch
+-(
+-    INSETUP,
+-    wxT( "ModAffC" ),
+-    &DisplayOpt.DisplayModEdge,
+-    FILLED,
+-    0, 2
+-);
+-
+-static PARAM_CFG_INT AfficheTexteModuleCfg  // Module Texts: fill/line/sketch
+-(
+-    INSETUP,
+-    wxT( "ModAffT" ),
+-    &DisplayOpt.DisplayModText,
+-    FILLED,
+-    0, 2
+-);
+-
+-static PARAM_CFG_INT AffichePcbTextCfg     // PCB Texts: fill/line/sketch
+-(
+-    INSETUP,
+-    wxT( "PcbAffT" ),
+-    &DisplayOpt.DisplayDrawItems,
+-    FILLED,
+-    0, 2
+-);
+-
+-static PARAM_CFG_BOOL SegmPcb45Cfg  // Force 45 degrees for segments
+-(
+-    wxT( "SgPcb45" ),
+-    &Segments_45_Only,
+-    TRUE
+-);
+-
+-static PARAM_CFG_INT PcbTextDimVCfg
+-(
+-    wxT( "TxtPcbV" ),
+-    &boardDesignSettings.m_PcbTextSize.y,
+-    600,
+-    TEXTS_MIN_SIZE, TEXTS_MAX_SIZE
+-);
+-
+-static PARAM_CFG_INT PcbTextDimHCfg
+-(
+-    wxT( "TxtPcbH" ),
+-    &boardDesignSettings.m_PcbTextSize.x,
+-    600,
+-    TEXTS_MIN_SIZE, TEXTS_MAX_SIZE
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer0Cfg   // CU Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLay0" ),
+-    LOC_COLOR(0),
+-    GREEN
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer1Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay1" ),
+-    LOC_COLOR(1),
+-    BLUE
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer2Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay2" ),
+-    LOC_COLOR(2),
+-    LIGHTGRAY
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer3Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay3" ),
+-    LOC_COLOR(3),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer4Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay4" ),
+-    LOC_COLOR(4),
+-    4
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer5Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay5" ),
+-    LOC_COLOR(5),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer6Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay6" ),
+-    LOC_COLOR(6),
+-    6
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer7Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay7" ),
+-    LOC_COLOR(7),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer8Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay8" ),
+-    LOC_COLOR(8),
+-    7
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer9Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLay9" ),
+-    LOC_COLOR(9),
+-    1
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer10Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayA" ),
+-    LOC_COLOR(10),
+-    2
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer11Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayB" ),
+-    LOC_COLOR(11),
+-    3
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer12Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayC" ),
+-    LOC_COLOR(12),
+-    12
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer13Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayD" ),
+-    LOC_COLOR(13),
+-    13
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer14Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayE" ),
+-    LOC_COLOR(14),
+-    14
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer15Cfg  // CMP Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayF" ),
+-    LOC_COLOR(15),
+-    RED
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer16Cfg  // Adhesive CU Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayG" ),
+-    LOC_COLOR(16),
+-    1
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer17Cfg  // Adhesive CMP Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayH" ),
+-    LOC_COLOR(17),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer18Cfg  // Solder Mask CU Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayI" ),
+-    LOC_COLOR(18),
+-    11
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer19Cfg  // Solder Mask CMP Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayJ" ),
+-    LOC_COLOR(19),
+-    4
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer20Cfg  // Silk Screen CU Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayK" ),
+-    LOC_COLOR(20),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer21Cfg  // Silk Screen CMP Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayL" ),
+-    LOC_COLOR(21),
+-    3
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer22Cfg  // Mask CU Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayM" ),
+-    LOC_COLOR(22),
+-    6
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer23Cfg  // Mask CMP Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayN" ),
+-    LOC_COLOR(23),
+-    5
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer24Cfg  // DRAW Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayO" ),
+-    LOC_COLOR(24),
+-    LIGHTGRAY
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer25Cfg  // Comment Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayP" ),
+-    LOC_COLOR(25),
+-    1
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer26Cfg  // ECO1 Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayQ" ),
+-    LOC_COLOR(26),
+-    2
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer27Cfg  //ECO2 Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayR" ),
+-    LOC_COLOR(27),
+-    14
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer28Cfg  // EDGES Layer Color
+-(
+-    INSETUP,
+-    wxT( "ColLayS" ),
+-    LOC_COLOR(28),
+-    YELLOW
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer29Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayT" ),
+-    LOC_COLOR(29),
+-    13
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer30Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayU" ),
+-    LOC_COLOR(30),
+-    14
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorLayer31Cfg
+-(
+-    INSETUP,
+-    wxT( "ColLayV" ),
+-    LOC_COLOR(31),
+-    7
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorTxtModCmpCfg
+-(
+-    INSETUP,
+-    wxT( "CTxtMoC" ),
+-    ITEM_COLOR(MOD_TEXT_FR_VISIBLE),
+-    LIGHTGRAY
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorTxtModCuCfg
+-(
+-    INSETUP,
+-    wxT( "CTxtMoS" ),
+-    ITEM_COLOR(MOD_TEXT_BK_VISIBLE),
+-    BLUE
+-);
+-
+-static PARAM_CFG_SETCOLOR VisibleTxtModCfg
+-(
+-    INSETUP,
+-    wxT( "CTxtVis" ),
+-    ITEM_COLOR(MOD_TEXT_INVISIBLE),
+-    DARKGRAY
+-);
+-
+-static PARAM_CFG_INT TexteModDimVCfg
+-(
+-    wxT( "TxtModV" ),
+-    &ModuleTextSize.y,
+-    500,
+-    TEXTS_MIN_SIZE, TEXTS_MAX_SIZE
+-);
+-
+-static PARAM_CFG_INT TexteModDimHCfg
+-(
+-    wxT( "TxtModH" ),
+-    &ModuleTextSize.x,
+-    500,
+-    TEXTS_MIN_SIZE, TEXTS_MAX_SIZE
+-);
+-
+-static PARAM_CFG_INT TexteModWidthCfg
+-(
+-    wxT( "TxtModW" ),
+-    &ModuleTextWidth,
+-    100,
+-    1, TEXTS_MAX_WIDTH
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorAncreModCfg
+-(
+-    INSETUP,
+-    wxT( "CAncreM" ),
+-    ITEM_COLOR(ANCHOR_VISIBLE),
+-    BLUE
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorPadCuCfg
+-(
+-    INSETUP,
+-    wxT( "CoPadCu" ),
+-    ITEM_COLOR(PAD_BK_VISIBLE),
+-    GREEN
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorPadCmpCfg
+-(
+-    INSETUP,
+-    wxT( "CoPadCm" ),
+-    ITEM_COLOR(PAD_FR_VISIBLE),
+-    RED
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorViaThroughCfg
+-(
+-    INSETUP,
+-    wxT( "CoViaTh" ),
+-    ITEM_COLOR(VIA_THROUGH_VISIBLE),
+-    LIGHTGRAY
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorViaBlindBuriedCfg
+-(
+-    INSETUP,
+-    wxT( "CoViaBu" ),
+-    ITEM_COLOR(VIA_BBLIND_VISIBLE),
+-    BROWN
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorViaMicroViaCfg  // Buried Via Color
+-(
+-    INSETUP,
+-    wxT( "CoViaMi" ),
+-    ITEM_COLOR(VIA_MICROVIA_VISIBLE),
+-    CYAN
+-);
+-
+-static PARAM_CFG_SETCOLOR ColorCheveluCfg
+-(
+-    INSETUP,
+-    wxT( "CoRatsN" ),
+-    ITEM_COLOR(RATSNEST_VISIBLE),
+-    WHITE
+-);
+-
+-static PARAM_CFG_INT HPGLpenNumCfg
+-(
+-    INSETUP,
+-    wxT( "HPGLnum" ),
+-    &g_pcb_plot_options.HPGL_Pen_Num,
+-    1,
+-    1, 16
+-);
+-
+-static PARAM_CFG_INT HPGLdiamCfg    // HPGL pen size (mils)
+-(
+-    INSETUP,
+-    wxT( "HPGdiam" ),
+-    &g_pcb_plot_options.HPGL_Pen_Diam,
+-    15,
+-    0, 100
+-);
+-
+-static PARAM_CFG_INT HPGLspeedCfg   //HPGL pen speed (cm/s)
+-(
+-    INSETUP,
+-    wxT( "HPGLSpd" ),
+-    &g_pcb_plot_options.HPGL_Pen_Speed,
+-    20,
+-    0, 1000
+-);
+-
+-static PARAM_CFG_INT HPGLrecouvrementCfg
+-(
+-    INSETUP,
+-    wxT( "HPGLrec" ),
+-    &g_pcb_plot_options.HPGL_Pen_Recouvrement,
+-    2,
+-    0, 0x100
+-);
+-
+-static PARAM_CFG_INT VernisEpargneGardeCfg
+-(
+-    wxT( "VEgarde" ),
+-    &boardDesignSettings.m_SolderMaskMargin,
+-    100,
+-    0, 10000
+-);
+-
+-static PARAM_CFG_INT DrawSegmLargeurCfg
+-(
+-    wxT( "DrawLar" ),
+-    &boardDesignSettings.m_DrawSegmentWidth,
+-    120,
+-    0, 0xFFFF
+-);
+-
+-static PARAM_CFG_INT EdgeSegmLargeurCfg
+-(
+-    wxT( "EdgeLar" ),
+-    &boardDesignSettings.m_EdgeSegmentWidth,
+-    120,
+-    0, 0xFFFF
+-);
+-
+-static PARAM_CFG_INT TexteSegmLargeurCfg
+-(
+-    wxT( "TxtLar" ),
+-    &boardDesignSettings.m_PcbTextWidth,
+-    120,
+-    0, 0xFFFF
+-);
+-
+-static PARAM_CFG_INT ModuleSegmWidthCfg
+-(
+-    wxT( "MSegLar" ),
+-    &ModuleSegmentWidth,
+-    120,
+-    0, 0xFFFF
+-);
+-
+-static PARAM_CFG_INT WTraitSerigraphiePlotCfg
+-(
+-    wxT( "WpenSer" ),
+-    &g_pcb_plot_options.PlotLine_Width,
+-    10,
+-    1, 10000
+-);
+-
+-static PARAM_CFG_INT TimeOutCfg     // Automatic backup duration time in
+-(                                   // seconds.
+-    INSETUP,
+-    wxT( "TimeOut" ),
+-    &g_TimeOut,
+-    600,
+-    0, 60000
+-);
+-
+-static PARAM_CFG_BOOL DisplPolairCfg
+-(
+-    INSETUP,
+-    wxT( "DPolair" ),
+-    &DisplayOpt.DisplayPolarCood,
+-    FALSE
+-);
+-
+-static PARAM_CFG_INT PrmMaxLinksShowed
+-(
+-    INSETUP,
+-    wxT( "MaxLnkS" ),
+-    &g_MaxLinksShowed,
+-    3,
+-    0, 15
+-);
+-
+-static PARAM_CFG_BOOL ShowModuleRatsnestCfg
+-(
+-    INSETUP,
+-    wxT( "ShowMRa" ),
+-    &g_Show_Module_Ratsnest,
+-    TRUE
+-);
+-
+-static PARAM_CFG_BOOL TwoSegmentTrackBuildCfg
+-(
+-    INSETUP,
+-    wxT( "TwoSegT" ),
+-    &g_TwoSegmentTrackBuild,
+-    TRUE
+-);
+-
+-
+-/* parameters in this list will be saved on request (when saving config).
+- */
+-PARAM_CFG_BASE* ParamCfgList[] =
+-{
+-    &UserLibDirBufCfg,
+-    &LibNameBufCfg,
+-    &PadDrillCfg,
+-    &PadDimHCfg,
+-    &PadDimVCfg,
+-    &ViaShowHoleCfg,
+-    &ShowNetNamesModeCfg,
+-    &BoardThicknessCfg,
+-    &RouteLayTopCfg,
+-    &RouteLayBotCfg,
+-    &Segm45Cfg,
+-    &Raccord45Cfg,
+-    &UnitCfg,
+-    &SegmFillCfg,
+-    &TrackDisplayClearanceCfg,
+-    &PadFillCfg,
+-    &ViaFillCfg,
+-    &PadAfficheGardeCfg,
+-    &PadShowNumCfg,
+-    &AfficheContourModuleCfg,
+-    &AfficheTexteModuleCfg,
+-    &AffichePcbTextCfg,
+-    &SegmPcb45Cfg,
+-    &PcbTextDimVCfg,
+-    &PcbTextDimHCfg,
+-    &ColorLayer0Cfg,
+-    &ColorLayer1Cfg,
+-    &ColorLayer2Cfg,
+-    &ColorLayer3Cfg,
+-    &ColorLayer4Cfg,
+-    &ColorLayer5Cfg,
+-    &ColorLayer6Cfg,
+-    &ColorLayer7Cfg,
+-    &ColorLayer8Cfg,
+-    &ColorLayer9Cfg,
+-    &ColorLayer10Cfg,
+-    &ColorLayer11Cfg,
+-    &ColorLayer12Cfg,
+-    &ColorLayer13Cfg,
+-    &ColorLayer14Cfg,
+-    &ColorLayer15Cfg,
+-    &ColorLayer16Cfg,
+-    &ColorLayer17Cfg,
+-    &ColorLayer18Cfg,
+-    &ColorLayer19Cfg,
+-    &ColorLayer20Cfg,
+-    &ColorLayer21Cfg,
+-    &ColorLayer22Cfg,
+-    &ColorLayer23Cfg,
+-    &ColorLayer24Cfg,
+-    &ColorLayer25Cfg,
+-    &ColorLayer26Cfg,
+-    &ColorLayer27Cfg,
+-    &ColorLayer28Cfg,
+-    &ColorLayer29Cfg,
+-    &ColorLayer30Cfg,
+-    &ColorLayer31Cfg,
+-    &ColorTxtModCmpCfg,
+-    &ColorTxtModCuCfg,
+-    &VisibleTxtModCfg,
+-    &TexteModDimVCfg,
+-    &TexteModDimHCfg,
+-    &TexteModWidthCfg,
+-    &ColorAncreModCfg,
+-    &ColorPadCuCfg,
+-    &ColorPadCmpCfg,
+-    &ColorViaThroughCfg,
+-    &ColorViaBlindBuriedCfg,
+-    &ColorViaMicroViaCfg,
+-    &ColorCheveluCfg,
+-    &HPGLpenNumCfg,
+-    &HPGLdiamCfg,
+-    &HPGLspeedCfg,
+-    &HPGLrecouvrementCfg,
+-    &VernisEpargneGardeCfg,
+-    &DrawSegmLargeurCfg,
+-    &EdgeSegmLargeurCfg,
+-    &TexteSegmLargeurCfg,
+-    &ModuleSegmWidthCfg,
+-    &WTraitSerigraphiePlotCfg,
+-    &TimeOutCfg,
+-    &DisplPolairCfg,
+-    &PrmMaxLinksShowed,
+-    &ShowModuleRatsnestCfg,
+-    &TwoSegmentTrackBuildCfg,
+-
+-    NULL
+-};
+diff -ru kicad-2010.04.06/pcbnew/pcbnew.cpp kicad-2010.04.06-new/pcbnew/pcbnew.cpp
+--- kicad-2010.04.06/pcbnew/pcbnew.cpp	2010-02-24 19:36:01.000000000 +0100
++++ kicad-2010.04.06-new/pcbnew/pcbnew.cpp	2010-05-03 00:56:59.000000000 +0200
+@@ -37,38 +37,36 @@
+                                       * default thickness line value (Frame references)
+                                       * (i.e. = 0 ). 0 = single pixel line width */
+ 
+-bool Drc_On = true;
+-bool g_AutoDeleteOldTrack = true;
+-bool g_Drag_Pistes_On;
+-bool g_Show_Module_Ratsnest;
+-bool g_Show_Pads_Module_in_Move = true;
+-bool g_Raccord_45_Auto = true;
+-bool Track_45_Only;
+-bool Segments_45_Only;
+-bool g_TwoSegmentTrackBuild = true;
+-bool g_HighLight_Status;
+-extern PARAM_CFG_BASE* ParamCfgList[];
+-
+-int                    ModuleSegmentWidth;
+-int                    ModuleTextWidth;
+-int                    Route_Layer_TOP;
+-int                    Route_Layer_BOTTOM;
+-int                    g_MaxLinksShowed;
+-int                    g_MagneticPadOption   = capture_cursor_in_track_tool;
+-int                    g_MagneticTrackOption = capture_cursor_in_track_tool;
+-int                    g_HighLight_NetCode   = -1;
+-
+-wxSize                 ModuleTextSize;      /* Default footprint texts size */
+-wxPoint                g_Offset_Module;     /* Offset de trace du modul en depl */
+-wxString               g_Current_PadName;   // Last used pad name (pad num)
++bool           Drc_On = true;
++bool           g_AutoDeleteOldTrack = true;
++bool           g_Drag_Pistes_On;
++bool           g_Show_Module_Ratsnest;
++bool           g_Show_Pads_Module_in_Move = true;
++bool           g_Raccord_45_Auto = true;
++bool           Track_45_Only;
++bool           Segments_45_Only;
++bool           g_TwoSegmentTrackBuild = true;
++bool           g_HighLight_Status;
++
++int            ModuleSegmentWidth;
++int            ModuleTextWidth;
++int            Route_Layer_TOP;
++int            Route_Layer_BOTTOM;
++int            g_MaxLinksShowed;
++int            g_MagneticPadOption   = capture_cursor_in_track_tool;
++int            g_MagneticTrackOption = capture_cursor_in_track_tool;
++int            g_HighLight_NetCode   = -1;
++
++wxSize         ModuleTextSize;      /* Default footprint texts size */
++wxPoint        g_Offset_Module;     /* Offset de trace du modul en depl */
++wxString       g_Current_PadName;   // Last used pad name (pad num)
+ 
+ // Wildcard for footprint libraries filesnames
+-const wxString         g_FootprintLibFileWildcard( wxT(
+-                                                      "Kicad footprint library file (*.mod)|*.mod" ) );
++const wxString g_FootprintLibFileWildcard( wxT( "Kicad footprint library file (*.mod)|*.mod" ) );
+ 
+ /* Name of the document footprint list
+  * usually located in share/modules/footprints_doc
+- * this is of the responsability to users to create this file
++ * this is of the responsibility to users to create this file
+  * if they want to have a list of footprints
+  */
+ wxString g_DocModulesFileName = wxT( "footprints_doc/footprints.pdf" );
+@@ -90,9 +88,7 @@
+ }
+ 
+ 
+-/****************************/
+ bool WinEDA_App::OnInit()
+-/****************************/
+ {
+     /* WXMAC application specific */
+ #ifdef __WXMAC__
+@@ -126,10 +122,8 @@
+ 
+         if( fn.GetExt() != BoardFileExtension )
+         {
+-            wxLogDebug( wxT(
+-                           "PcbNew file <%s> has the wrong extension.\
+-Changing extension to .brd."                                                                         ),
+-                       GetChars( fn.GetFullPath() ) );
++            wxLogDebug( wxT( "PcbNew file <%s> has the wrong extension.  \
++Changing extension to .brd." ), GetChars( fn.GetFullPath() ) );
+             fn.SetExt( BoardFileExtension );
+         }
+ 
+@@ -137,15 +131,13 @@
+             wxSetWorkingDirectory( fn.GetPath() );
+     }
+ 
+-    wxGetApp().ReadCurrentSetupValues( ParamCfgList );
+     g_DrawBgColor = BLACK;
+     Read_Hotkey_Config( frame, false );  /* Must be called before creating the
+                                           * main frame in order to display the
+                                           * real hotkeys in menus or tool tips */
+ 
+ 
+-    frame = new WinEDA_PcbFrame( NULL, wxT( "PcbNew" ),
+-                                wxPoint( 0, 0 ), wxSize( 600, 400 ) );
++    frame = new WinEDA_PcbFrame( NULL, wxT( "PcbNew" ), wxPoint( 0, 0 ), wxSize( 600, 400 ) );
+     frame->SetTitle( GetTitle() + wxT( " " ) + GetBuildVersion() );
+     ActiveScreen = ScreenPcb;
+ 
+@@ -157,8 +149,6 @@
+         SetupServerFunction( RemoteCommand );
+     }
+ 
+-    frame->Read_Config( fn.GetFullPath() );
+-
+     frame->Zoom_Automatique( true );
+ 
+     /* Load file specified in the command line. */
+@@ -170,6 +160,8 @@
+         frame->ReCreateLayerBox( NULL );
+     }
+ 
++    frame->LoadProjectSettings( fn.GetFullPath() );
++
+     /* For an obscure reason the focus is lost after loading a board file
+      * when starting (i.e. only at this point)
+      * (seems due to the recreation of the layer manager after loading the file)
+diff -ru kicad-2010.04.06/pcbnew/tool_onrightclick.cpp kicad-2010.04.06-new/pcbnew/tool_onrightclick.cpp
+--- kicad-2010.04.06/pcbnew/tool_onrightclick.cpp	2010-05-02 19:30:15.000000000 +0200
++++ kicad-2010.04.06-new/pcbnew/tool_onrightclick.cpp	2010-05-02 21:51:01.000000000 +0200
+@@ -38,7 +38,7 @@
+     case ID_PCB_ADD_LINE_BUTT:
+     case ID_PCB_DIMENSION_BUTT:
+     case ID_PCB_ADD_TEXT_BUTT:
+-        InstallPcbOptionsFrame( ID_PCB_DRAWINGS_WIDTHS_SETUP );
++        OnConfigurePcbOptions( event );
+         break;
+ 
+     default:

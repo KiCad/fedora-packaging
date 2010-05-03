@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.04.06
-Release:        3.rev2514%{?dist}
+Release:        8.rev2515%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
 
@@ -15,8 +15,18 @@ Source1:        http://dionysos.fedorapeople.org/SOURCES/kicad-doc-%{version}.ta
 Source2:        http://dionysos.fedorapeople.org/SOURCES/kicad-library-%{version}.tar.bz2
 Source3:        http://dionysos.fedorapeople.org/SOURCES/kicad-ld.conf
 
-Patch:          %{name}-%{version}.edit_component_in_schematic.cpp.fix_footprint_edition.patch
+Patch0:         %{name}-%{version}.edit_component_in_schematic.cpp.fix_footprint_edition.patch
 Patch1:         %{name}-%{version}.dialog_design_rules.cpp.fix-sort-function.patch
+Patch2:         %{name}-%{version}.subcomponent.patch
+Patch3:         %{name}-%{version}.drc-clearance.patch
+Patch4:         %{name}-%{version}.cleanup-undoable.patch
+Patch5:         %{name}-%{version}.fix-issues-svg-export.patch
+Patch6:         %{name}-%{version}.minor-pcbnew-enhancements.patch
+Patch7:         %{name}-%{version}.gerber-lines-thickness.patch
+Patch8:         %{name}-%{version}.dimension-vs-cotation.patch
+Patch9:         %{name}-%{version}.last-netlist-file.patch
+Patch10:        %{name}-%{version}.auto-update-3D-display.patch
+Patch11:        %{name}-%{version}.create-png-from-screen.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -169,8 +179,18 @@ Documentation and tutorials for Kicad in Chinese
 %prep
 %setup -q -a 1 -a 2
 
-%patch -p0 -b .fix_footprint_edition
+%patch0 -p0 -b .fix_footprint_edition
 %patch1 -p0 -b .fix-sort-function
+%patch2 -p1 -b .subcomponent
+%patch3 -p1 -b .drc-clearance
+%patch4 -p1 -b .cleanup-undoable
+%patch5 -p1 -b .fix-issues-svg-export
+%patch6 -p1 -b .minor-pcbnew-enhancements
+%patch7 -p1 -b .gerber-lines-thickness
+%patch8 -p1 -b .dimension-vs-cotation
+%patch9 -p1 -b .last-netlist-file
+%patch10 -p1 -b .auto-update-3D-display
+%patch11 -p1 -b .create-png-from-screen
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -258,6 +278,11 @@ install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
 %{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
 %{__cp} -pr AUTHORS.txt CHANGELOG* TODO.txt version.txt %{buildroot}%{_docdir}/%{name}
+
+# remove duplicate files created by patches
+%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.drc-clearance
+%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.gerber-lines-thickness
+%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.dimension-vs-cotation
 
 
 %find_lang %{name}
@@ -354,6 +379,28 @@ fi
 
 
 %changelog
+* Mon May  3 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-8.rev2515
+- Auto update 3D viewer: fix https://bugs.launchpad.net/kicad/+bug/571089
+- Create png from screen (libedit): fix https://bugs.launchpad.net/kicad/+bug/573833
+
+* Sun May  2 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-7.rev2515
+- Rename COTATION class (french word) in DIMENSION and fix
+  https://bugs.launchpad.net/kicad/+bug/568356 and https://bugs.launchpad.net/kicad/+bug/568357
+- Some code cleaning ans enhancements + fix a bug about last netlist file used (LP #567902)
+
+* Sat May  1 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-6.rev2515
+- Make cleanup feature undoable, fix https://bugs.launchpad.net/kicad/+bug/564619
+- Fix issues in SVG export, fix https://bugs.launchpad.net/kicad/+bug/565388
+- Minor pcbnew enhancements
+- Fix minor gerber problems, fix https://bugs.launchpad.net/kicad/+bug/567881
+
+* Sat May  1 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-5.rev2515
+- DRC have to use the local parameters clearance if specified,
+  and NETCLASS value only if no local value specified. 
+
+* Sat May  1 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-4.rev2514
+- Fix https://bugs.launchpad.net/bugs/568896 and https://bugs.launchpad.net/bugs/569312
+
 * Thu Apr 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-3.rev2514
 - Fix a crash that happens sometimes when opening the design rule dialog
 
