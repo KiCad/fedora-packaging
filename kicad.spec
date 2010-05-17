@@ -1,32 +1,28 @@
 Name:           kicad
-Version:        2010.04.06
-Release:        8.rev2515%{?dist}
+Version:        2010.05.09
+Release:        1%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
-Summary(fr):    Saisie de schéma électronique et tracé de circuit imprimé
+Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
 Group:          Applications/Engineering
 License:        GPLv2+
-URL:            http://kicad.sourceforge.net
+URL:            https://launchpad.net/kicad
 
-# Source files created from upstream's SVN repository
-# available on packager web site
-Source:         http://dionysos.fedorapeople.org/SOURCES/kicad-%{version}.tar.bz2
-Source1:        http://dionysos.fedorapeople.org/SOURCES/kicad-doc-%{version}.tar.bz2
-Source2:        http://dionysos.fedorapeople.org/SOURCES/kicad-library-%{version}.tar.bz2
-Source3:        http://dionysos.fedorapeople.org/SOURCES/kicad-ld.conf
+# Source files created from upstream's bazaar repository
+# available on packager web site http://dionysos.fedorapeople.org/SOURCES/
+# bzr export -r 2361 kicad-2010.05.09
+# bzr export -r 76 kicad-libraries-2010.05.09
+# bzr export -r 110 kicad-doc-2010.05.09
 
-Patch0:         %{name}-%{version}.edit_component_in_schematic.cpp.fix_footprint_edition.patch
-Patch1:         %{name}-%{version}.dialog_design_rules.cpp.fix-sort-function.patch
-Patch2:         %{name}-%{version}.subcomponent.patch
-Patch3:         %{name}-%{version}.drc-clearance.patch
-Patch4:         %{name}-%{version}.cleanup-undoable.patch
-Patch5:         %{name}-%{version}.fix-issues-svg-export.patch
-Patch6:         %{name}-%{version}.minor-pcbnew-enhancements.patch
-Patch7:         %{name}-%{version}.gerber-lines-thickness.patch
-Patch8:         %{name}-%{version}.dimension-vs-cotation.patch
-Patch9:         %{name}-%{version}.last-netlist-file.patch
-Patch10:        %{name}-%{version}.auto-update-3D-display.patch
-Patch11:        %{name}-%{version}.create-png-from-screen.patch
+Source:         %{name}-%{version}.tar.bz2
+Source1:        %{name}-doc-%{version}.tar.bz2
+Source2:        %{name}-libraries-%{version}.tar.bz2
+Source3:        %{name}-ld.conf
+Source4:        %{name}-%{version}.x-kicad-pcbnew.desktop
+Source5:        pcbnew.desktop
+Source6:        %{name}-icons.tar.bz2
+
+Patch0:         %{name}-%{version}.cmake-requirement.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -177,20 +173,9 @@ Documentation and tutorials for Kicad in Chinese
 
 
 %prep
-%setup -q -a 1 -a 2
+%setup -q -a 1 -a 2 -a 6
 
-%patch0 -p0 -b .fix_footprint_edition
-%patch1 -p0 -b .fix-sort-function
-%patch2 -p1 -b .subcomponent
-%patch3 -p1 -b .drc-clearance
-%patch4 -p1 -b .cleanup-undoable
-%patch5 -p1 -b .fix-issues-svg-export
-%patch6 -p1 -b .minor-pcbnew-enhancements
-%patch7 -p1 -b .gerber-lines-thickness
-%patch8 -p1 -b .dimension-vs-cotation
-%patch9 -p1 -b .last-netlist-file
-%patch10 -p1 -b .auto-update-3D-display
-%patch11 -p1 -b .create-png-from-screen
+%patch0 -p0 -b .cmake-requirement
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -208,7 +193,7 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 #
 # Symbols libraries
 #
-pushd %{name}-library-%{version}/
+pushd %{name}-libraries-%{version}/
 %cmake -DCMAKE_BUILD_TYPE=Release .
 %{__make} %{?_smp_mflags} VERBOSE=1
 popd
@@ -228,24 +213,33 @@ popd
 
 
 # install localization
-%{__rm} -rf %{buildroot}%{_datadir}/%{name}/internat/
-install -d %{buildroot}%{_datadir}/locale
-cd internat
+cd %{name}-doc-%{version}/internat
 for dir in ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
-  install -d %{buildroot}%{_datadir}/locale/${dir}
-  install -m 644 ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
+#  install -d %{buildroot}%{_datadir}/locale/${dir}
+#  install -m 644 ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
+  install -m 644 -D ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
 done
-cd ..
+cd ../..
 
 
 # install desktop
-desktop-file-install --vendor=fedora         \
+desktop-file-install \
   --dir %{buildroot}%{_datadir}/applications \
-  --remove-category Development		     \
+  --remove-category Development              \
   --delete-original                          \
   %{buildroot}%{_datadir}/applications/kicad.desktop
-rm -f %{buildroot}%{_datadir}/applications/eeschema.desktop
+
+desktop-file-install \
+  --dir %{buildroot}%{_datadir}/applications \
+  --remove-category Development              \
+  --delete-original                          \
+  %{buildroot}%{_datadir}/applications/eeschema.desktop
+
+desktop-file-install \
+  --dir %{buildroot}%{_datadir}/applications \
+  --remove-category Development              \
+  %{SOURCE5}
 
 # Missing requires libraries
 %{__cp} -p ./3d-viewer/lib3d-viewer.so %{buildroot}%{_libdir}/%{name}
@@ -258,17 +252,43 @@ rm -f %{buildroot}%{_datadir}/applications/eeschema.desktop
 #
 # Symbols libraries
 #
-pushd %{name}-library-%{version}/
+pushd %{name}-libraries-%{version}/
 %{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 popd
 
 # install ld.conf
-mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
-install -pm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
+install -m 644 -D -p %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
+
+# install new mime type
+install -pm 644 %{SOURCE4} %{buildroot}%{_datadir}/mimelnk/application/x-%{name}-pcbnew.desktop
+
+# install mimetype and application icons
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/32x32/mimetypes/application-x-kicad-eeschema.png
+install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/eeschema.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/24x24/mimetypes/application-x-kicad-eeschema.png
+install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/eeschema.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/22x22/mimetypes/application-x-kicad-eeschema.png
+install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/eeschema.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/16x16/mimetypes/application-x-kicad-eeschema.png
+install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/eeschema.png
+
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/32x32/mimetypes/application-x-kicad-pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/24x24/mimetypes/application-x-kicad-pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/22x22/mimetypes/application-x-kicad-pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/16x16/mimetypes/application-x-kicad-pcbnew.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/pcbnew.png
+
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/kicad.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/kicad.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/kicad.png
+install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/kicad.png
 
 
 # Preparing for documentation pull-ups
@@ -277,36 +297,41 @@ install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 %{__rm} -f  %{name}-doc-%{version}/doc/tutorials/CMakeLists.txt
 
 %{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
-%{__cp} -pr AUTHORS.txt CHANGELOG* TODO.txt version.txt %{buildroot}%{_docdir}/%{name}
+%{__cp} -pr AUTHORS.txt CHANGELOG* version.txt %{buildroot}%{_docdir}/%{name}
 
-# remove duplicate files created by patches
-%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.drc-clearance
-%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.gerber-lines-thickness
-%{__rm} -f  %{buildroot}%{_docdir}/%{name}/CHANGELOG.txt.dimension-vs-cotation
+
+# Delete backup of patched files
+%{__rm} -f %{buildroot}%{_datadir}/applications/*.desktops
+%{__rm} -f %{buildroot}%{_datadir}/mime/packages/*.mimetype
+%{__rm} -f %{buildroot}%{_datadir}/mimelnk/application/*.mimetype
 
 
 %find_lang %{name}
 
 
 %post
-update-desktop-database &> /dev/null || :
 touch --no-create %{_datadir}/icons/hicolor || :
-if [ -x %{_bindir}/gtk-update-icon-cache ]
-then
-  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
-fi
+update-desktop-database &> /dev/null || :
+update-mime-database %{_datadir}/mime &> /dev/null || :
 
 /sbin/ldconfig
+
 
 %postun
-update-desktop-database &> /dev/null || :
-touch --no-create %{_datadir}/icons/hicolor || :
-if [ -x %{_bindir}/gtk-update-icon-cache ]
+if [ $1 -eq 0 ]
 then
-  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
+  touch --no-create %{_datadir}/icons/hicolor || :
+  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
 fi
+update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
+update-mime-database %{_datadir}/mime &> /dev/null || :
 
 /sbin/ldconfig
+
+
+%posttrans
+gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -318,12 +343,12 @@ fi
 %{_bindir}/*
 %{_libdir}/%{name}
 %{_datadir}/%{name}/
-%{_datadir}/applications/fedora-%{name}.desktop
-%{_datadir}/icons/hicolor/*/mimetypes/application-x-kicad-project.*
-%{_datadir}/icons/hicolor/*/apps/%{name}.*
+%{_datadir}/applications/*.desktop
+%{_datadir}/icons/hicolor/*/mimetypes/application-x-%{name}-*.*
+%{_datadir}/icons/hicolor/*/apps/*.*
 %{_datadir}/mime/packages/%{name}.xml
 %{_datadir}/mimelnk/application/x-%{name}-*.desktop
-%{_sysconfdir}/ld.so.conf.d/kicad.conf
+%config %{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 %files doc
 %defattr(-,root,root,-)
@@ -379,6 +404,22 @@ fi
 
 
 %changelog
+* Mon May 17 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-1
+- New upstream version
+- All previous patches no more needed
+- Backward to cmake 2.6 requirement
+
+* Sun May  9 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.05-1
+- New upstream version
+- All previous patches no more needed
+- Fix url: KiCad move from SourceForge.net to LaunchPad.net
+- Remove vendor tag from desktop-file-install
+- Add x-kicad-pcbnew mimetype
+- Add new icons for mimetype
+
+* Mon May  3 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-9.rev2515
+- Fix a minor bug that occurs when changing module orientation or side
+
 * Mon May  3 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.04.06-8.rev2515
 - Auto update 3D viewer: fix https://bugs.launchpad.net/kicad/+bug/571089
 - Create png from screen (libedit): fix https://bugs.launchpad.net/kicad/+bug/573833
