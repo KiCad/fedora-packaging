@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        1.rev2363%{?dist}
+Release:        2.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -405,6 +405,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sun May 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-2
+- Don't forget icons
+
 * Sat May 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-1
 - New packager version
 - Update kicad version number patch
