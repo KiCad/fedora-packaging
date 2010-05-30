@@ -1,6 +1,6 @@
 Name:           kicad
-Version:        2010.05.09
-Release:        1%{?dist}
+Version:        2010.05.27
+Release:        1.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -9,20 +9,21 @@ License:        GPLv2+
 URL:            https://launchpad.net/kicad
 
 # Source files created from upstream's bazaar repository
-# available on packager web site http://dionysos.fedorapeople.org/SOURCES/
-# bzr export -r 2361 kicad-2010.05.09
-# bzr export -r 76 kicad-libraries-2010.05.09
-# bzr export -r 110 kicad-doc-2010.05.09
+# bzr export -r 2363 kicad-2010.05.27
+# bzr export -r 76 kicad-libraries-2010.05.27
+# bzr export -r 110 kicad-doc-2010.05.27
 
 Source:         %{name}-%{version}.tar.bz2
 Source1:        %{name}-doc-%{version}.tar.bz2
 Source2:        %{name}-libraries-%{version}.tar.bz2
 Source3:        %{name}-ld.conf
-Source4:        %{name}-%{version}.x-kicad-pcbnew.desktop
+Source4:        %{name}-2010.05.09.x-kicad-pcbnew.desktop
 Source5:        pcbnew.desktop
 Source6:        %{name}-icons.tar.bz2
 
-Patch0:         %{name}-%{version}.cmake-requirement.patch
+Patch10:        %{name}-%{version}.real-version.patch
+Patch11:        %{name}-%{version}.display-footprint-value.patch
+Patch12:        %{name}-%{version}.set-extension-if-missing.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -175,7 +176,9 @@ Documentation and tutorials for Kicad in Chinese
 %prep
 %setup -q -a 1 -a 2 -a 6
 
-%patch0 -p0 -b .cmake-requirement
+%patch10 -p0 -b .real-version
+%patch11 -p0 -b .display-footprint-value
+%patch12 -p0 -b .set-extension-if-missing
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -216,8 +219,6 @@ popd
 cd %{name}-doc-%{version}/internat
 for dir in ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
-#  install -d %{buildroot}%{_datadir}/locale/${dir}
-#  install -m 644 ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
   install -m 644 -D ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
 done
 cd ../..
@@ -348,7 +349,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_datadir}/icons/hicolor/*/apps/*.*
 %{_datadir}/mime/packages/%{name}.xml
 %{_datadir}/mimelnk/application/x-%{name}-*.desktop
-%config %{_sysconfdir}/ld.so.conf.d/kicad.conf
+%config(noreplace) %{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 %files doc
 %defattr(-,root,root,-)
@@ -404,6 +405,21 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sat May 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-1
+- New packager version
+- Update kicad version number patch
+- Patch to fix https://bugs.launchpad.net/kicad/+bug/587175
+- Patch to fix https://bugs.launchpad.net/kicad/+bug/587176
+
+* Fri May 21 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-3
+- Fix the kicad version number
+- Fix a problem when trying to modify a footprint value in eeschema
+  https://bugs.launchpad.net/kicad/+bug/583939
+
+* Tue May 18 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-2
+- No backup of patched files to deleted
+- Add noreplace flag to config macro
+
 * Mon May 17 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-1
 - New upstream version
 - All previous patches no more needed

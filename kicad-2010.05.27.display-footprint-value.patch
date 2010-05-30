@@ -1,0 +1,10 @@
+--- eeschema/edit_component_in_schematic.cpp.orig	2010-05-28 21:47:32.000000000 +0200
++++ eeschema/edit_component_in_schematic.cpp	2010-05-29 15:27:08.000000000 +0200
+@@ -369,6 +369,7 @@
+         return;
+ 
+     SCH_FIELD* TextField = Cmp->GetField( FOOTPRINT );
++    message = TextField->m_Text;
+ 
+     if( Get_Message( _( "Footprint" ), _( "Component footprint" ), message, this ) )
+         return;    // edition cancelled by user.

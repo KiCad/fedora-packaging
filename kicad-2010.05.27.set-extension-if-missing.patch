@@ -1,0 +1,19 @@
+--- kicad/prjconfig.cpp.orig	2010-05-28 21:47:32.000000000 +0200
++++ kicad/prjconfig.cpp	2010-05-29 15:29:37.000000000 +0200
+@@ -86,8 +86,15 @@
+         m_ProjectFileName = dlg.GetPath();
+ 
+         if( event.GetId() == ID_NEW_PROJECT )
++        {
++            wxString tmpString = m_ProjectFileName.GetFullName();
++            if ( !tmpString.EndsWith( wxT( ".pro" ) ) )
++            {
++                tmpString += wxT( ".pro" );
++                m_ProjectFileName.SetFullName( tmpString );
++            }
+             CreateNewProject( m_ProjectFileName.GetFullPath() );
+-
++        }
+         SetLastProject( m_ProjectFileName.GetFullPath() );
+     }
+ 
