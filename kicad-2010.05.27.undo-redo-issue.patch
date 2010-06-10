@@ -1,0 +1,10 @@
+--- eeschema/class_sch_component.cpp.orig	2010-05-28 19:08:39.000000000 +0200
++++ eeschema/class_sch_component.cpp	2010-05-31 22:16:03.000000000 +0200
+@@ -608,6 +608,7 @@
+        GetField(ii)->SetParent( this );
+     }
+ 
++    EXCHG( m_PathsAndReferences, copyitem->m_PathsAndReferences);
+ }
+ 
+ 

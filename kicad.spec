@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        2.rev2363%{?dist}
+Release:        4.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -24,6 +24,10 @@ Source6:        %{name}-icons.tar.bz2
 Patch10:        %{name}-%{version}.real-version.patch
 Patch11:        %{name}-%{version}.display-footprint-value.patch
 Patch12:        %{name}-%{version}.set-extension-if-missing.patch
+Patch13:        %{name}-%{version}.undo-redo-issue.patch
+Patch14:        %{name}-%{version}.missing-focus.patch
+Patch15:        %{name}-%{version}.fix-unwanted-mouse-cursor-move.patch
+Patch16:        %{name}-%{version}.3Dviewer-arcs-draw-issue.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -179,6 +183,10 @@ Documentation and tutorials for Kicad in Chinese
 %patch10 -p0 -b .real-version
 %patch11 -p0 -b .display-footprint-value
 %patch12 -p0 -b .set-extension-if-missing
+%patch13 -p0 -b .undo-redo-issue
+%patch14 -p1 -b .missing-focus
+%patch15 -p1 -b .fix-unwanted-mouse-cursor-move
+%patch16 -p0 -b .3Dviewer-arcs-draw-issue
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -301,12 +309,6 @@ install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/kica
 %{__cp} -pr AUTHORS.txt CHANGELOG* version.txt %{buildroot}%{_docdir}/%{name}
 
 
-# Delete backup of patched files
-%{__rm} -f %{buildroot}%{_datadir}/applications/*.desktops
-%{__rm} -f %{buildroot}%{_datadir}/mime/packages/*.mimetype
-%{__rm} -f %{buildroot}%{_datadir}/mimelnk/application/*.mimetype
-
-
 %find_lang %{name}
 
 
@@ -405,7 +407,15 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
-* Sun May 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-2
+* Mon Jun  8 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-4
+- Fix a focus issue (https://bugs.launchpad.net/kicad/+bug/587970)
+- Fix an unwanted mouse cursor move when using the t hotkey in pcbnew
+- Fix an issue on arcs draw in 3D viewer (https://bugs.launchpad.net/kicad/+bug/588882)
+
+* Mon May 31 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-3
+- Fix an undo-redo issue (https://bugs.launchpad.net/kicad/+bug/586032)
+
+* Sun May 30 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-2
 - Don't forget icons
 
 * Sat May 29 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-1

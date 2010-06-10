@@ -1,0 +1,44 @@
+diff -ru kicad-2010.05.27/pcbnew/edit.cpp kicad-2010.06.08/pcbnew/edit.cpp
+--- kicad-2010.05.27/pcbnew/edit.cpp	2010-05-28 21:47:32.000000000 +0200
++++ kicad-2010.06.08/pcbnew/edit.cpp	2010-06-08 20:36:39.000000000 +0200
+@@ -582,7 +582,6 @@
+         g_Drag_Pistes_On = true;
+ 
+     case ID_POPUP_PCB_MOVE_MODULE_REQUEST:
+-
+         // If the current Item is a pad, text module ...: Get its parent
+         if( GetCurItem()->Type() != TYPE_MODULE )
+             SetCurItem( GetCurItem()->GetParent() );
+@@ -591,6 +590,7 @@
+             g_Drag_Pistes_On = false;
+             break;
+         }
++        GetScreen()->m_Curseur = ((MODULE*) GetCurItem())->m_Pos;
+         DrawPanel->MouseToCursorSchema();
+         StartMove_Module( (MODULE*) GetCurItem(), &dc );
+         break;
+diff -ru kicad-2010.05.27/pcbnew/hotkeys.cpp kicad-2010.06.08/pcbnew/hotkeys.cpp
+--- kicad-2010.05.27/pcbnew/hotkeys.cpp	2010-05-28 21:47:32.000000000 +0200
++++ kicad-2010.06.08/pcbnew/hotkeys.cpp	2010-06-08 20:36:39.000000000 +0200
+@@ -657,6 +657,8 @@
+ 
+             // fall through
+             case HK_MOVE_FOOTPRINT: // Start move module
++                GetScreen()->m_Curseur = module->m_Pos;
++                DrawPanel->MouseToCursorSchema();
+                 StartMove_Module( module, DC );
+                 break;
+             }
+diff -ru kicad-2010.05.27/pcbnew/modules.cpp kicad-2010.06.08/pcbnew/modules.cpp
+--- kicad-2010.05.27/pcbnew/modules.cpp	2010-05-28 21:47:32.000000000 +0200
++++ kicad-2010.06.08/pcbnew/modules.cpp	2010-06-08 20:36:39.000000000 +0200
+@@ -100,9 +100,6 @@
+     GetBoard()->m_Status_Pcb &= ~RATSNEST_ITEM_LOCAL_OK;
+     module->m_Flags |= IS_MOVED;
+ 
+-    GetScreen()->m_Curseur = module->m_Pos;
+-    DrawPanel->MouseToCursorSchema();
+-
+     /* Show ratsnest. */
+     if( GetBoard()->IsElementVisible(RATSNEST_VISIBLE) )
+         DrawGeneralRatsnest( DC );
