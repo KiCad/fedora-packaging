@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        4.rev2363%{?dist}
+Release:        5.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -28,6 +28,7 @@ Patch13:        %{name}-%{version}.undo-redo-issue.patch
 Patch14:        %{name}-%{version}.missing-focus.patch
 Patch15:        %{name}-%{version}.fix-unwanted-mouse-cursor-move.patch
 Patch16:        %{name}-%{version}.3Dviewer-arcs-draw-issue.patch
+Patch17:        %{name}-%{version}.search-current-sheet-only.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -187,6 +188,7 @@ Documentation and tutorials for Kicad in Chinese
 %patch14 -p1 -b .missing-focus
 %patch15 -p1 -b .fix-unwanted-mouse-cursor-move
 %patch16 -p0 -b .3Dviewer-arcs-draw-issue
+%patch17 -p1 -b .search-current-sheet-only
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -407,6 +409,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Jun 11 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-5
+- Fix a crash in searching string (https://bugs.launchpad.net/kicad/+bug/592566)
+
 * Mon Jun  8 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-4
 - Fix a focus issue (https://bugs.launchpad.net/kicad/+bug/587970)
 - Fix an unwanted mouse cursor move when using the t hotkey in pcbnew
