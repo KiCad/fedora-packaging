@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        6.rev2363%{?dist}
+Release:        7.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -411,6 +411,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Wed Jul 14 2010 Dan Horák <dan@danny.cz> - 2010.05.27-7.rev2363
+- rebuilt against wxGTK-2.8.11-2
+
 * Tue Jun 15 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-6
 - Fix some module edition issues (https://bugs.launchpad.net/kicad/+bug/593546,
   https://bugs.launchpad.net/kicad/+bug/593547)
