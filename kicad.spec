@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        7.rev2363%{?dist}
+Release:        8.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -30,6 +30,7 @@ Patch15:        %{name}-%{version}.fix-unwanted-mouse-cursor-move.patch
 Patch16:        %{name}-%{version}.3Dviewer-arcs-draw-issue.patch
 Patch17:        %{name}-%{version}.search-current-sheet-only.patch
 Patch18:        %{name}-%{version}.module-edition-issues.patch
+Patch19:        %{name}-%{version}.3DViewer-crash.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -191,6 +192,7 @@ Documentation and tutorials for Kicad in Chinese
 %patch16 -p0 -b .3Dviewer-arcs-draw-issue
 %patch17 -p1 -b .search-current-sheet-only
 %patch18 -p1 -b .module-edition-issues
+%patch19 -p1 -b .3DViewer-crash
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -411,6 +413,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sat Jan 29 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-8
+- Fix 3D view crash with some graphics cards (BZ #664143).
+
 * Wed Jul 14 2010 Dan Horák <dan@danny.cz> - 2010.05.27-7.rev2363
 - rebuilt against wxGTK-2.8.11-2
 
