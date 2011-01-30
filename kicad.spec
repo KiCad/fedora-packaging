@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        8.rev2363%{?dist}
+Release:        9.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -199,7 +199,7 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 
 
 #multilibs
-%ifarch x86_64 sparc64 ppc64 amd64
+%ifarch x86_64 sparc64 ppc64 amd64 s390x
 %{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
 %{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
 %endif
@@ -413,6 +413,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sun Jan 30 2011 Dan Horák <dan@danny.cz> - 2010.05.27-9
+- Add s390x as 64-bit arch
+
 * Sat Jan 29 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-8
 - Fix 3D view crash with some graphics cards (BZ #664143).
 
