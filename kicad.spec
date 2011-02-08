@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2010.05.27
-Release:        9.rev2363%{?dist}
+Release:        10.rev2363%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -413,6 +413,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2010.05.27-10.rev2363
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Sun Jan 30 2011 Dan Horák <dan@danny.cz> - 2010.05.27-9
 - Add s390x as 64-bit arch
 
