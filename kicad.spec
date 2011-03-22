@@ -1,6 +1,6 @@
 Name:           kicad
-Version:        2010.05.27
-Release:        10.rev2363%{?dist}
+Version:        2011.01.28
+Release:        1.rev2765%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -9,9 +9,9 @@ License:        GPLv2+
 URL:            https://launchpad.net/kicad
 
 # Source files created from upstream's bazaar repository
-# bzr export -r 2363 kicad-2010.05.27
-# bzr export -r 76 kicad-libraries-2010.05.27
-# bzr export -r 110 kicad-doc-2010.05.27
+# bzr export -r 2765 kicad-2011.01.28
+# bzr export -r 109 kicad-libraries-2011.01.28
+# bzr export -r 163 kicad-doc-2011.01.28
 
 Source:         %{name}-%{version}.tar.bz2
 Source1:        %{name}-doc-%{version}.tar.bz2
@@ -21,16 +21,8 @@ Source4:        %{name}-2010.05.09.x-kicad-pcbnew.desktop
 Source5:        pcbnew.desktop
 Source6:        %{name}-icons.tar.bz2
 
-Patch10:        %{name}-%{version}.real-version.patch
-Patch11:        %{name}-%{version}.display-footprint-value.patch
-Patch12:        %{name}-%{version}.set-extension-if-missing.patch
-Patch13:        %{name}-%{version}.undo-redo-issue.patch
-Patch14:        %{name}-%{version}.missing-focus.patch
-Patch15:        %{name}-%{version}.fix-unwanted-mouse-cursor-move.patch
-Patch16:        %{name}-%{version}.3Dviewer-arcs-draw-issue.patch
-Patch17:        %{name}-%{version}.search-current-sheet-only.patch
-Patch18:        %{name}-%{version}.module-edition-issues.patch
-Patch19:        %{name}-%{version}.3DViewer-crash.patch
+Patch10:        %{name}-%{version}-real-version.patch
+Patch11:        %{name}-%{version}-fix-build.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -184,15 +176,7 @@ Documentation and tutorials for Kicad in Chinese
 %setup -q -a 1 -a 2 -a 6
 
 %patch10 -p0 -b .real-version
-%patch11 -p0 -b .display-footprint-value
-%patch12 -p0 -b .set-extension-if-missing
-%patch13 -p0 -b .undo-redo-issue
-%patch14 -p1 -b .missing-focus
-%patch15 -p1 -b .fix-unwanted-mouse-cursor-move
-%patch16 -p0 -b .3Dviewer-arcs-draw-issue
-%patch17 -p1 -b .search-current-sheet-only
-%patch18 -p1 -b .module-edition-issues
-%patch19 -p1 -b .3DViewer-crash
+%patch11 -p1 -b .fix-build
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -413,13 +397,18 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Tue Mar 22 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-1.rev2765
+- New upstream version
+- Update versioning patch, all others patches no more needed
+- Patch to fix a link time error (with help from Kevin Kofler and Nikola Pajkovsky)
+
 * Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2010.05.27-10.rev2363
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
-* Sun Jan 30 2011 Dan Horák <dan@danny.cz> - 2010.05.27-9
+* Sun Jan 30 2011 Dan Horák <dan@danny.cz> - 2010.05.27-9.rev2363
 - Add s390x as 64-bit arch
 
-* Sat Jan 29 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-8
+* Sat Jan 29 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.27-8.rev2363
 - Fix 3D view crash with some graphics cards (BZ #664143).
 
 * Wed Jul 14 2010 Dan Horák <dan@danny.cz> - 2010.05.27-7.rev2363
