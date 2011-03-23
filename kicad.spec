@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2011.01.28
-Release:        1.rev2765%{?dist}
+Release:        2.rev2765%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -247,6 +247,7 @@ desktop-file-install \
 %{__cp} -p ./polygon/kbool/src/libkbool.so %{buildroot}%{_libdir}/%{name}
 %{__cp} -p ./common/libpcbcommon.so %{buildroot}%{_libdir}/%{name}
 %{__cp} -p ./polygon/libpolygon.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./potrace/libpotrace.so %{buildroot}%{_libdir}/%{name}
 
 #
 # Symbols libraries
@@ -397,6 +398,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Wed Mar 23 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-2.rev2765
+- Add missing library
+
 * Tue Mar 22 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-1.rev2765
 - New upstream version
 - Update versioning patch, all others patches no more needed
