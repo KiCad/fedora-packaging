@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2011.01.28
-Release:        2.rev2765%{?dist}
+Release:        3.rev2765%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -23,6 +23,7 @@ Source6:        %{name}-icons.tar.bz2
 
 Patch10:        %{name}-%{version}-real-version.patch
 Patch11:        %{name}-%{version}-fix-build.patch
+Patch12:        %{name}-%{version}-3DViewer-crash.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -177,6 +178,7 @@ Documentation and tutorials for Kicad in Chinese
 
 %patch10 -p0 -b .real-version
 %patch11 -p1 -b .fix-build
+%patch12 -p1 -b .3Dviewer-crash
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -398,6 +400,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Apr  4 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-3.rev2765
+- Fix 3D viewer crash (BZ #693008)
+
 * Wed Mar 23 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-2.rev2765
 - Add missing library
 
