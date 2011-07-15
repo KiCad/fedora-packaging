@@ -1,6 +1,6 @@
 Name:           kicad
-Version:        2011.01.28
-Release:        3.rev2765%{?dist}
+Version:        2011.07.12
+Release:        1.rev3047%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -9,9 +9,9 @@ License:        GPLv2+
 URL:            https://launchpad.net/kicad
 
 # Source files created from upstream's bazaar repository
-# bzr export -r 2765 kicad-2011.01.28
-# bzr export -r 109 kicad-libraries-2011.01.28
-# bzr export -r 163 kicad-doc-2011.01.28
+# bzr export -r 3047 kicad-2011.07.12
+# bzr export -r 109 kicad-libraries-07.12
+# bzr export -r 225 kicad-doc-2011.07.12
 
 Source:         %{name}-%{version}.tar.bz2
 Source1:        %{name}-doc-%{version}.tar.bz2
@@ -20,10 +20,10 @@ Source3:        %{name}-ld.conf
 Source4:        %{name}-2010.05.09.x-kicad-pcbnew.desktop
 Source5:        pcbnew.desktop
 Source6:        %{name}-icons.tar.bz2
+Source7:        Epcos-MKT-1.0.tar.bz2
 
 Patch10:        %{name}-%{version}-real-version.patch
-Patch11:        %{name}-%{version}-fix-build.patch
-Patch12:        %{name}-%{version}-3DViewer-crash.patch
+Patch11:        %{name}-%{version}-fix-linking.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -134,6 +134,19 @@ BuildArch:      noarch
 Documentation and tutorials for Kicad in Italian
 
 
+%package        doc-pl
+Summary:        Documentation for Kicad in Polish
+Summary(fr):    Documentations pour kicad en polonais
+Group:          Documentation
+Requires:       %{name}-doc = %{version}-%{release}
+%if 0%{?fedora} >= 11
+BuildArch:      noarch
+%endif
+
+%description    doc-pl
+Documentation and tutorials for Kicad in Polish
+
+
 %package        doc-pt
 Summary:        Documentation for Kicad in Portuguese
 Summary(fr):    Documentations pour kicad en portugais
@@ -174,11 +187,10 @@ Documentation and tutorials for Kicad in Chinese
 
 
 %prep
-%setup -q -a 1 -a 2 -a 6
+%setup -q -a 1 -a 2 -a 6 -a 7
 
-%patch10 -p0 -b .real-version
-%patch11 -p1 -b .fix-build
-%patch12 -p1 -b .3Dviewer-crash
+%patch10 -p1 -b .real-version
+%patch11 -p1 -b .fix-linking
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -193,11 +205,17 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 
 %build
 
+# Add Epcos library
+cd Epcos-MKT-1.0
+cp -pR library ../%{name}-libraries-%{version}/
+cp -pR modules ../%{name}-libraries-%{version}/
+cd ..
+
 #
 # Symbols libraries
 #
 pushd %{name}-libraries-%{version}/
-%cmake -DCMAKE_BUILD_TYPE=Release .
+%cmake -DKICAD_STABLE_VERSION=ON
 %{__make} %{?_smp_mflags} VERBOSE=1
 popd
 
@@ -205,7 +223,7 @@ popd
 #
 # Core components
 #
-%cmake -DCMAKE_BUILD_TYPE=Release
+%cmake -DKICAD_STABLE_VERSION=ON
 %{__make} %{?_smp_mflags} VERBOSE=1
 
 
@@ -219,7 +237,7 @@ popd
 cd %{name}-doc-%{version}/internat
 for dir in ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
-  install -m 644 -D ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/%{name}.mo
+  install -m 644 -D ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/LC_MESSAGES/%{name}.mo
 done
 cd ../..
 
@@ -385,6 +403,10 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/it
 
+%files doc-pl
+%defattr(-,root,root,-)
+%doc %{_docdir}/%{name}/help/pl
+
 %files doc-pt
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/pt
@@ -400,6 +422,13 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Jul 12 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-1.rev3047
+- New upstream version
+- Update versioning patch
+- Add Polish documentation
+- Add Epcos MKT capacitors library
+- Fix localisation installation path
+
 * Mon Apr  4 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.01.28-3.rev2765
 - Fix 3D viewer crash (BZ #693008)
 

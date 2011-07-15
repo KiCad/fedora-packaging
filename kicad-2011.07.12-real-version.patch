@@ -1,0 +1,11 @@
+--- common/build_version.cpp.orig	2011-07-12 19:16:32.000000000 +0200
++++ common/build_version.cpp	2011-07-12 19:22:59.000000000 +0200
+@@ -6,7 +6,7 @@
+ #endif
+ 
+ #ifndef KICAD_BUILD_VERSION
+-#define KICAD_BUILD_VERSION "(2011-07-08)"
++#define KICAD_BUILD_VERSION "(2011-07-12 BZR 3047)"
+ #endif
+ 
+ 
