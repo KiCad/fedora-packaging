@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2011.07.12
-Release:        1.rev3047%{?dist}
+Release:        2.rev3047%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -189,8 +189,8 @@ Documentation and tutorials for Kicad in Chinese
 %prep
 %setup -q -a 1 -a 2 -a 6 -a 7
 
-%patch10 -p1 -b .real-version
-%patch11 -p1 -b .fix-linking
+%patch10 -p0 -b .real-version
+%patch11 -p0 -b .fix-linking
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -422,6 +422,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Fri Jul 15 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-2.rev3047
+- Fix patch command 
+
 * Mon Jul 12 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-1.rev3047
 - New upstream version
 - Update versioning patch
