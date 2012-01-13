@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2011.07.12
-Release:        2.rev3047%{?dist}
+Release:        3.rev3047%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -422,6 +422,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2011.07.12-3.rev3047
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Fri Jul 15 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-2.rev3047
 - Fix patch command 
 
