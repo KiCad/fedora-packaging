@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2011.07.12
-Release:        3.rev3047%{?dist}
+Release:        4.rev3047%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -24,6 +24,7 @@ Source7:        Epcos-MKT-1.0.tar.bz2
 
 Patch10:        %{name}-%{version}-real-version.patch
 Patch11:        %{name}-%{version}-fix-linking.patch
+Patch12:        %{name}-%{version}-boost-polygon-declare-gtlsort-earlier.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -191,6 +192,7 @@ Documentation and tutorials for Kicad in Chinese
 
 %patch10 -p0 -b .real-version
 %patch11 -p0 -b .fix-linking
+%patch12 -p0 -b .gcc-4.7
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -422,6 +424,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Wed Jan 25 2012 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-4.rev3047
+- Fix gcc-4.7 issue by Scott Tsai <scottt.tw@gmail.com> 
+
 * Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2011.07.12-3.rev3047
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
