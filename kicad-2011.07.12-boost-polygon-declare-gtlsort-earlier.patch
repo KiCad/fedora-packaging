@@ -1,0 +1,11 @@
+--- include/boost/polygon/polygon.hpp.orig	2011-07-12 19:16:41.000000000 +0200
++++ include/boost/polygon/polygon.hpp	2012-01-25 19:34:06.000000000 +0100
+@@ -24,6 +24,8 @@
+ #include "transform.hpp"
+ #include "detail/transform_detail.hpp"
+ 
++#include "detail/polygon_sort_adaptor.hpp"
++
+ //interval
+ #include "interval_data.hpp"
+ #include "interval_traits.hpp"
