@@ -1,6 +1,6 @@
 Name:           kicad
-Version:        2011.07.12
-Release:        4.rev3047%{?dist}
+Version:        2012.01.19
+Release:        1.rev3256%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -9,9 +9,9 @@ License:        GPLv2+
 URL:            https://launchpad.net/kicad
 
 # Source files created from upstream's bazaar repository
-# bzr export -r 3047 kicad-2011.07.12
-# bzr export -r 109 kicad-libraries-07.12
-# bzr export -r 225 kicad-doc-2011.07.12
+# bzr export -r 3256 kicad-2012.01.19
+# bzr export -r 114 kicad-libraries-2012.01.19
+# bzr export -r 309 kicad-doc-2012.01.19
 
 Source:         %{name}-%{version}.tar.bz2
 Source1:        %{name}-doc-%{version}.tar.bz2
@@ -23,8 +23,18 @@ Source6:        %{name}-icons.tar.bz2
 Source7:        Epcos-MKT-1.0.tar.bz2
 
 Patch10:        %{name}-%{version}-real-version.patch
-Patch11:        %{name}-%{version}-fix-linking.patch
-Patch12:        %{name}-%{version}-boost-polygon-declare-gtlsort-earlier.patch
+Patch11:        %{name}-2011.07.12-fix-linking.patch
+Patch12:        %{name}-2011.07.12-boost-polygon-declare-gtlsort-earlier.patch
+Patch13:        %{name}-%{version}-fix-linking.patch
+Patch14:        %{name}-%{version}-fix-bom-in-python.patch
+
+Patch20:        %{name}-%{version}-fix-plotting-scale.patch
+Patch21:        %{name}-%{version}-move-up-junction-button.rev3371.patch
+Patch22:        %{name}-%{version}-thermal-relief.rev3281.patch
+Patch23:        %{name}-%{version}-undo-redo-auto.rev3297.patch
+Patch24:        %{name}-%{version}-cvpcb-preview.rev3303.patch
+Patch25:        %{name}-%{version}-pcb-calculation.rev3328.patch
+Patch26:        %{name}-%{version}-ps-plotting-width-correction.rev3342.patch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -32,6 +42,7 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
 BuildRequires:  boost-devel
 BuildRequires:  cmake
+BuildRequires:  doxygen
 
 Requires:       electronics-menu
 
@@ -191,8 +202,18 @@ Documentation and tutorials for Kicad in Chinese
 %setup -q -a 1 -a 2 -a 6 -a 7
 
 %patch10 -p0 -b .real-version
-%patch11 -p0 -b .fix-linking
+%patch11 -p0 -b .fix-linking1
 %patch12 -p0 -b .gcc-4.7
+%patch13 -p0 -b .fix-linking2
+%patch14 -p1 -b .fix-bom-in-python
+
+%patch20 -p0 -b .fix-plotting-scale
+%patch21 -p0 -b .junction-button
+%patch22 -p0 -b .thermal-relief
+%patch23 -p1 -b .undo-redo
+%patch24 -p1 -b .cvpcb-preview
+%patch25 -p0 -b .pcb-calculation
+%patch26 -p1 -b .width-correction
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -237,7 +258,7 @@ popd
 
 # install localization
 cd %{name}-doc-%{version}/internat
-for dir in ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
+for dir in bg ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
   install -m 644 -D ${dir}/%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/LC_MESSAGES/%{name}.mo
 done
@@ -264,7 +285,7 @@ desktop-file-install \
 
 # Missing requires libraries
 %{__cp} -p ./3d-viewer/lib3d-viewer.so %{buildroot}%{_libdir}/%{name}
-%{__cp} -p ./bitmaps/libbitmaps.so %{buildroot}%{_libdir}/%{name}
+%{__cp} -p ./bitmaps_png/libbitmaps.so %{buildroot}%{_libdir}/%{name}
 %{__cp} -p ./common/libcommon.so %{buildroot}%{_libdir}/%{name}
 %{__cp} -p ./polygon/kbool/src/libkbool.so %{buildroot}%{_libdir}/%{name}
 %{__cp} -p ./common/libpcbcommon.so %{buildroot}%{_libdir}/%{name}
@@ -319,7 +340,7 @@ install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/kica
 %{__rm} -f  %{name}-doc-%{version}/doc/tutorials/CMakeLists.txt
 
 %{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
-%{__cp} -pr AUTHORS.txt CHANGELOG* version.txt %{buildroot}%{_docdir}/%{name}
+%{__cp} -pr AUTHORS.txt CHANGELOG* %{buildroot}%{_docdir}/%{name}
 
 
 %find_lang %{name}
@@ -369,18 +390,14 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files doc
 %defattr(-,root,root,-)
 %dir %{_docdir}/%{name}
-%dir %{_docdir}/%{name}/help/
-%dir %{_docdir}/%{name}/tutorials
 %doc %{_docdir}/%{name}/*.txt
-%doc %{_docdir}/%{name}/scripts
 %doc %{_docdir}/%{name}/contrib
-%doc %{_docdir}/%{name}/help/en/docs_src/
-%doc %{_docdir}/%{name}/help/en/cvpcb.pdf
-%doc %{_docdir}/%{name}/help/en/eeschema.pdf
-%doc %{_docdir}/%{name}/help/en/gerbview.pdf
-%doc %{_docdir}/%{name}/help/en/pcbnew.pdf
+%dir %{_docdir}/%{name}/help/
+%doc %{_docdir}/%{name}/help/en
 %doc %{_docdir}/%{name}/help/file_formats
+%dir %{_docdir}/%{name}/tutorials
 %doc %{_docdir}/%{name}/tutorials/en
+%doc %{_docdir}/%{name}/scripts
 
 %files doc-de
 %defattr(-,root,root,-)
@@ -404,10 +421,12 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %files doc-it
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/it
+%doc %{_docdir}/%{name}/tutorials/it
 
 %files doc-pl
 %defattr(-,root,root,-)
 %doc %{_docdir}/%{name}/help/pl
+%doc %{_docdir}/%{name}/tutorials/pl
 
 %files doc-pt
 %defattr(-,root,root,-)
@@ -424,6 +443,22 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sun Jan 29 2012 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2012.01.19-1.rev3256
+- New upstream release
+- Add doxygen as build requirement
+- Add bulgarian language
+- Add it and pl tutorials
+- Update versioning patch
+- Add patch to fix python syntax in bom-in-python (Gerd v. Egidy <gerd@egidy.de>)
+- Add a new patch to fix a new link time error
+- Fix a PS plotting scale bug
+- Move junction button close to no connexion button
+- Fix thermal relief gap calculation for circular pads in pcbnew
+- Add undo/redo support for Pcbnew auto place, auto move, and auto route features.
+- Make CvPcb correctly preview the selected component footprint if one has already been assigned.
+- Fix a bug in pcb calculation
+- Width tuning (width correction) for PS plotting of tracks, pads and vias
+
 * Wed Jan 25 2012 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-4.rev3047
 - Fix gcc-4.7 issue by Scott Tsai <scottt.tw@gmail.com> 
 
@@ -493,7 +528,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
   https://bugs.launchpad.net/kicad/+bug/583939
 
 * Tue May 18 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-2
-- No backup of patched files to deleted
+- No backup of patched files to delete
 - Add noreplace flag to config macro
 
 * Mon May 17 2010 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2010.05.09-1
@@ -593,7 +628,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 - Autorebuild for GCC 4.3
 
 * Mon Oct 15 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-2
-  - Update desktop file
+- Update desktop file
 
 * Thu Oct 04 2007 Alain Portal <aportal[AT]univ-montp2[DOT]fr> 2007.07.09-1
 - New upstream version

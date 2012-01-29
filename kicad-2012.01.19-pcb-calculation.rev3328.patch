@@ -1,0 +1,11 @@
+--- pcbnew/class_board.cpp.orig	2012-01-22 17:23:38.000000000 +0100
++++ pcbnew/class_board.cpp	2012-01-27 18:49:34.000000000 +0100
+@@ -1684,8 +1684,6 @@
+     int idxmax = aPadList.size()-1;
+ 
+     int delta = aPadList.size();
+-    if( delta & 1 && delta > 1 )
+-        delta += 1;
+ 
+     int idx = 0;        // Starting index is the beginning of list
+     while( delta )

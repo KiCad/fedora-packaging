@@ -1,0 +1,740 @@
+diff -ru kicad-2012.01.19-4.rev3256/common/common_plotPS_functions.cpp kicad-2012.01.19-5.rev3256/common/common_plotPS_functions.cpp
+--- kicad-2012.01.19-4.rev3256/common/common_plotPS_functions.cpp	2012-01-22 17:23:37.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/common/common_plotPS_functions.cpp	2012-01-27 20:21:51.000000000 +0100
+@@ -489,16 +489,18 @@
+ void PS_PLOTTER::flash_pad_circle( wxPoint pos, int diametre,
+                                    GRTraceMode modetrace )
+ {
++    int current_line_width;
+     wxASSERT( output_file );
+ 
+     set_current_line_width( -1 );
+-    if( current_pen_width >= diametre )
+-        set_current_line_width( diametre );
++    current_line_width = get_current_line_width();
++    if( current_line_width > diametre )
++        current_line_width = diametre;
+ 
+     if( modetrace == FILLED )
+-        circle( pos, diametre - current_pen_width, FILLED_SHAPE );
++        circle( pos, diametre - current_pen_width, FILLED_SHAPE, current_line_width );
+     else
+-        circle( pos, diametre - current_pen_width, NO_FILL );
++        circle( pos, diametre - current_pen_width, NO_FILL, current_line_width );
+ 
+     set_current_line_width( -1 );
+ }
+diff -ru kicad-2012.01.19-4.rev3256/include/plot_common.h kicad-2012.01.19-5.rev3256/include/plot_common.h
+--- kicad-2012.01.19-4.rev3256/include/plot_common.h	2012-01-22 17:23:38.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/include/plot_common.h	2012-01-27 20:59:30.000000000 +0100
+@@ -77,6 +77,20 @@
+     virtual void set_color( int color )  = 0;
+     virtual void set_dash( bool dashed ) = 0;
+ 
++    virtual int get_current_line_width()
++    {
++        return current_pen_width;
++    }
++
++    virtual void set_plot_width_adj( double width )
++    {
++    }
++
++    virtual double get_plot_width_adj()
++    {
++        return 0.;
++    }
++
+     virtual void set_creator( const wxString& _creator )
+     {
+         creator = _creator;
+@@ -350,6 +364,16 @@
+         plot_scale_adjX = scaleX;
+         plot_scale_adjY = scaleY;
+     }
++ 
++    virtual void set_plot_width_adj( double width )
++    {
++        plot_width_adj = width;
++    }
++    
++    virtual double get_plot_width_adj()
++    {
++        return plot_width_adj;
++    }
+ 
+ 
+     virtual void set_viewport( wxPoint aOffset, double aScale, bool aMirror );
+@@ -393,6 +417,7 @@
+ 
+ protected:
+     double plot_scale_adjX, plot_scale_adjY;
++    double plot_width_adj;
+ };
+ 
+ /* Class to handle a D_CODE when plotting a board : */
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/class_board.cpp kicad-2012.01.19-5.rev3256/pcbnew/class_board.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/class_board.cpp	2012-01-22 17:23:38.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/class_board.cpp	2012-01-27 20:25:02.000000000 +0100
+@@ -278,6 +278,21 @@
+ }
+ 
+ 
++int BOARD::GetSmallestClearanceValue()
++{
++    int clearance = m_NetClasses.GetDefault()->GetClearance();
++
++    //Read list of Net Classes
++    for( NETCLASSES::const_iterator nc = m_NetClasses.begin(); nc != m_NetClasses.end(); nc++ )
++    {
++        NETCLASS* netclass = nc->second;
++        clearance = MIN( clearance, netclass->GetClearance() );
++    }
++
++    return clearance;
++}
++
++
+ int BOARD::GetCurrentMicroViaSize()
+ {
+     NETCLASS* netclass = m_NetClasses.Find( m_CurrentNetClassName );
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/class_board.h kicad-2012.01.19-5.rev3256/pcbnew/class_board.h
+--- kicad-2012.01.19-4.rev3256/pcbnew/class_board.h	2012-01-22 17:23:39.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/class_board.h	2012-01-27 20:26:22.000000000 +0100
+@@ -761,6 +761,12 @@
+     int GetBiggestClearanceValue();
+ 
+     /**
++     * Function GetSmallestClearanceValue
++     * @return the smallest clearance value found in NetClasses list
++     */
++    int GetSmallestClearanceValue();
++
++    /**
+      * Function GetCurrentTrackWidth
+      * @return the current track width, according to the selected options
+      * ( using the default netclass value or a preset value )
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.cpp kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.cpp	2012-01-22 17:23:35.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.cpp	2012-01-27 20:31:44.000000000 +0100
+@@ -179,7 +179,6 @@
+ 	m_GerberOptionsSizer->Add( m_excludeEdgeLayerOpt, 0, wxTOP|wxRIGHT|wxLEFT, 2 );
+ 	
+ 	m_subtractMaskFromSilk = new wxCheckBox( this, wxID_ANY, _("Subtract soldermask from silkscreen"), wxDefaultPosition, wxDefaultSize, 0 );
+-	m_subtractMaskFromSilk->SetValue(true); 
+ 	m_subtractMaskFromSilk->SetToolTip( _("Remove silkscreen from areas without soldermask") );
+ 	
+ 	m_GerberOptionsSizer->Add( m_subtractMaskFromSilk, 0, wxTOP|wxRIGHT|wxLEFT, 2 );
+@@ -268,6 +267,20 @@
+ 	
+ 	bSizer17->Add( bSizer19, 1, wxEXPAND, 5 );
+ 	
++	wxBoxSizer* bSizer191;
++	bSizer191 = new wxBoxSizer( wxVERTICAL );
++	
++	m_textPSFineAdjustWidth = new wxStaticText( this, wxID_ANY, _("Width correction"), wxDefaultPosition, wxDefaultSize, 0 );
++	m_textPSFineAdjustWidth->Wrap( -1 );
++	bSizer191->Add( m_textPSFineAdjustWidth, 0, wxLEFT|wxRIGHT|wxTOP, 5 );
++	
++	m_PSFineAdjustWidthOpt = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
++	m_PSFineAdjustWidthOpt->SetToolTip( _("Set global width correction for exact width postscript output.\nThese width correction is intended to compensate tracks width and also pads and vias size errors.\nThe reasonable width correction value must be in a range of [-(MinTrackWidth-1), +(MinClearanceValue-1)] in decimils.") );
++	
++	bSizer191->Add( m_PSFineAdjustWidthOpt, 0, wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT, 5 );
++	
++	bSizer17->Add( bSizer191, 1, wxEXPAND, 5 );
++	
+ 	m_PSOptionsSizer->Add( bSizer17, 1, wxEXPAND, 5 );
+ 	
+ 	m_plotPSNegativeOpt = new wxCheckBox( this, wxID_ANY, _("Negative plot"), wxDefaultPosition, wxDefaultSize, 0 );
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.fbp kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.fbp
+--- kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.fbp	2012-01-22 17:23:35.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.fbp	2012-01-27 20:42:20.000000000 +0100
+@@ -3416,6 +3416,189 @@
+                                                                 </object>
+                                                             </object>
+                                                         </object>
++                                                        <object class="sizeritem" expanded="1">
++                                                            <property name="border">5</property>
++                                                            <property name="flag">wxEXPAND</property>
++                                                            <property name="proportion">1</property>
++                                                            <object class="wxBoxSizer" expanded="1">
++                                                                <property name="minimum_size"></property>
++                                                                <property name="name">bSizer191</property>
++                                                                <property name="orient">wxVERTICAL</property>
++                                                                <property name="permission">none</property>
++                                                                <object class="sizeritem" expanded="1">
++                                                                    <property name="border">5</property>
++                                                                    <property name="flag">wxLEFT|wxRIGHT|wxTOP</property>
++                                                                    <property name="proportion">0</property>
++                                                                    <object class="wxStaticText" expanded="1">
++                                                                        <property name="BottomDockable">1</property>
++                                                                        <property name="LeftDockable">1</property>
++                                                                        <property name="RightDockable">1</property>
++                                                                        <property name="TopDockable">1</property>
++                                                                        <property name="aui_name"></property>
++                                                                        <property name="bg"></property>
++                                                                        <property name="caption"></property>
++                                                                        <property name="caption_visible">1</property>
++                                                                        <property name="center_pane">0</property>
++                                                                        <property name="close_button">1</property>
++                                                                        <property name="context_help"></property>
++                                                                        <property name="context_menu">1</property>
++                                                                        <property name="default_pane">0</property>
++                                                                        <property name="dock">Dock</property>
++                                                                        <property name="dock_fixed">0</property>
++                                                                        <property name="docking">Left</property>
++                                                                        <property name="enabled">1</property>
++                                                                        <property name="fg"></property>
++                                                                        <property name="floatable">1</property>
++                                                                        <property name="font"></property>
++                                                                        <property name="gripper">0</property>
++                                                                        <property name="hidden">0</property>
++                                                                        <property name="id">wxID_ANY</property>
++                                                                        <property name="label">Width correction</property>
++                                                                        <property name="layer"></property>
++                                                                        <property name="maximize_button">0</property>
++                                                                        <property name="maximum_size"></property>
++                                                                        <property name="minimize_button">0</property>
++                                                                        <property name="minimum_size"></property>
++                                                                        <property name="moveable">1</property>
++                                                                        <property name="name">m_textPSFineAdjustWidth</property>
++                                                                        <property name="pane_border">1</property>
++                                                                        <property name="pane_position"></property>
++                                                                        <property name="pane_size"></property>
++                                                                        <property name="permission">protected</property>
++                                                                        <property name="pin_button">1</property>
++                                                                        <property name="pos"></property>
++                                                                        <property name="position"></property>
++                                                                        <property name="resize">Resizable</property>
++                                                                        <property name="row"></property>
++                                                                        <property name="show">1</property>
++                                                                        <property name="size"></property>
++                                                                        <property name="style"></property>
++                                                                        <property name="subclass"></property>
++                                                                        <property name="toolbar_pane">0</property>
++                                                                        <property name="tooltip"></property>
++                                                                        <property name="validator_data_type"></property>
++                                                                        <property name="validator_style">wxFILTER_NONE</property>
++                                                                        <property name="validator_type">wxDefaultValidator</property>
++                                                                        <property name="validator_variable"></property>
++                                                                        <property name="window_extra_style"></property>
++                                                                        <property name="window_name"></property>
++                                                                        <property name="window_style"></property>
++                                                                        <property name="wrap">-1</property>
++                                                                        <event name="OnChar"></event>
++                                                                        <event name="OnEnterWindow"></event>
++                                                                        <event name="OnEraseBackground"></event>
++                                                                        <event name="OnKeyDown"></event>
++                                                                        <event name="OnKeyUp"></event>
++                                                                        <event name="OnKillFocus"></event>
++                                                                        <event name="OnLeaveWindow"></event>
++                                                                        <event name="OnLeftDClick"></event>
++                                                                        <event name="OnLeftDown"></event>
++                                                                        <event name="OnLeftUp"></event>
++                                                                        <event name="OnMiddleDClick"></event>
++                                                                        <event name="OnMiddleDown"></event>
++                                                                        <event name="OnMiddleUp"></event>
++                                                                        <event name="OnMotion"></event>
++                                                                        <event name="OnMouseEvents"></event>
++                                                                        <event name="OnMouseWheel"></event>
++                                                                        <event name="OnPaint"></event>
++                                                                        <event name="OnRightDClick"></event>
++                                                                        <event name="OnRightDown"></event>
++                                                                        <event name="OnRightUp"></event>
++                                                                        <event name="OnSetFocus"></event>
++                                                                        <event name="OnSize"></event>
++                                                                        <event name="OnUpdateUI"></event>
++                                                                    </object>
++                                                                </object>
++                                                                <object class="sizeritem" expanded="1">
++                                                                    <property name="border">5</property>
++                                                                    <property name="flag">wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</property>
++                                                                    <property name="proportion">0</property>
++                                                                    <object class="wxTextCtrl" expanded="1">
++                                                                        <property name="BottomDockable">1</property>
++                                                                        <property name="LeftDockable">1</property>
++                                                                        <property name="RightDockable">1</property>
++                                                                        <property name="TopDockable">1</property>
++                                                                        <property name="aui_name"></property>
++                                                                        <property name="bg"></property>
++                                                                        <property name="caption"></property>
++                                                                        <property name="caption_visible">1</property>
++                                                                        <property name="center_pane">0</property>
++                                                                        <property name="close_button">1</property>
++                                                                        <property name="context_help"></property>
++                                                                        <property name="context_menu">1</property>
++                                                                        <property name="default_pane">0</property>
++                                                                        <property name="dock">Dock</property>
++                                                                        <property name="dock_fixed">0</property>
++                                                                        <property name="docking">Left</property>
++                                                                        <property name="enabled">1</property>
++                                                                        <property name="fg"></property>
++                                                                        <property name="floatable">1</property>
++                                                                        <property name="font"></property>
++                                                                        <property name="gripper">0</property>
++                                                                        <property name="hidden">0</property>
++                                                                        <property name="id">wxID_ANY</property>
++                                                                        <property name="layer"></property>
++                                                                        <property name="maximize_button">0</property>
++                                                                        <property name="maximum_size"></property>
++                                                                        <property name="maxlength">0</property>
++                                                                        <property name="minimize_button">0</property>
++                                                                        <property name="minimum_size"></property>
++                                                                        <property name="moveable">1</property>
++                                                                        <property name="name">m_PSFineAdjustWidthOpt</property>
++                                                                        <property name="pane_border">1</property>
++                                                                        <property name="pane_position"></property>
++                                                                        <property name="pane_size"></property>
++                                                                        <property name="permission">protected</property>
++                                                                        <property name="pin_button">1</property>
++                                                                        <property name="pos"></property>
++                                                                        <property name="position"></property>
++                                                                        <property name="resize">Resizable</property>
++                                                                        <property name="row"></property>
++                                                                        <property name="show">1</property>
++                                                                        <property name="size"></property>
++                                                                        <property name="style"></property>
++                                                                        <property name="subclass"></property>
++                                                                        <property name="toolbar_pane">0</property>
++                                                                        <property name="tooltip">Set global width correction for exact width postscript output.&#x0A;These width correction is intended to compensate tracks width and also pads and vias size errors.&#x0A;The reasonable width correction value must be in a range of [-(MinTrackWidth-1), +(MinClearanceValue-1)] in decimils.</property>
++                                                                        <property name="validator_data_type"></property>
++                                                                        <property name="validator_style">wxFILTER_NONE</property>
++                                                                        <property name="validator_type">wxDefaultValidator</property>
++                                                                        <property name="validator_variable"></property>
++                                                                        <property name="value"></property>
++                                                                        <property name="window_extra_style"></property>
++                                                                        <property name="window_name"></property>
++                                                                        <property name="window_style"></property>
++                                                                        <event name="OnChar"></event>
++                                                                        <event name="OnEnterWindow"></event>
++                                                                        <event name="OnEraseBackground"></event>
++                                                                        <event name="OnKeyDown"></event>
++                                                                        <event name="OnKeyUp"></event>
++                                                                        <event name="OnKillFocus"></event>
++                                                                        <event name="OnLeaveWindow"></event>
++                                                                        <event name="OnLeftDClick"></event>
++                                                                        <event name="OnLeftDown"></event>
++                                                                        <event name="OnLeftUp"></event>
++                                                                        <event name="OnMiddleDClick"></event>
++                                                                        <event name="OnMiddleDown"></event>
++                                                                        <event name="OnMiddleUp"></event>
++                                                                        <event name="OnMotion"></event>
++                                                                        <event name="OnMouseEvents"></event>
++                                                                        <event name="OnMouseWheel"></event>
++                                                                        <event name="OnPaint"></event>
++                                                                        <event name="OnRightDClick"></event>
++                                                                        <event name="OnRightDown"></event>
++                                                                        <event name="OnRightUp"></event>
++                                                                        <event name="OnSetFocus"></event>
++                                                                        <event name="OnSize"></event>
++                                                                        <event name="OnText"></event>
++                                                                        <event name="OnTextEnter"></event>
++                                                                        <event name="OnTextMaxLen"></event>
++                                                                        <event name="OnTextURL"></event>
++                                                                        <event name="OnUpdateUI"></event>
++                                                                    </object>
++                                                                </object>
++                                                            </object>
++                                                        </object>
+                                                     </object>
+                                                 </object>
+                                                 <object class="sizeritem" expanded="0">
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.h kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.h
+--- kicad-2012.01.19-4.rev3256/pcbnew/dialogs/dialog_plot_base.h	2012-01-22 17:23:35.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/dialogs/dialog_plot_base.h	2012-01-27 20:43:04.000000000 +0100
+@@ -85,6 +85,8 @@
+ 		wxTextCtrl* m_fineAdjustXscaleOpt;
+ 		wxStaticText* m_staticText8;
+ 		wxTextCtrl* m_fineAdjustYscaleOpt;
++		wxStaticText* m_textPSFineAdjustWidth;
++		wxTextCtrl* m_PSFineAdjustWidthOpt;
+ 		wxCheckBox* m_plotPSNegativeOpt;
+ 		wxCheckBox* m_forcePSA4OutputOpt;
+ 		wxTextCtrl* m_messagesBox;
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/pcbplot.cpp kicad-2012.01.19-5.rev3256/pcbnew/pcbplot.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/pcbplot.cpp	2012-01-22 17:23:38.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/pcbplot.cpp	2012-01-28 15:27:08.000000000 +0100
+@@ -24,6 +24,7 @@
+ /* Keywords to r/w options in m_Config */
+ #define CONFIG_XFINESCALE_ADJ    wxT( "PlotXFineScaleAdj" )
+ #define CONFIG_YFINESCALE_ADJ    wxT( "PlotYFineScaleAdj" )
++#define CONFIG_PS_FINEWIDTH_ADJ  wxT( "PSPlotFineWidthAdj" )
+ 
+ // Define min and max reasonable values for print scale
+ #define MIN_SCALE 0.01
+@@ -59,10 +60,13 @@
+ private:
+     PCB_EDIT_FRAME*  m_Parent;
+     wxConfig*        m_Config;
+-    std::vector<int> layerList;         // List to hold CheckListBox layer numbers
++    std::vector<int> layerList;               // List to hold CheckListBox layer numbers
+     double           m_XScaleAdjust;
+     double           m_YScaleAdjust;
+-    static wxPoint   prevPosition;      // Dialog position & size
++    double           m_PSWidthAdjust;         // Global width correction for exact width postscript output.
++    double           m_WidthAdjustMinValue;   // Global width correction
++    double           m_WidthAdjustMaxValue;   // margins.
++    static wxPoint   prevPosition;            // Dialog position & size
+     static wxSize    prevSize;
+ 
+ public:
+@@ -114,6 +118,12 @@
+ 
+     m_Config->Read( CONFIG_XFINESCALE_ADJ, &m_XScaleAdjust );
+     m_Config->Read( CONFIG_YFINESCALE_ADJ, &m_YScaleAdjust );
++    m_Config->Read( CONFIG_PS_FINEWIDTH_ADJ, &m_PSWidthAdjust);
++    
++    // The reasonable width correction value must be in a range of
++    // [-(MinTrackWidth-1), +(MinClearanceValue-1)] decimils.
++    m_WidthAdjustMinValue = -(board->GetBoardDesignSettings()->m_TrackMinWidth - 1);
++    m_WidthAdjustMaxValue = board->GetSmallestClearanceValue() - 1;
+ 
+     m_plotFormatOpt->SetSelection( g_PcbPlotOptions.GetPlotFormat() );
+ 
+@@ -135,6 +145,12 @@
+     msg = ReturnStringFromValue( g_UserUnit, g_PcbPlotOptions.GetPlotLineWidth(),
+                                  PCB_INTERNAL_UNIT );
+     m_linesWidth->AppendText( msg );
++    
++    // Set units for PS global width correction.
++    AddUnitSymbol( *m_textPSFineAdjustWidth, g_UserUnit );
++    
++    // Set units for PS global width correction.
++    AddUnitSymbol( *m_textPSFineAdjustWidth, g_UserUnit );
+ 
+     m_useAuxOriginCheckBox->SetValue( g_PcbPlotOptions.GetUseAuxOrigin() );
+ 
+@@ -148,6 +164,13 @@
+ 
+     msg.Printf( wxT( "%f" ), m_YScaleAdjust );
+     m_fineAdjustYscaleOpt->AppendText( msg );
++    
++    // Test for a reasonable PS width correction value. Set to 0 if problem.
++    if( m_PSWidthAdjust < m_WidthAdjustMinValue || m_PSWidthAdjust > m_WidthAdjustMaxValue )
++        m_PSWidthAdjust = 0.;
++
++    msg.Printf( wxT( "%f" ), To_User_Unit( g_UserUnit, m_PSWidthAdjust, PCB_INTERNAL_UNIT ) );
++    m_PSFineAdjustWidthOpt->AppendText( msg );
+ 
+     m_plotPSNegativeOpt->SetValue( g_PcbPlotOptions.m_PlotPSNegative );
+     m_forcePSA4OutputOpt->SetValue( g_PcbPlotOptions.GetPsA4Output() );
+@@ -282,16 +305,16 @@
+ 
+     wxFileName dirName = wxFileName::DirName( dirDialog.GetPath() );
+ 
+-    wxMessageDialog dialog( this, wxT( "Use a relative path? "),
+-                            wxT( "Plot Output Directory" ),
++    wxMessageDialog dialog( this, _( "Use a relative path? "),
++                            _( "Plot Output Directory" ),
+                             wxYES_NO | wxICON_QUESTION | wxYES_DEFAULT );
+ 
+     if( dialog.ShowModal() == wxID_YES ) {
+         wxString boardFilePath = ( (wxFileName) m_Parent->GetScreen()->GetFileName()).GetPath();
+ 
+         if( !dirName.MakeRelativeTo( boardFilePath ) )
+-            wxMessageBox( wxT( "Cannot make path relative (target volume different from board file volume)!" ),
+-                          wxT( "Plot Output Directory" ), wxICON_ERROR );
++            wxMessageBox( _( "Cannot make path relative (target volume different from board file volume)!" ),
++                          _( "Plot Output Directory" ), wxOK | wxICON_ERROR );
+     }
+ 
+     m_outputDirectoryName->SetValue( dirName.GetFullPath() );
+@@ -319,6 +342,7 @@
+         m_scaleOpt->Enable( true );
+         m_fineAdjustXscaleOpt->Enable( true );
+         m_fineAdjustYscaleOpt->Enable( true );
++        m_PSFineAdjustWidthOpt->Enable( true );
+         m_plotPSNegativeOpt->Enable( true );
+         m_PlotOptionsSizer->Hide( m_GerberOptionsSizer );
+         m_PlotOptionsSizer->Hide( m_HPGLOptionsSizer );
+@@ -345,6 +369,7 @@
+         m_scaleOpt->Enable( false );
+         m_fineAdjustXscaleOpt->Enable( false );
+         m_fineAdjustYscaleOpt->Enable( false );
++        m_PSFineAdjustWidthOpt->Enable( false );
+         m_plotPSNegativeOpt->SetValue( false );
+         m_plotPSNegativeOpt->Enable( false );
+         m_PlotOptionsSizer->Show( m_GerberOptionsSizer );
+@@ -370,6 +395,7 @@
+         m_scaleOpt->Enable( true );
+         m_fineAdjustXscaleOpt->Enable( false );
+         m_fineAdjustYscaleOpt->Enable( false );
++        m_PSFineAdjustWidthOpt->Enable( false );
+         m_plotPSNegativeOpt->SetValue( false );
+         m_plotPSNegativeOpt->Enable( false );
+         m_PlotOptionsSizer->Hide( m_GerberOptionsSizer );
+@@ -397,6 +423,7 @@
+         m_scaleOpt->SetSelection( 1 );
+         m_fineAdjustXscaleOpt->Enable( false );
+         m_fineAdjustYscaleOpt->Enable( false );
++        m_PSFineAdjustWidthOpt->Enable( false );
+         m_plotPSNegativeOpt->SetValue( false );
+         m_plotPSNegativeOpt->Enable( false );
+         m_PlotOptionsSizer->Hide( m_GerberOptionsSizer );
+@@ -447,7 +474,7 @@
+     {
+         msg = ReturnStringFromValue( g_UserUnit, tempOptions.GetHpglPenDiameter(), UNITS_MILS );
+         m_HPGLPenSizeOpt->SetValue( msg );
+-        msg.Printf( wxT( "HPGL pen size constrained!\n" ) );
++        msg.Printf( _( "HPGL pen size constrained!\n" ) );
+         m_messagesBox->AppendText( msg );
+     }
+ 
+@@ -459,7 +486,7 @@
+     {
+         msg = ReturnStringFromValue( UNSCALED_UNITS, tempOptions.GetHpglPenSpeed(), 1 );
+         m_HPGLPenSpeedOpt->SetValue( msg );
+-        msg.Printf( wxT( "HPGL pen speed constrained!\n" ) );
++        msg.Printf( _( "HPGL pen speed constrained!\n" ) );
+         m_messagesBox->AppendText( msg );
+     }
+ 
+@@ -471,7 +498,7 @@
+     {
+         msg = ReturnStringFromValue( g_UserUnit, tempOptions.GetHpglPenOverlay(), UNITS_MILS );
+         m_HPGLPenOverlayOpt->SetValue( msg );
+-        msg.Printf( wxT( "HPGL pen overlay constrained!\n" ) );
++        msg.Printf( _( "HPGL pen overlay constrained!\n" ) );
+         m_messagesBox->AppendText( msg );
+     }
+ 
+@@ -484,7 +511,7 @@
+         msg = ReturnStringFromValue( g_UserUnit, tempOptions.GetPlotLineWidth(),
+                                      PCB_INTERNAL_UNIT );
+         m_linesWidth->SetValue( msg );
+-        msg.Printf( wxT( "Default linewidth constrained!\n" ) );
++        msg.Printf( _( "Default linewidth constrained!\n" ) );
+         m_messagesBox->AppendText( msg );
+     }
+ 
+@@ -497,7 +524,7 @@
+     {
+         msg.Printf( wxT( "%f" ), m_XScaleAdjust );
+         m_fineAdjustXscaleOpt->SetValue( msg );
+-        msg.Printf( wxT( "X scale constrained!\n" ) );
++        msg.Printf( _( "X scale constrained!\n" ) );
+         m_messagesBox->AppendText( msg );
+     }
+ 
+@@ -511,10 +538,28 @@
+     {
+         msg.Printf( wxT( "%f" ), m_YScaleAdjust );
+         m_fineAdjustYscaleOpt->SetValue( msg );
+-        msg.Printf( wxT( "Y scale constrained!\n" ) );
++        msg.Printf( _( "Y scale constrained!\n" ) );
++        m_messagesBox->AppendText( msg );
++    }
++    
++    // PS Width correction
++    msg = m_PSFineAdjustWidthOpt->GetValue();
++    tmpDouble = ReturnValueFromString( g_UserUnit, msg, PCB_INTERNAL_UNIT );
++
++    if( !setDouble( &m_PSWidthAdjust, tmpDouble, m_WidthAdjustMinValue, m_WidthAdjustMaxValue ) )
++    {
++        msg = ReturnStringFromValue( g_UserUnit, m_PSWidthAdjust, PCB_INTERNAL_UNIT );
++        m_PSFineAdjustWidthOpt->SetValue( msg );
++        msg.Printf( _( "Width correction constrained!\nThe reasonable width correction value must be in a range of [%+f; %+f]" ),
++                    To_User_Unit( g_UserUnit, m_WidthAdjustMinValue, PCB_INTERNAL_UNIT ),
++                    To_User_Unit( g_UserUnit, m_WidthAdjustMaxValue, PCB_INTERNAL_UNIT ) );
++        msg += ( g_UserUnit == INCHES )? _(" (\")") : _(" (mm)");
++        msg += _( " for current design rules!\n" );
+         m_messagesBox->AppendText( msg );
+     }
+ 
++    m_Config->Write( CONFIG_PS_FINEWIDTH_ADJ, m_PSWidthAdjust );
++
+     m_Config->Write( CONFIG_YFINESCALE_ADJ, m_YScaleAdjust );
+ 
+     tempOptions.SetUseGerberExtensions( m_useGerberExtensions->GetValue() );
+@@ -565,10 +610,10 @@
+     if( !outputDir.MakeAbsolute( boardFilePath ) )
+     {
+         wxString msg;
+-        msg.Printf( wxT( " Cannot make %s absolute with respect to %s!" ),
++        msg.Printf( _( " Cannot make %s absolute with respect to %s!" ),
+                     GetChars( outputDir.GetPath() ),
+                     GetChars( boardFilePath ) );
+-        wxMessageBox( msg, wxT( "Plot" ), wxICON_ERROR );
++        wxMessageBox( msg, _( "Plot" ), wxOK | wxICON_ERROR );
+         return;
+     }
+ 
+@@ -577,12 +622,13 @@
+         if( wxMkdir( outputDir.GetPath() ) )
+         {
+             wxString msg;
+-            msg.Printf( wxT( "Directory %s created.\n" ), GetChars( outputDir.GetPath() ) );
++            msg.Printf( _( "Directory %s created.\n" ), GetChars( outputDir.GetPath() ) );
+             m_messagesBox->AppendText( msg );
+         }
+         else
+         {
+-            wxMessageBox( wxT( "Cannot create output directory!" ), wxT( "Plot" ), wxICON_ERROR );
++            wxMessageBox( _( "Cannot create output directory!" ),
++                               _( "Plot" ), wxOK | wxICON_ERROR );
+             return;
+         }
+     }
+@@ -623,6 +669,9 @@
+     if( m_fineAdjustYscaleOpt->IsEnabled() && m_YScaleAdjust != 0.0 )
+         g_PcbPlotOptions.m_FineScaleAdjustY = m_YScaleAdjust;
+ 
++    if( m_PSFineAdjustWidthOpt->IsEnabled() )
++        g_PcbPlotOptions.m_FineWidthAdjust = m_PSWidthAdjust;
++
+     switch( g_PcbPlotOptions.GetPlotFormat() )
+     {
+     case PLOT_FORMAT_POST:
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/pcb_plot_params.cpp kicad-2012.01.19-5.rev3256/pcbnew/pcb_plot_params.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/pcb_plot_params.cpp	2012-01-22 17:23:42.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/pcb_plot_params.cpp	2012-01-27 20:44:50.000000000 +0100
+@@ -102,6 +102,7 @@
+     scaleSelection         = 1;
+     m_FineScaleAdjustX     = 1.0;
+     m_FineScaleAdjustY     = 1.0;
++    m_FineWidthAdjust      = 0.;
+     outputDirectory        = wxT( "" );
+ }
+ 
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/pcb_plot_params.h kicad-2012.01.19-5.rev3256/pcbnew/pcb_plot_params.h
+--- kicad-2012.01.19-4.rev3256/pcbnew/pcb_plot_params.h	2012-01-22 17:23:42.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/pcb_plot_params.h	2012-01-27 20:45:42.000000000 +0100
+@@ -86,6 +86,8 @@
+     // Only X and Y dimensions are adjusted: circles are plotted as circle, even if X and Y fine scale differ.
+     double      m_FineScaleAdjustX;     // fine scale adjust X axis
+     double      m_FineScaleAdjustY;     // dine scale adjust Y axis
++    // These width factor is intended to compensate plotters (and mainly printers) line width error.
++    double      m_FineWidthAdjust;
+ 
+ private:
+     long        layerSelection;
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/plotps.cpp kicad-2012.01.19-5.rev3256/pcbnew/plotps.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/plotps.cpp	2012-01-27 14:42:34.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/plotps.cpp	2012-01-27 20:58:11.000000000 +0100
+@@ -101,6 +101,7 @@
+     plotter->set_paper_size( SheetPS );
+     plotter->set_scale_adjust( g_PcbPlotOptions.m_FineScaleAdjustX,
+                                g_PcbPlotOptions.m_FineScaleAdjustY );
++    plotter->set_plot_width_adj( g_PcbPlotOptions.m_FineWidthAdjust );
+     plotter->set_viewport( offset, scale, g_PcbPlotOptions.m_PlotMirror );
+     plotter->set_default_line_width( g_PcbPlotOptions.m_PlotLineWidth );
+     plotter->set_creator( wxT( "PCBNEW-PS" ) );
+diff -ru kicad-2012.01.19-4.rev3256/pcbnew/plot_rtn.cpp kicad-2012.01.19-5.rev3256/pcbnew/plot_rtn.cpp
+--- kicad-2012.01.19-4.rev3256/pcbnew/plot_rtn.cpp	2012-01-22 17:23:38.000000000 +0100
++++ kicad-2012.01.19-5.rev3256/pcbnew/plot_rtn.cpp	2012-01-27 20:57:10.000000000 +0100
+@@ -32,6 +32,12 @@
+ static void PlotTextModule( PLOTTER* plotter, TEXTE_MODULE* pt_texte,
+                             GRTraceMode trace_mode );
+ 
++static int doIntValueFitToBand( int aInt, int aMin, int aMax )
++{
++    if( aInt < aMin ) return aMin;
++    if( aInt > aMax ) return aMax;
++    return aInt;
++}   
+ 
+ /* Creates the plot for silkscreen layers
+  */
+@@ -826,6 +832,12 @@
+             shape_pos = pad->ReturnShapePos();
+             pos = shape_pos;
+             wxSize margin;
++            double width_adj = 0;
++            
++            if( aLayerMask & ALL_CU_LAYERS )
++            {
++                width_adj =  aPlotter->get_plot_width_adj();
++            }
+ 
+             switch( aLayerMask &
+                    ( SOLDERMASK_LAYER_BACK | SOLDERMASK_LAYER_FRONT |
+@@ -845,8 +857,8 @@
+                 break;
+             }
+ 
+-            size.x = pad->m_Size.x + ( 2 * margin.x );
+-            size.y = pad->m_Size.y + ( 2 * margin.y );
++            size.x = pad->m_Size.x + ( 2 * margin.x ) + width_adj;
++            size.y = pad->m_Size.y + ( 2 * margin.y ) + width_adj;
+ 
+             /* Don't draw a null size item : */
+             if( size.x <= 0 || size.y <= 0 )
+@@ -913,14 +925,20 @@
+                 continue;
+ 
+             int via_margin = 0;
++            double width_adj = 0;
+ 
+             // If the current layer is a solder mask, use the global mask
+             // clearance for vias
+             if( ( aLayerMask & ( SOLDERMASK_LAYER_BACK | SOLDERMASK_LAYER_FRONT ) ) )
+                 via_margin = GetBoard()->GetBoardDesignSettings()->m_SolderMaskMargin;
++            
++            if( aLayerMask & ALL_CU_LAYERS )
++            {
++                width_adj =  aPlotter->get_plot_width_adj();
++            }
+ 
+             pos    = Via->m_Start;
+-            size.x = size.y = Via->m_Width + 2 * via_margin;
++            size.x = size.y = Via->m_Width + 2 * via_margin + width_adj;
+ 
+             /* Don't draw a null size item : */
+             if( size.x <= 0 )
+@@ -941,7 +959,7 @@
+         if( (g_TabOneLayerMask[track->GetLayer()] & aLayerMask) == 0 )
+             continue;
+ 
+-        size.x = size.y = track->m_Width;
++        size.x = size.y = track->m_Width + aPlotter->get_plot_width_adj();
+         pos    = track->m_Start;
+         end    = track->m_End;
+ 
+@@ -956,7 +974,7 @@
+         if( (g_TabOneLayerMask[track->GetLayer()] & aLayerMask) == 0 )
+             continue;
+ 
+-        size.x = size.y = track->m_Width;
++        size.x = size.y = track->m_Width + aPlotter->get_plot_width_adj();
+         pos    = track->m_Start;
+         end    = track->m_End;
+ 
+@@ -1008,12 +1026,15 @@
+             continue;
+ 
+         pos = pts->m_Start;
+-
++        
++        // It is quite possible that the real drill value is less then small drill value.
+         if( g_PcbPlotOptions.m_DrillShapeOpt == PCB_PLOT_PARAMS::SMALL_DRILL_SHAPE )
+-            diam.x = diam.y = SMALL_DRILL;
++            diam.x = diam.y = MIN( SMALL_DRILL, pts->GetDrillValue() );
+         else
+             diam.x = diam.y = pts->GetDrillValue();
+-
++        
++        diam.x -= aPlotter->get_plot_width_adj();
++        diam.x = doIntValueFitToBand( diam.x, 1, pts->m_Width - 1 );
+         aPlotter->flash_pad_circle( pos, diam.x, aTraceMode );
+     }
+ 
+@@ -1030,11 +1051,19 @@
+             if( PtPad->m_DrillShape == PAD_OVAL )
+             {
+                 diam = PtPad->m_Drill;
++                diam.x -= aPlotter->get_plot_width_adj();
++                diam.x = doIntValueFitToBand( diam.x, 1, PtPad->m_Size.x - 1 );
++                diam.y -= aPlotter->get_plot_width_adj();
++                diam.y = doIntValueFitToBand( diam.y, 1, PtPad->m_Size.y - 1 );
+                 aPlotter->flash_pad_oval( pos, diam, PtPad->m_Orient, aTraceMode );
+             }
+             else
+             {
+                 diam.x = aSmallDrillShape ? SMALL_DRILL : PtPad->m_Drill.x;
++                // It is quite possible that the real pad drill value is less then small drill value.
++                diam.x = aSmallDrillShape ? MIN( SMALL_DRILL, PtPad->m_Drill.x ) : PtPad->m_Drill.x;
++                diam.x -= aPlotter->get_plot_width_adj();
++                diam.x = doIntValueFitToBand( diam.x, 1, PtPad->m_Size.x - 1 );
+                 aPlotter->flash_pad_circle( pos, diam.x, aTraceMode );
+             }
+         }

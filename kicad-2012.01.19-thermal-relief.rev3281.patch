@@ -1,0 +1,13 @@
+--- pcbnew/board_items_to_polygon_shape_transform.cpp.orig	2012-01-26 23:50:21.000000000 +0100
++++ pcbnew/board_items_to_polygon_shape_transform.cpp	2012-01-27 00:50:23.000000000 +0100
+@@ -615,8 +615,8 @@
+         // The pattern roughtly is a 90 deg arc pie
+         std::vector <wxPoint> corners_buffer;
+ 
+-        // Radius of outer arcs of the shape:
+-        int outer_radius = dx + aThermalGap;     // The radius of the outer arc is pad radius + aThermalGap
++        // Radius of outer arcs of the shape corrected for arc approximation by lines
++        int outer_radius = (int) ( (dx + aThermalGap) * aCorrectionFactor );
+ 
+         // Crosspoint of thermal spoke sides, the first point of polygon buffer
+         corners_buffer.push_back( wxPoint( copper_thickness.x / 2, copper_thickness.y / 2 ) );
