@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2012.01.19
-Release:        1.rev3256%{?dist}
+Release:        2.rev3256%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -443,6 +443,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2012.01.19-2.rev3256
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
 * Sun Jan 29 2012 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2012.01.19-1.rev3256
 - New upstream release
 - Add doxygen as build requirement
