@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2013.06.11
-Release:        1.rev4021%{?dist}
+Release:        2.rev4021%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -435,6 +435,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Tue Jul 30 2013 Petr Machata <pmachata@redhat.com> - 2013.06.11-2.rev4021
+- Rebuild for boost 1.54.0
+
 * Fri Jun 22 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-1.rev4021
 - New upstream release
 - Added symbols and modules (with 3d view) from Walter Lain
