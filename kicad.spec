@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2013.06.11
-Release:        2.rev4021%{?dist}
+Release:        3.rev4021%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -435,6 +435,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2013.06.11-3.rev4021
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
 * Tue Jul 30 2013 Petr Machata <pmachata@redhat.com> - 2013.06.11-2.rev4021
 - Rebuild for boost 1.54.0
 
