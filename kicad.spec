@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2013.06.11
-Release:        3.rev4021%{?dist}
+Release:        2.rev4021%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -20,14 +20,12 @@ URL:            https://launchpad.net/kicad
 Source:         %{name}-%{version}.tar.bz2
 Source1:        %{name}-doc-%{version}.tar.bz2
 Source2:        %{name}-libraries-%{version}.tar.bz2
-Source3:        %{name}-ld.conf
+#Source3:        %{name}-ld.conf
 Source4:        %{name}-2010.05.09.x-kicad-pcbnew.desktop
 Source5:        pcbnew.desktop
 Source6:        %{name}-icons.tar.bz2
 Source7:        Epcos-MKT-1.0.tar.bz2
 Source8:        %{name}-walter-libraries-%{version}.tar.bz2
-
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
@@ -41,32 +39,29 @@ Requires:       electronics-menu
 Kicad is an EDA software to design electronic schematic
 diagrams and printed circuit board artwork up to 16 layers.
 Kicad is a set of four softwares and a project manager:
+- Kicad: project manager
 - Eeschema: schematic entry
 - Pcbnew: board editor
-- Gerbview: GERBER viewer (photoplotter documents)
 - Cvpcb: footprint selector for components used in the circuit design
-- Kicad: project manager
+- Gerbview: GERBER viewer (photoplotter documents)
 
 %description -l fr
 Kicad est un logiciel open source (GPL) pour la création de schémas
 électroniques et le tracé de circuits imprimés jusqu'à 16 couches.
 Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
+- Kicad : gestionnaire de projet.
 - Eeschema : saisie de schémas
 - Pcbnew : éditeur de circuits imprimés
-- Gerbview : visualisateur GERBER (documents pour phototraçage)
 - Cvpcb : sélecteur d'empreintes pour les composants utilisés dans le circuit
-- Kicad : gestionnaire de projet.
+- Gerbview : visualisateur GERBER (documents pour phototraçage)
 
 
 %package        doc
 Summary:        Documentations for kicad
 Summary(fr):    Documentations pour kicad en anglais
-Group:          Applications/Engineering
+Group:          Documentation
 License:        GPLv2+
-Requires:       %{name} = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc
 Documentations and tutorials for kicad in English
@@ -77,9 +72,7 @@ Summary:        Documentation for Kicad in German
 Summary(fr):    Documentations pour kicad en allemand
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-de
 Documentation and tutorials for Kicad in German
@@ -90,9 +83,7 @@ Summary:        Documentation for Kicad in Spanish
 Summary(fr):    Documentations pour kicad en espagnol
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-es
 Documentation and tutorials for Kicad in Spanish
@@ -103,9 +94,7 @@ Summary:        Documentation for Kicad in French
 Summary(fr):    Documentations pour kicad en français
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-fr
 Documentation and tutorials for Kicad in French
@@ -116,9 +105,7 @@ Summary:        Documentation for Kicad in Hungarian
 Summary(fr):    Documentations pour kicad en hongrois
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-hu
 Documentation and tutorials for Kicad in Hungarian
@@ -129,9 +116,7 @@ Summary:        Documentation for Kicad in Italian
 Summary(fr):    Documentations pour kicad en italien
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-it
 Documentation and tutorials for Kicad in Italian
@@ -142,10 +127,7 @@ Summary:        Documentation for Kicad in Japanese
 Summary(fr):    Documentations pour kicad en japonais
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
-
 %description    doc-ja
 Documentation and tutorials for Kicad in Japanese
 
@@ -155,9 +137,7 @@ Summary:        Documentation for Kicad in Polish
 Summary(fr):    Documentations pour kicad en polonais
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-pl
 Documentation and tutorials for Kicad in Polish
@@ -168,9 +148,7 @@ Summary:        Documentation for Kicad in Portuguese
 Summary(fr):    Documentations pour kicad en portugais
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-pt
 Documentation and tutorials for Kicad in Portuguese
@@ -181,9 +159,7 @@ Summary:        Documentation for Kicad in Russian
 Summary(fr):    Documentations pour kicad en russe
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-ru
 Documentation and tutorials for Kicad in Russian
@@ -194,9 +170,7 @@ Summary:        Documentation for Kicad in Chinese
 Summary(fr):    Documentations pour kicad en chinois
 Group:          Documentation
 Requires:       %{name}-doc = %{version}-%{release}
-%if 0%{?fedora} >= 11
 BuildArch:      noarch
-%endif
 
 %description    doc-zh_CN
 Documentation and tutorials for Kicad in Chinese
@@ -212,7 +186,7 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 #multilibs
 %ifarch x86_64 sparc64 ppc64 amd64 s390x
 %{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
-%{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
+#%{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
 %endif
 
 
@@ -287,7 +261,7 @@ pushd %{name}-libraries-%{version}/
 popd
 
 # install ld.conf
-install -m 644 -D -p %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
+# install -m 644 -D -p %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
 
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
@@ -338,8 +312,6 @@ touch --no-create %{_datadir}/icons/hicolor || :
 update-desktop-database &> /dev/null || :
 update-mime-database %{_datadir}/mime &> /dev/null || :
 
-/sbin/ldconfig
-
 
 %postun
 if [ $1 -eq 0 ]
@@ -350,20 +322,12 @@ fi
 update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
 update-mime-database %{_datadir}/mime &> /dev/null || :
 
-/sbin/ldconfig
-
 
 %posttrans
 gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
-%clean
-%{__rm} -rf %{buildroot}
-
-
 %files -f %{name}.lang
-%defattr(-,root,root)
-%doc %{_docdir}/%{name}/help/en/kicad.pdf
 %{_bindir}/*
 %{_libdir}/%{name}
 %{_datadir}/%{name}/
@@ -372,75 +336,66 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_datadir}/icons/hicolor/*/apps/*.*
 %{_datadir}/mime/packages/%{name}.xml
 %{_datadir}/mimelnk/application/x-%{name}-*.desktop
-%config(noreplace) %{_sysconfdir}/ld.so.conf.d/kicad.conf
+#%config(noreplace) %{_sysconfdir}/ld.so.conf.d/kicad.conf
+%dir %{_docdir}/%{name}/
+%{_docdir}/%{name}/*.txt
 
 %files doc
-%defattr(-,root,root,-)
-%dir %{_docdir}/%{name}
-%doc %{_docdir}/%{name}/*.txt
-%doc %{_docdir}/%{name}/contrib
-%dir %{_docdir}/%{name}/help/
-%doc %{_docdir}/%{name}/help/en
-%doc %{_docdir}/%{name}/help/file_formats
-%dir %{_docdir}/%{name}/tutorials
-%doc %{_docdir}/%{name}/tutorials/en
-%doc %{_docdir}/%{name}/scripts
+%dir %{_docdir}/%{name}/
+%{_docdir}/%{name}/contrib
+#%{_docdir}/%{name}/help/
+%{_docdir}/%{name}/help/en
+%{_docdir}/%{name}/help/file_formats
+#%{_docdir}/%{name}/tutorials
+%{_docdir}/%{name}/tutorials/en
+%{_docdir}/%{name}/scripts
 
 %files doc-de
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/de
-%doc %{_docdir}/%{name}/tutorials/de
+%{_docdir}/%{name}/help/de
+%{_docdir}/%{name}/tutorials/de
 
 %files doc-es
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/es
-%doc %{_docdir}/%{name}/tutorials/es
+%{_docdir}/%{name}/help/es
+%{_docdir}/%{name}/tutorials/es
 
 %files doc-fr
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/fr
-%doc %{_docdir}/%{name}/tutorials/fr
+%{_docdir}/%{name}/help/fr
+%{_docdir}/%{name}/tutorials/fr
 
 %files doc-hu
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/tutorials/hu
+%{_docdir}/%{name}/tutorials/hu
 
 %files doc-it
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/it
-%doc %{_docdir}/%{name}/tutorials/it
+%{_docdir}/%{name}/help/it
+%{_docdir}/%{name}/tutorials/it
 
 %files doc-ja
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/ja
-%doc %{_docdir}/%{name}/tutorials/ja
+%{_docdir}/%{name}/help/ja
+%{_docdir}/%{name}/tutorials/ja
 
 %files doc-pl
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/pl
-%doc %{_docdir}/%{name}/tutorials/pl
+%{_docdir}/%{name}/help/pl
+%{_docdir}/%{name}/tutorials/pl
 
 %files doc-pt
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/pt
+%{_docdir}/%{name}/help/pt
 
 %files doc-ru
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/help/ru
-%doc %{_docdir}/%{name}/tutorials/ru
+%{_docdir}/%{name}/help/ru
+%{_docdir}/%{name}/tutorials/ru
 
 %files doc-zh_CN
-%defattr(-,root,root,-)
-%doc %{_docdir}/%{name}/tutorials/zh_CN
+%{_docdir}/%{name}/tutorials/zh_CN
 
 
 %changelog
-* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2013.06.11-3.rev4021
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
-
-* Tue Jul 30 2013 Petr Machata <pmachata@redhat.com> - 2013.06.11-2.rev4021
-- Rebuild for boost 1.54.0
-
+* Mon Dec 23 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-2.rev4021
+- Removed kicad.pdf from kicad (Fix #1001243)
+- Clean up spec file as suggested by Michael Schwendt
+- ldconfig no more needed in this release
+- Fix kicad-doc Group
+- kicad-doc no more requires kicad
+ 
 * Fri Jun 22 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-1.rev4021
 - New upstream release
 - Added symbols and modules (with 3d view) from Walter Lain
