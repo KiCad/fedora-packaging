@@ -1,37 +1,35 @@
 Name:           kicad
-Version:        2013.06.11
-Release:        2.rev4021%{?dist}
+Version:        2014.03.13
+Release:        1.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
 Group:          Applications/Engineering
 License:        GPLv2+
-URL:            https://launchpad.net/kicad
-
-# Source files created from upstream's bazaar repository
-# bzr export -r 4021 kicad-2013.06.11
-# bzr export -r 263 kicad-libraries-2013.06.11
-# bzr export -r 464 kicad-doc-2013.06.11
-
+URL:            http://www.kicad-pcb.org
+# URL2:         https://launchpad.net/kicad
+# URL3:         http://orson.net.pl/pub/kicad/
 # Additional librairies from Walter Lain
-# http://smisioto.no-ip.org/elettronica/kicad/kicad-en.htm
-# kicad-walter-libraries is manually built by downloading all available files
+# URL4:         http://smisioto.no-ip.org/elettronica/kicad/kicad-en.htm
 
-Source:         %{name}-%{version}.tar.bz2
-Source1:        %{name}-doc-%{version}.tar.bz2
-Source2:        %{name}-libraries-%{version}.tar.bz2
-#Source3:        %{name}-ld.conf
-Source4:        %{name}-2010.05.09.x-kicad-pcbnew.desktop
-Source5:        pcbnew.desktop
-Source6:        %{name}-icons.tar.bz2
+# Source files created with the following scripts ...
+#   kicad-clone.sh ... clone BZR repositories of main, libraries, doc
+#   kicad-update.sh ... update BZR repositories
+#   kicad-export.sh ... export BZR repositories and create tarballs
+#   kicad-walter-libs.sh ... download, unpack and prepare tarball with walter libs
+
+Source:         %{name}-%{version}.tar.xz
+Source1:        %{name}-doc-%{version}.tar.xz
+Source2:        %{name}-libraries-%{version}.tar.xz
 Source7:        Epcos-MKT-1.0.tar.bz2
-Source8:        %{name}-walter-libraries-%{version}.tar.bz2
+Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
 BuildRequires:  boost-devel
 BuildRequires:  cmake
 BuildRequires:  doxygen
+BuildRequires:  glew-devel
 
 Requires:       electronics-menu
 
@@ -177,7 +175,7 @@ Documentation and tutorials for Kicad in Chinese
 
 
 %prep
-%setup -q -a 1 -a 2 -a 6 -a 7 -a 8
+%setup -q -a 1 -a 2 -a 7 -a 8
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -208,7 +206,7 @@ cd ..
 # Symbols libraries
 #
 pushd %{name}-libraries-%{version}/
-%cmake -DKICAD_STABLE_VERSION=ON
+%cmake -DKICAD_STABLE_VERSION=OFF
 %{__make} %{?_smp_mflags} VERBOSE=1
 popd
 
@@ -216,7 +214,7 @@ popd
 #
 # Core components
 #
-%cmake -DKICAD_STABLE_VERSION=ON
+%cmake -DKICAD_STABLE_VERSION=OFF -DKICAD_SKIP_BOOST=ON
 %{__make} %{?_smp_mflags} VERBOSE=1
 
 
@@ -236,22 +234,13 @@ cd ../..
 
 
 # install desktop
-desktop-file-install \
+for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
+  desktop-file-install \
   --dir %{buildroot}%{_datadir}/applications \
   --remove-category Development              \
   --delete-original                          \
-  %{buildroot}%{_datadir}/applications/kicad.desktop
-
-desktop-file-install \
-  --dir %{buildroot}%{_datadir}/applications \
-  --remove-category Development              \
-  --delete-original                          \
-  %{buildroot}%{_datadir}/applications/eeschema.desktop
-
-desktop-file-install \
-  --dir %{buildroot}%{_datadir}/applications \
-  --remove-category Development              \
-  %{SOURCE5}
+  ${desktopfile}
+done
 
 #
 # Symbols libraries
@@ -260,40 +249,9 @@ pushd %{name}-libraries-%{version}/
 %{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 popd
 
-# install ld.conf
-# install -m 644 -D -p %{SOURCE3} %{buildroot}%{_sysconfdir}/ld.so.conf.d/kicad.conf
-
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
-
-# install new mime type
-install -pm 644 %{SOURCE4} %{buildroot}%{_datadir}/mimelnk/application/x-%{name}-pcbnew.desktop
-
-# install mimetype and application icons
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/32x32/mimetypes/application-x-kicad-eeschema.png
-install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/eeschema.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/24x24/mimetypes/application-x-kicad-eeschema.png
-install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/eeschema.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/22x22/mimetypes/application-x-kicad-eeschema.png
-install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/eeschema.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/mimetypes/application-x-kicad-eeschema.png %{buildroot}%{_datadir}/icons/hicolor/16x16/mimetypes/application-x-kicad-eeschema.png
-install -m 644 -D -p %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/eeschema.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/eeschema.png
-
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/32x32/mimetypes/application-x-kicad-pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/24x24/mimetypes/application-x-kicad-pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/22x22/mimetypes/application-x-kicad-pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/mimetypes/application-x-kicad-pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/16x16/mimetypes/application-x-kicad-pcbnew.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/pcbnew.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/pcbnew.png
-
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/32x32/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/kicad.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/24x24/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/24x24/apps/kicad.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/22x22/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/22x22/apps/kicad.png
-install -pm 644 %{name}-icons/resources/linux/mime/icons/hicolor/16x16/apps/kicad.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/kicad.png
-
 
 # Preparing for documentation pull-ups
 %{__rm} -f  %{name}-doc-%{version}/doc/help/CMakeLists.txt
@@ -332,7 +290,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_libdir}/%{name}
 %{_datadir}/%{name}/
 %{_datadir}/applications/*.desktop
-%{_datadir}/icons/hicolor/*/mimetypes/application-x-%{name}-*.*
+%{_datadir}/icons/hicolor/*/mimetypes/application-x-*.*
 %{_datadir}/icons/hicolor/*/apps/*.*
 %{_datadir}/mime/packages/%{name}.xml
 %{_datadir}/mimelnk/application/x-%{name}-*.desktop
@@ -389,6 +347,11 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Thu Mar 13 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-1.rev4744
+- Update to the latest available revisions
+- Creating scripts for source downloading & postprocessing
+- Fixing bogus dates in the changelog
+
 * Mon Dec 23 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-2.rev4021
 - Removed kicad.pdf from kicad (Fix #1001243)
 - Clean up spec file as suggested by Michael Schwendt
@@ -396,7 +359,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 - Fix kicad-doc Group
 - kicad-doc no more requires kicad
  
-* Fri Jun 22 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-1.rev4021
+* Sat Jun 22 2013 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2013.06.11-1.rev4021
 - New upstream release
 - Added symbols and modules (with 3d view) from Walter Lain
  
@@ -431,7 +394,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 * Fri Jul 15 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-2.rev3047
 - Fix patch command 
 
-* Mon Jul 12 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-1.rev3047
+* Tue Jul 12 2011 Alain Portal <alain.portal[AT]univ-montp2[DOT]fr> 2011.07.12-1.rev3047
 - New upstream version
 - Update versioning patch
 - Add Polish documentation
