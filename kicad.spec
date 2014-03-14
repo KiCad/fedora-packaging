@@ -24,6 +24,9 @@ Source2:        %{name}-libraries-%{version}.tar.xz
 Source7:        Epcos-MKT-1.0.tar.bz2
 Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
+# Temporary hack due to a missing boost-context library
+ExcludeArch:    %{arm}
+
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
 BuildRequires:  boost-devel
