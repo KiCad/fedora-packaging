@@ -210,7 +210,7 @@ cd ..
 #
 pushd %{name}-libraries-%{version}/
 %cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} %{?_smp_mflags} VERBOSE=1
+%{__make} -j1 VERBOSE=1
 popd
 
 
@@ -218,7 +218,7 @@ popd
 # Core components
 #
 %cmake -DKICAD_STABLE_VERSION=OFF -DKICAD_SKIP_BOOST=ON
-%{__make} %{?_smp_mflags} VERBOSE=1
+%{__make} -j1 VERBOSE=1
 
 
 %install
@@ -352,6 +352,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %changelog
 * Thu Mar 13 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-1.rev4744
 - Update to the latest available revisions
+- Building with -j1 instead of _smp_mflags (probably causing build failures)
 - Creating scripts for source downloading & postprocessing
 - Fixing bogus dates in the changelog
 
