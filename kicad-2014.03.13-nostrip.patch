@@ -1,0 +1,19 @@
+diff -up kicad-2014.03.13/CMakeLists.txt~ kicad-2014.03.13/CMakeLists.txt
+--- kicad-2014.03.13/CMakeLists.txt~	2014-03-16 17:32:13.917001129 +0200
++++ kicad-2014.03.13/CMakeLists.txt	2014-03-16 17:35:04.238816477 +0200
+@@ -157,7 +157,6 @@ if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CX
+     endif()
+ 
+     if( MINGW )
+-        set( CMAKE_EXE_LINKER_FLAGS_RELEASE "-s" )
+ 
+         # _UNICODE definition seems needed under mingw/gcc 4.8
+         # (Kicad uses unicode, and on Windows, wxWidgets >= 2.9.4 is mandatory
+@@ -201,7 +200,6 @@ if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CX
+             set( CMAKE_MODULE_LINKER_FLAGS "${TO_LINKER},--no-undefined" )
+         endif()
+ 
+-        set( CMAKE_EXE_LINKER_FLAGS_RELEASE "-s" )
+     endif()
+ 
+     # quiet GCC while in boost
