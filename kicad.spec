@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        1.rev4744%{?dist}
+Release:        2.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -23,6 +23,8 @@ Source1:        %{name}-doc-%{version}.tar.xz
 Source2:        %{name}-libraries-%{version}.tar.xz
 Source7:        Epcos-MKT-1.0.tar.bz2
 Source8:        %{name}-walter-libraries-%{version}.tar.xz
+
+Patch0:         pcb_calculator-desktop-fix.patch
 
 # Temporary hack due to a missing boost-context library
 ExcludeArch:    %{arm}
@@ -179,6 +181,8 @@ Documentation and tutorials for Kicad in Chinese
 
 %prep
 %setup -q -a 1 -a 2 -a 7 -a 8
+
+%patch0 -p1
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -350,6 +354,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Mar 17 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-2.rev4744
+- Fixing the pcb_calculator desktop file (missing underscore)
+
 * Thu Mar 13 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-1.rev4744
 - Update to the latest available revisions
 - Building with -j1 instead of _smp_mflags (probably causing build failures)
