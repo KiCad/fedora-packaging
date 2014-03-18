@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        3.rev4744%{?dist}
+Release:        4.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -26,9 +26,6 @@ Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
 Patch0:         pcb_calculator-desktop-fix.patch
 Patch1:         kicad-2014.03.13-nostrip.patch
-
-# Temporary hack due to a missing boost-context library
-ExcludeArch:    %{arm}
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
@@ -356,6 +353,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Tue Mar 18 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-4.rev4744
+- Removing ExcludeArch as boost-context has been built for arm
+
 * Mon Mar 17 2014 Ville Skyttä <ville.skytta@iki.fi> - 2014.03.13-3.rev4744
 - Don't strip binaries too early (#1076929)
 
