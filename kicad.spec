@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        4.rev4744%{?dist}
+Release:        5.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -353,6 +353,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Fri May 23 2014 Petr Machata <pmachata@redhat.com> - 2014.03.13-5.rev4744
+- Rebuild for boost 1.55.0
+
 * Tue Mar 18 2014 Jaromir Capik <jcapik@redhat.com> - 2014.03.13-4.rev4744
 - Removing ExcludeArch as boost-context has been built for arm
 
