@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        7.rev4744%{?dist}
+Release:        8.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -273,22 +273,24 @@ install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
 %post
 touch --no-create %{_datadir}/icons/hicolor || :
+touch --no-create %{_datadir}/mime/packages &> /dev/null || :
 update-desktop-database &> /dev/null || :
-update-mime-database %{_datadir}/mime &> /dev/null || :
 
 
 %postun
 if [ $1 -eq 0 ]
 then
   touch --no-create %{_datadir}/icons/hicolor || :
-  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+  gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+  touch --no-create %{_datadir}/mime/packages &> /dev/null || :
+  update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 fi
 update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
-update-mime-database %{_datadir}/mime &> /dev/null || :
 
 
 %posttrans
 gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %files -f %{name}.lang
@@ -353,6 +355,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
+* Mon Aug 18 2014 Rex Dieter <rdieter@fedoraproject.org> 2014.03.13-8.rev4744
+- update mime scriptlets
+
 * Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2014.03.13-7.rev4744
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
