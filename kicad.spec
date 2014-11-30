@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        8.rev4744%{?dist}
+Release:        9.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -21,11 +21,13 @@ URL:            http://www.kicad-pcb.org
 Source:         %{name}-%{version}.tar.xz
 Source1:        %{name}-doc-%{version}.tar.xz
 Source2:        %{name}-libraries-%{version}.tar.xz
+Source3:        %{name}-footprints-%{version}.tar.xz
 Source7:        Epcos-MKT-1.0.tar.bz2
 Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
 Patch0:         pcb_calculator-desktop-fix.patch
 Patch1:         kicad-2014.03.13-nostrip.patch
+Patch2:         kicad-2014.03.13-fp-lib.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
@@ -178,10 +180,14 @@ Documentation and tutorials for Kicad in Chinese
 
 
 %prep
-%setup -q -a 1 -a 2 -a 7 -a 8
+%setup -q -a 1 -a 2 -a 3 -a 7 -a 8
 
 %patch0 -p1
 %patch1 -p1
+
+cd %{name}-libraries-%{version}
+%patch2 -p1
+cd ..
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -258,6 +264,12 @@ popd
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
+
+# Footprints
+pushd %{name}-footprints-%{version}/
+cp -a */ %{buildroot}%{_datadir}/%{name}/modules
+popd
+ln -f %{buildroot}%{_datadir}/%{name}/template/fp-lib-table{.for-pretty,}
 
 # Preparing for documentation pull-ups
 %{__rm} -f  %{name}-doc-%{version}/doc/help/CMakeLists.txt
@@ -355,6 +367,9 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Sun Nov 30 2014 Lubomir Rintel <lkundrak@v3.sk> - 2014.03.13-9.rev4744
+- Install library footprints
+
 * Mon Aug 18 2014 Rex Dieter <rdieter@fedoraproject.org> 2014.03.13-8.rev4744
 - update mime scriptlets
 
