@@ -1,6 +1,6 @@
 Name:           kicad
 Version:        2014.03.13
-Release:        9.rev4744%{?dist}
+Release:        10.rev4744%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 
@@ -28,6 +28,7 @@ Source8:        %{name}-walter-libraries-%{version}.tar.xz
 Patch0:         pcb_calculator-desktop-fix.patch
 Patch1:         kicad-2014.03.13-nostrip.patch
 Patch2:         kicad-2014.03.13-fp-lib.patch
+Patch3:         kicad-2014.03.13-freerouting.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
@@ -37,6 +38,7 @@ BuildRequires:  doxygen
 BuildRequires:  glew-devel
 
 Requires:       electronics-menu
+Requires:       freerouting
 
 %description
 Kicad is an EDA software to design electronic schematic
@@ -184,6 +186,7 @@ Documentation and tutorials for Kicad in Chinese
 
 %patch0 -p1
 %patch1 -p1
+%patch3 -p1
 
 cd %{name}-libraries-%{version}
 %patch2 -p1
@@ -279,6 +282,9 @@ ln -f %{buildroot}%{_datadir}/%{name}/template/fp-lib-table{.for-pretty,}
 %{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
 %{__cp} -pr AUTHORS.txt CHANGELOG* %{buildroot}%{_docdir}/%{name}
 
+# Drop this, it's no longer able to webstart the freerouter
+# and we have it available locally anyway
+rm %{buildroot}%{_bindir}/*.jnlp
 
 %find_lang %{name}
 
@@ -367,6 +373,9 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Fri Jan 02 2015 Lubomir Rintel <lkundrak@v3.sk> - 2014.03.13-10.rev4744
+- Use local autorouter
+
 * Sun Nov 30 2014 Lubomir Rintel <lkundrak@v3.sk> - 2014.03.13-9.rev4744
 - Install library footprints
 
