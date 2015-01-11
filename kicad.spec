@@ -1,8 +1,9 @@
 Name:           kicad
-Version:        2014.03.13
-Release:        10.rev4744%{?dist}
+Version:        2015.01.08
+Release:        7.rev5360%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
+Summary(es):    Esquemas electrónicos y diseño de circuitos impresos
 
 Group:          Applications/Engineering
 License:        GPLv2+
@@ -21,21 +22,22 @@ URL:            http://www.kicad-pcb.org
 Source:         %{name}-%{version}.tar.xz
 Source1:        %{name}-doc-%{version}.tar.xz
 Source2:        %{name}-libraries-%{version}.tar.xz
-Source3:        %{name}-footprints-%{version}.tar.xz
-Source7:        Epcos-MKT-1.0.tar.bz2
-Source8:        %{name}-walter-libraries-%{version}.tar.xz
+#Source3:        %{name}-footprints-%{version}.tar.xz
+#Source7:        Epcos-MKT-1.0.tar.bz2
+#Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
-Patch0:         pcb_calculator-desktop-fix.patch
 Patch1:         kicad-2014.03.13-nostrip.patch
-Patch2:         kicad-2014.03.13-fp-lib.patch
-Patch3:         kicad-2014.03.13-freerouting.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK-devel
+BuildRequires:  wxPython-devel
+BuildRequires:  python-devel
+BuildRequires:  swig
 BuildRequires:  boost-devel
 BuildRequires:  cmake
 BuildRequires:  doxygen
 BuildRequires:  glew-devel
+BuildRequires:  openssl-devel
 
 Requires:       electronics-menu
 Requires:       freerouting
@@ -182,15 +184,10 @@ Documentation and tutorials for Kicad in Chinese
 
 
 %prep
-%setup -q -a 1 -a 2 -a 3 -a 7 -a 8
+%setup -q -a 1 -a 2 
 
-%patch0 -p1
 %patch1 -p1
-%patch3 -p1
 
-cd %{name}-libraries-%{version}
-%patch2 -p1
-cd ..
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
 iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
@@ -205,32 +202,39 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 
 %build
 
+ln -s $(which wx-config-3.0) ./wx-config
+export PATH=$(pwd):$PATH
+
+
 # Add Epcos library
-cd Epcos-MKT-1.0
-cp -pR library ../%{name}-libraries-%{version}/
-cp -pR modules ../%{name}-libraries-%{version}/
-cd ..
+#cd Epcos-MKT-1.0
+#cp -pR library ../%{name}-libraries-%{version}/
+#cp -pR modules ../%{name}-libraries-%{version}/
+#cd ..
 
 # Add Walter libraries
-cd %{name}-walter-libraries-%{version}
-cp -pR library ../%{name}-libraries-%{version}/
-cp -pR modules ../%{name}-libraries-%{version}/
-cd ..
+#cd %{name}-walter-libraries-%{version}
+#cp -pR library ../%{name}-libraries-%{version}/
+#cp -pR modules ../%{name}-libraries-%{version}/
+#cd ..
 
 #
 # Symbols libraries
 #
 pushd %{name}-libraries-%{version}/
 %cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j1 VERBOSE=1
+%{__make} -j3 VERBOSE=1
 popd
 
 
 #
 # Core components
 #
-%cmake -DKICAD_STABLE_VERSION=OFF -DKICAD_SKIP_BOOST=ON
-%{__make} -j1 VERBOSE=1
+%cmake -DKICAD_STABLE_VERSION=OFF -DKICAD_SKIP_BOOST=ON \
+				  -DKICAD_SCRIPTING=ON \
+				  -DKICAD_SCRIPTING_MODULES=ON \
+				  -DKICAD_SCRIPTING_WXPYTHON=ON
+%{__make} %{?_smp_mflags} VERBOSE=1
 
 
 %install
@@ -240,6 +244,7 @@ popd
 
 
 # install localization
+
 cd %{name}-doc-%{version}/internat
 for dir in bg ca cs de es fr hu it ko nl pl pt ru sl sv zh_CN
 do
@@ -269,10 +274,10 @@ install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
 # Footprints
-pushd %{name}-footprints-%{version}/
-cp -a */ %{buildroot}%{_datadir}/%{name}/modules
-popd
-ln -f %{buildroot}%{_datadir}/%{name}/template/fp-lib-table{.for-pretty,}
+#pushd %{name}-footprints-%{version}/
+#cp -a */ %{buildroot}%{_datadir}/%{name}/modules
+#popd
+#ln -f %{buildroot}%{_datadir}/%{name}/template/fp-lib-table{.for-pretty,}
 
 # Preparing for documentation pull-ups
 %{__rm} -f  %{name}-doc-%{version}/doc/help/CMakeLists.txt
@@ -284,7 +289,6 @@ ln -f %{buildroot}%{_datadir}/%{name}/template/fp-lib-table{.for-pretty,}
 
 # Drop this, it's no longer able to webstart the freerouter
 # and we have it available locally anyway
-rm %{buildroot}%{_bindir}/*.jnlp
 
 %find_lang %{name}
 
@@ -313,6 +317,7 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 %files -f %{name}.lang
 %{_bindir}/*
+%{_prefix}/lib/python2.7/site-packages/*
 %{_libdir}/%{name}
 %{_datadir}/%{name}/
 %{_datadir}/applications/*.desktop
@@ -373,6 +378,10 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Sat Jan 10 2015 Miguel Ángel Ajo <miguelangel@ajo.es> - 2015.01.08-7.rev5360
+- use wxPython3.0
+- build with python support
+
 * Fri Jan 02 2015 Lubomir Rintel <lkundrak@v3.sk> - 2014.03.13-10.rev4744
 - Use local autorouter
 
