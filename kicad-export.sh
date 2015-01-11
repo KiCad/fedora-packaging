@@ -1,23 +1,29 @@
 #!/bin/sh
 set -e
 
-TIMESTAMP="2014.03.13"
-MAIN_REV=4744
-LIB_REV=333
-DOC_REV=560
+TIMESTAMP="2015.01.08"
+MAIN_REV=5360
+LIB_REV=466
+DOC_REV=653
 
 cd kicad.bzr
+rm -rf kicad-$TIMESTAMP
 bzr export -r $MAIN_REV kicad-$TIMESTAMP
 echo "Creating kicad-$TIMESTAMP.tar.xz ..."
-tar cJf kicad-$TIMESTAMP.tar.xz kicad-$TIMESTAMP
+tar cJf ../kicad-$TIMESTAMP.tar.xz kicad-$TIMESTAMP
+
 cd ../kicad-library.bzr
+rm -rf kicad-libraries-$TIMESTAMP
 bzr export -r $LIB_REV kicad-libraries-$TIMESTAMP
 echo "Creating kicad-libraries-$TIMESTAMP.tar.xz ..."
-tar cJf kicad-libraries-$TIMESTAMP.tar.xz kicad-libraries-$TIMESTAMP
+tar cJf ../kicad-libraries-$TIMESTAMP.tar.xz kicad-libraries-$TIMESTAMP
+
 cd ../kicad-doc.bzr
+rm -rf kicad-doc-$TIMESTAMP
 bzr export -r $DOC_REV kicad-doc-$TIMESTAMP
 echo "Creating kicad-doc-$TIMESTAMP.tar.xz ..."
-tar cJf kicad-doc-$TIMESTAMP.tar.xz kicad-doc-$TIMESTAMP
+tar cJf ../kicad-doc-$TIMESTAMP.tar.xz kicad-doc-$TIMESTAMP
+
 cd ../footprints
 echo "Creating kicad-footprints-$TIMESTAMP.tar.xz ..."
 rm -rf kicad-footprints-$TIMESTAMP
