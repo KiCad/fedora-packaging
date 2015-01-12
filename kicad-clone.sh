@@ -1,9 +1,30 @@
 #!/bin/sh
 set -e
+set -x
+if [ -d kicad.bzr ]; then
+	cd kicad.bzr
+	bzr update 
+	cd ..
+else 
+	bzr checkout lp:kicad kicad.bzr
+fi
 
-bzr checkout lp:kicad kicad.bzr
-bzr checkout lp:~kicad-product-committers/kicad/library kicad-library.bzr
-bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
+if [ -d kicad-library.bzr ]; then
+	cd kicad-library.bzr
+	bzr update 
+	cd ..
+else
+	bzr checkout lp:~kicad-product-committers/kicad/library kicad-library.bzr
+fi
+
+if [ -d kicad-doc.bzr ]; then
+	cd kicad-doc.bzr
+	bzr update 
+	cd ..
+else
+	bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
+fi
+
 
 exit 0
 

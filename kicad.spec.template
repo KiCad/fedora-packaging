@@ -1,6 +1,9 @@
+#%global commit 56bf16c7849ea509296497ced621737e1f967108
+#%global shortcommit %(c=%{commit}; echo ${c:0:7})
+
 Name:           kicad
-Version:        2015.01.08
-Release:        7.rev5360%{?dist}
+Version:        nightlies
+Release:        1.REVISION_NUMBER%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 Summary(es):    Esquemas electrónicos y diseño de circuitos impresos
@@ -20,6 +23,7 @@ URL:            http://www.kicad-pcb.org
 #   kicad-walter-libs.sh ... download, unpack and prepare tarball with walter libs
 
 Source:         %{name}-%{version}.tar.xz
+#Source: https://github.com/KiCad/kicad-source-mirror/archive/%{commit}/kicad-source-mirror-%{commit}.tar.gz
 Source1:        %{name}-doc-%{version}.tar.xz
 Source2:        %{name}-libraries-%{version}.tar.xz
 #Source3:        %{name}-footprints-%{version}.tar.xz
@@ -41,6 +45,9 @@ BuildRequires:  openssl-devel
 
 Requires:       electronics-menu
 Requires:       freerouting
+Requires:	wxPython
+Requires:       python
+Requires:	boost	
 
 %description
 Kicad is an EDA software to design electronic schematic
@@ -378,6 +385,11 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Sun Jan 11 2015 Miguel Ángel Ajo <miguelangel@ajo.es> - 2015.01.08-8.rev5360
+- add wxPython runtime dependency
+- add python and boost dependencies (even they are generally satisfied by
+  other packages)
+
 * Sat Jan 10 2015 Miguel Ángel Ajo <miguelangel@ajo.es> - 2015.01.08-7.rev5360
 - use wxPython3.0
 - build with python support
