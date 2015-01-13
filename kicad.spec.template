@@ -3,7 +3,7 @@
 
 Name:           kicad
 Version:        nightlies
-Release:        1.REVISION_NUMBER%{?dist}
+Release:        REVISION_NUMBER%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
 Summary(es):    Esquemas electrónicos y diseño de circuitos impresos
