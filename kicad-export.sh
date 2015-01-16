@@ -8,10 +8,10 @@ get_last_rev()
  cd ..
 }
 
-TIMESTAMP="nightlies"
 MAIN_REV=$(get_last_rev kicad.bzr)
 LIB_REV=$(get_last_rev kicad-library.bzr)
 DOC_REV=$(get_last_rev kicad-doc.bzr)
+TIMESTAMP="$MAIN_REV"
 
 cd kicad.bzr
 rm -rf kicad-$TIMESTAMP
