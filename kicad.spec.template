@@ -33,7 +33,7 @@ Source2:        %{name}-libraries-%{version}.tar.xz
 Patch1:         kicad-2014.03.13-nostrip.patch
 
 BuildRequires:  desktop-file-utils
-BuildRequires:  wxGTK-devel
+BuildRequires:  wxGTK3-devel
 BuildRequires:  wxPython-devel
 BuildRequires:  python-devel
 BuildRequires:  swig
