@@ -242,6 +242,9 @@ popd
 				  -DKICAD_SCRIPTING_MODULES=ON \
 				  -DKICAD_SCRIPTING_WXPYTHON=ON \
                   -DCMAKE_BUILD_TYPE=Debug
+# workaround to get WXPYTHON_VERSION set in config.h
+make rebuild_cache
+# end workaround
 
 %{__make} %{?_smp_mflags} VERBOSE=1
 
