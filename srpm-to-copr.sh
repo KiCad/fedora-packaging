@@ -2,10 +2,12 @@
 set -x
 set -e
 
+WORKSPACE_URL=$1
+
 SRPM_FILE=$(fedpkg --dist master srpm | grep Wrote | cut -d\  -f 2)
 SRPM_FILENAME=$(basename $SRPM_FILE)
 if [ "$( whoami )" == "jenkins" ]; then
-        SRPM_URL="http://ci.kicad-pcb.org/job/fedora-nightlies/ws/$SRPM_FILENAME"	
+        SRPM_URL="$WORKSPACE_URL$SRPM_FILENAME"	
 else
         scp $SRPM_FILE mangelajo@fedorapeople.org:~/public_html/copr/
         SRPM_URL="https://mangelajo.fedorapeople.org/copr/$SRPM_FILENAME"
