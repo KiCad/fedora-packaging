@@ -42,6 +42,8 @@ BuildRequires:  cmake
 BuildRequires:  doxygen
 BuildRequires:  glew-devel
 BuildRequires:  openssl-devel
+BuildRequires:  bzip2-devel
+BuildRequires:  bzr
 
 Requires:       electronics-menu
 Requires:       freerouting
@@ -237,7 +239,17 @@ popd
 #
 # Core components
 #
-%cmake -DKICAD_STABLE_VERSION=OFF -DKICAD_SKIP_BOOST=ON \
+
+echo dist: "%{?dist}"
+
+if [ "%{?dist}" == ".el7.centos" ]; then
+   SKIP_BOOST=""
+   bzr whoami "KiCad COPR builder <builder@kicad-pcb.org>"
+else
+   SKIP_BOOST="-DKICAD_SKIP_BOOST=ON"
+fi
+
+%cmake -DKICAD_STABLE_VERSION=OFF $SKIP_BOOST \
 				  -DKICAD_SCRIPTING=ON \
 				  -DKICAD_SCRIPTING_MODULES=ON \
 				  -DKICAD_SCRIPTING_WXPYTHON=ON \
