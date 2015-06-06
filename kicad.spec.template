@@ -46,10 +46,14 @@ BuildRequires:  bzip2-devel
 BuildRequires:  bzr
 
 Requires:       electronics-menu
-Requires:       freerouting
 Requires:	wxPython
 Requires:       python
-Requires:	boost	
+
+%if 0%{?el7}
+%else
+Requires:   freerouting
+Requires:	boost
+%endif
 
 %description
 Kicad is an EDA software to design electronic schematic
