@@ -17,13 +17,22 @@ else
 	bzr checkout lp:~kicad-product-committers/kicad/library kicad-library.bzr
 fi
 
-if [ -d kicad-doc.bzr ]; then
-	cd kicad-doc.bzr
-	bzr update 
-	cd ..
+if [ -d kicad-i18n ]; then
+    cd kicad-i18n
+    git pull
+    cd ..
 else
-	bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
+    git clone https://github.com/KiCad/kicad-i18n.git
 fi
+
+#TODO(mangelajo): pull the new doc builds
+#if [ -d kicad-doc.bzr ]; then
+#	cd kicad-doc.bzr
+#	bzr update 
+#	cd ..
+#else
+#	bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
+#fi
 
 
 exit 0

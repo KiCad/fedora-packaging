@@ -10,7 +10,7 @@ get_last_rev()
 
 MAIN_REV=$(get_last_rev kicad.bzr)
 LIB_REV=$(get_last_rev kicad-library.bzr)
-DOC_REV=$(get_last_rev kicad-doc.bzr)
+#DOC_REV=$(get_last_rev kicad-doc.bzr)
 TIMESTAMP="$MAIN_REV"
 
 cd kicad.bzr
@@ -27,13 +27,23 @@ echo "Creating kicad-libraries-$TIMESTAMP.tar.xz ..."
 tar cJf ../kicad-libraries-$TIMESTAMP.tar.xz kicad-libraries-$TIMESTAMP
 rm -rf kicad-libraries-$TIMESTAMP
 
-cd ../kicad-doc.bzr
-rm -rf kicad-doc-$TIMESTAMP
-bzr export kicad-doc-$TIMESTAMP
-echo "Creating kicad-doc-$TIMESTAMP.tar.xz ..."
-tar cJf ../kicad-doc-$TIMESTAMP.tar.xz kicad-doc-$TIMESTAMP
-rm -rf kicad-doc-$TIMESTAMP
 cd ..
+rm -rf kicad-i18n-$TIMESTAMP
+mkdir kicad-i18n-$TIMESTAMP
+cp -rfp kicad-i18n/* kicad-i18n-$TIMESTAMP
+rm -rf kicad-i18n-$TIMESTAMP/.git
+tar cJf kicad-i18n-$TIMESTAMP.tar.xz kicad-i18n-$TIMESTAMP
+rm -rf kicad-i18n-$TIMESTAMP
+
+
+#TODO(mangelajo): new docs?
+#cd ../kicad-doc.bzr
+#rm -rf kicad-doc-$TIMESTAMP
+#bzr export kicad-doc-$TIMESTAMP
+#echo "Creating kicad-doc-$TIMESTAMP.tar.xz ..."
+#tar cJf ../kicad-doc-$TIMESTAMP.tar.xz kicad-doc-$TIMESTAMP
+#rm -rf kicad-doc-$TIMESTAMP
+#cd ..
 
 exit 0
 
