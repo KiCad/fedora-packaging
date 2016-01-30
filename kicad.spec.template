@@ -30,7 +30,7 @@ Source2:        %{name}-libraries-%{version}.tar.xz
 #Source7:        Epcos-MKT-1.0.tar.bz2
 #Source8:        %{name}-walter-libraries-%{version}.tar.xz
 
-Patch1:         kicad-2014.03.13-nostrip.patch
+Patch1:         kicad-4.0.0-nostrip.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK3-devel
@@ -52,7 +52,7 @@ Requires:       python
 
 %if 0%{?el7}
 %else
-Requires:   freerouting
+# Requires:   freerouting
 Requires:	boost
 %endif
 
@@ -248,6 +248,9 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Sat Jan 30 2016 Miguel Ángel Ajo <miguelangel@ajo.es>
+- Import the stable branch 4.0.0 patch for nostrip
+
 * Thu Oct 15 2015 Miguel Ángel Ajo <miguelangel@ajo.es>
 - removed doc packaging temporarily, as we move to the new docs, and while
   the old bzr is not available anymore.
