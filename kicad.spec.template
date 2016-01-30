@@ -46,10 +46,11 @@ BuildRequires:  bzip2-devel
 BuildRequires:  bzr
 BuildRequires:  gettext
 BuildRequires:  glm-devel
-
+BuildRequires:  libcurl-devel
 Requires:       electronics-menu
 Requires:	wxPython
 Requires:       python
+Requires: 	libcurl
 
 %if 0%{?el7}
 %else
