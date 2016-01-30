@@ -29,8 +29,8 @@ Source2:        %{name}-libraries-%{version}.tar.xz
 #Source3:        %{name}-footprints-%{version}.tar.xz
 #Source7:        Epcos-MKT-1.0.tar.bz2
 #Source8:        %{name}-walter-libraries-%{version}.tar.xz
-
-Patch1:         kicad-4.0.0-nostrip.patch
+#disabled, breaks in devel version
+#Patch1:         kicad-4.0.0-nostrip.patch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  wxGTK3-devel
@@ -80,7 +80,7 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 %prep
 %setup -q -a 1 -a 2
 
-%patch1 -p1
+#%patch1 -p1
 
 
 #kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
