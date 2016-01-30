@@ -45,6 +45,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  bzip2-devel
 BuildRequires:  bzr
 BuildRequires:  gettext
+BuildRequires:  glm-devel
 
 Requires:       electronics-menu
 Requires:	wxPython
