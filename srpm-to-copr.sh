@@ -20,7 +20,7 @@ echo and the status of the build, here:
 echo https://copr.fedoraproject.org/coprs/mangelajo/kicad/builds/ 
 set -x
 
-copr-cli build kicad $SRPM_URL
+copr-cli build @kicad/kicad $SRPM_URL
 
 set +x
 echo DONE, check installation instructions here: 

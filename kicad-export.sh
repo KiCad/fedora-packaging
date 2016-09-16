@@ -4,7 +4,7 @@ set -x
 get_last_rev()
 {
  cd $1 
- bzr log | head -2 | tail -1 | cut -d\  -f 2
+ printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
  cd ..
 }
 
@@ -14,27 +14,21 @@ LIB_REV=$(get_last_rev kicad-library.bzr)
 TIMESTAMP="$MAIN_REV"
 
 cd kicad.bzr
-rm -rf kicad-$TIMESTAMP
-bzr export kicad-$TIMESTAMP
-echo "Creating kicad-$TIMESTAMP.tar.xz ..."
-tar cJf ../kicad-$TIMESTAMP.tar.xz kicad-$TIMESTAMP
-rm -rf kicad-$TIMESTAMP
+echo "Creating kicad-$TIMESTAMP.tar.gz ..."
+git archive --format=tar.gz HEAD > ../kicad-$TIMESTAMP.tar.gz
+#bzr export kicad-$TIMESTAMP
+#echo "Creating kicad-$TIMESTAMP.tar.xz ..."
+#tar cJf ../kicad-$TIMESTAMP.tar.xz kicad-$TIMESTAMP
+#rm -rf kicad-$TIMESTAMP
 
 cd ../kicad-library.bzr
-rm -rf kicad-libraries-$TIMESTAMP
-bzr export kicad-libraries-$TIMESTAMP
-echo "Creating kicad-libraries-$TIMESTAMP.tar.xz ..."
-tar cJf ../kicad-libraries-$TIMESTAMP.tar.xz kicad-libraries-$TIMESTAMP
-rm -rf kicad-libraries-$TIMESTAMP
+echo "Creating kicad-libraries-$TIMESTAMP.tar.gz ..."
+git archive --format=tar.gz HEAD > ../kicad-libraries-$TIMESTAMP.tar.gz
 
-cd ..
-rm -rf kicad-i18n-$TIMESTAMP
-mkdir kicad-i18n-$TIMESTAMP
-cp -rfp kicad-i18n/* kicad-i18n-$TIMESTAMP
-rm -rf kicad-i18n-$TIMESTAMP/.git
-tar cJf kicad-i18n-$TIMESTAMP.tar.xz kicad-i18n-$TIMESTAMP
-rm -rf kicad-i18n-$TIMESTAMP
 
+cd ../kicad-i18n
+echo "Creating kicad-i18n-$TIMESTAMP.tar.gz ..."
+git archive --format=tar.gz HEAD > ../kicad-i18n-$TIMESTAMP.tar.gz
 
 #TODO(mangelajo): new docs?
 #cd ../kicad-doc.bzr

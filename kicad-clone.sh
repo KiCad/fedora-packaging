@@ -3,18 +3,18 @@ set -e
 set -x
 if [ -d kicad.bzr ]; then
 	cd kicad.bzr
-	bzr update 
+	git pull
 	cd ..
 else 
-	bzr checkout lp:kicad kicad.bzr
+	git clone https://git.launchpad.net/kicad kicad.bzr
 fi
 
 if [ -d kicad-library.bzr ]; then
 	cd kicad-library.bzr
-	bzr update 
+	git pull 
 	cd ..
 else
-	bzr checkout lp:~kicad-product-committers/kicad/library kicad-library.bzr
+	git clone https://github.com/KiCad/kicad-library.git kicad-library.bzr
 fi
 
 if [ -d kicad-i18n ]; then
