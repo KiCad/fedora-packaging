@@ -3,7 +3,8 @@ set -e
 set -x
 if [ -d kicad.bzr ]; then
 	cd kicad.bzr
-	git pull
+	git fetch origin
+	git reset --hard origin/master
 	cd ..
 else 
 	git clone https://git.launchpad.net/kicad kicad.bzr
@@ -11,7 +12,8 @@ fi
 
 if [ -d kicad-library.bzr ]; then
 	cd kicad-library.bzr
-	git pull 
+	git fetch origin
+	git reset --hard origin/master
 	cd ..
 else
 	git clone https://github.com/KiCad/kicad-library.git kicad-library.bzr
@@ -19,7 +21,8 @@ fi
 
 if [ -d kicad-i18n ]; then
     cd kicad-i18n
-    git pull
+    git fetch origin
+    git reset --hard origin/master
     cd ..
 else
     git clone https://github.com/KiCad/kicad-i18n.git
