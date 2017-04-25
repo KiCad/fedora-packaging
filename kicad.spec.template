@@ -36,7 +36,7 @@ Source2:        %{name}-libraries-%{version}.tar.gz
 #Patch1:         kicad-4.0.0-nostrip.patch
 
 BuildRequires:  desktop-file-utils
-BuildRequires:  wxGTK3-devel
+BuildRequires:  compat-wxGTK3-gtk2-devel
 BuildRequires:  wxPython-devel
 BuildRequires:  python-devel
 BuildRequires:  swig
