@@ -4,7 +4,7 @@ set -e
 
 WORKSPACE_URL=$1
 
-SRPM_FILE=$(fedpkg --dist master srpm | grep Wrote | cut -d\  -f 2)
+SRPM_FILE=$(fedpkg --release master srpm | grep Wrote | cut -d\  -f 2)
 SRPM_FILENAME=$(basename $SRPM_FILE)
 if [ "$( whoami )" == "jenkins" ]; then
         SRPM_URL="$WORKSPACE_URL$SRPM_FILENAME"	
