@@ -51,9 +51,10 @@ BuildRequires:  gettext
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
 Requires:       electronics-menu
-Requires:	wxPython
+Requires:       wxPython
 Requires:       python
-Requires: 	libcurl
+Requires:       libcurl
+Requires:       compat-wxGTK3-gtk2
 
 %if 0%{?el7}
 %else
@@ -104,9 +105,6 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 
 %build
 
-ln -s $(which wx-config-3.0) ./wx-config
-export PATH=$(pwd):$PATH
-
 
 # Add Epcos library
 #cd Epcos-MKT-1.0
@@ -142,11 +140,19 @@ else
    SKIP_BOOST="-DKICAD_SKIP_BOOST=ON"
 fi
 
+# compat-wxGTK3-gtk2-devel is now merged with wxGTK3-devel and uses a single wx-config
+%if 0%{?fedora} > 27
+%global wx_config wx-config
+%else
+%global wx_config wx-config-3.0-gtk2
+%endif
+
 %cmake -DKICAD_STABLE_VERSION=OFF $SKIP_BOOST \
 				  -DKICAD_SCRIPTING=ON \
 				  -DKICAD_SCRIPTING_MODULES=ON \
 				  -DKICAD_SCRIPTING_WXPYTHON=ON \
-                  -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config}
 # workaround to get WXPYTHON_VERSION set in config.h
 make rebuild_cache
 # end workaround
