@@ -153,6 +153,8 @@ fi
 				  -DKICAD_SCRIPTING=OFF \
 				  -DKICAD_SCRIPTING_MODULES=OFF \
 				  -DKICAD_SCRIPTING_WXPYTHON=OFF \
+          -DKICAD_USE_OCE=OFF \
+          -DkicAD_SPICE=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
           -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config}
 # workaround to get WXPYTHON_VERSION set in config.h
