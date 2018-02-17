@@ -28,6 +28,15 @@ else
     git clone https://github.com/KiCad/kicad-i18n.git
 fi
 
+if [ -d kicad-footprints ]; then
+    cd kicad-footprints
+    git fetch origin
+    git reset --hard origin/master
+    cd ..
+else
+    git clone https://github.com/KiCad/kicad-footprints.git
+fi
+
 #TODO(mangelajo): pull the new doc builds
 #if [ -d kicad-doc.bzr ]; then
 #	cd kicad-doc.bzr
@@ -36,17 +45,3 @@ fi
 #else
 #	bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
 #fi
-
-
-exit 0
-
-sed -n 's|.*\${KIGITHUB}/\([^)]*\)).*|\1|p'  kicad-library.bzr/template/fp-lib-table.for-github > footprint.list
-
-mkdir -p footprints
-cat footprint.list |while read FP
-	do
-		git clone https://github.com/KiCad/$FP footprints/$FP ||
-			print "$FP missing, possibly gone from GitHub now"
-	done
-
-
