@@ -8,8 +8,6 @@ Version:        REVISION_NUMBER
 Epoch:          100
 Release:        nightlies%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
-Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
-Summary(es):    Esquemas electrónicos y diseño de circuitos impresos
 
 Group:          Applications/Engineering
 License:        GPLv2+
@@ -70,16 +68,6 @@ Kicad is a set of four softwares and a project manager:
 - Pcbnew: board editor
 - Cvpcb: footprint selector for components used in the circuit design
 - Gerbview: GERBER viewer (photoplotter documents)
-
-%description -l fr
-Kicad est un logiciel open source (GPL) pour la création de schémas
-électroniques et le tracé de circuits imprimés jusqu'à 16 couches.
-Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
-- Kicad : gestionnaire de projet.
-- Eeschema : saisie de schémas
-- Pcbnew : éditeur de circuits imprimés
-- Cvpcb : sélecteur d'empreintes pour les composants utilisés dans le circuit
-- Gerbview : visualisateur GERBER (documents pour phototraçage)
 
 
 %prep
