@@ -128,26 +128,25 @@ popd
 # end workaround
 %make_build VERBOSE=1
 
+# Localization
+mkdir %{name}-i18n-%{version}/build
+pushd %{name}-i18n-%{version}/build
+%cmake \
+    -DKICAD_I18N_UNIX_STRICT_PATH=ON \
+    ..
+%make_build VERBOSE=1
+popd
+
 
 %install
 %{__rm} -rf %{buildroot}
 
 %{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 
-
-# install localization
-
-cd %{name}-i18n-%{version}
-mkdir build
-cd build
-cmake ..
-rm -rf CMakeFiles
-for dir in `ls -d */`
-do
-  install -m 644 -D ${dir}%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/LC_MESSAGES/%{name}.mo
-done
-cd ../..
-
+# Localization
+pushd %{name}-i18n-%{version}/build
+%make_install
+popd
 
 # install desktop
 for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
