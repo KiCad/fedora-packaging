@@ -40,6 +40,7 @@ BuildRequires:  bzr
 BuildRequires:  gettext
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
+BuildRequires:  libappstream-glib
 
 Requires:       electronics-menu
 #Requires:       wxPython
@@ -178,6 +179,10 @@ popd
 #%{__cp} -pr AUTHORS.txt CHANGELOG* %{buildroot}%{_docdir}/%{name}
 
 %find_lang %{name}
+
+
+%check
+appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata.xml
 
 
 %post
