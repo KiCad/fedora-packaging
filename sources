@@ -1,9 +1,6 @@
-8fc31113a865493f83c0978bca4896c8  kicad-5430.tar.xz
-9f4adb0b808e5bcfa91f3a430807c300  kicad-9.5377.tar.xz
-bfcbbb15267645f47d7965c3ea113cb7  kicad-doc-5430.tar.xz
-31b432a75974a44ff5b39b9f553cddaf  kicad-doc-9.5377.tar.xz
-5b311b66edf14057df4fa5682754c7c7  kicad-doc-nightlies.tar.xz
-d5f709c2cf5e9fd8e4defb64e8ad2392  kicad-libraries-5430.tar.xz
-3d42931886a4b20d5940e85ae77246a5  kicad-libraries-9.5377.tar.xz
-e90d12ed7b3723e9c927e3de73de44a4  kicad-libraries-nightlies.tar.xz
-2ca14836d3c23a178c0cd5de02538ad4  kicad-nightlies.tar.xz
+8faead3016a037492bc2ae3594b8a0d9  kicad-footprints-r12226.be8bb2439.tar.gz
+855d0e2786dc31cd6b1703350652fba9  kicad-i18n-r12226.be8bb2439.tar.gz
+4e25ea83aadbad60bb6d4d940a748905  kicad-packages3D-r12226.be8bb2439.tar.gz
+bf2d34c526bdc83b4791ea9f6e6c28cb  kicad-r12226.be8bb2439.tar.gz
+2eab9a15dcf5fe4078cd67ce23feb10f  kicad-symbols-r12226.be8bb2439.tar.gz
+83786ce5d0bd114463f0d99f039cf83c  kicad-templates-r12226.be8bb2439.tar.gz
