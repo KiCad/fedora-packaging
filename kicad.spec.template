@@ -64,11 +64,6 @@ Kicad is a set of four softwares and a project manager:
 
 #%patch1 -p1
 
-
-#kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
-iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
-
-
 #multilibs
 %ifarch x86_64 sparc64 ppc64 amd64 s390x
 #This seems to cause build errors 
