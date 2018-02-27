@@ -64,15 +64,6 @@ Kicad is a set of four softwares and a project manager:
 
 #%patch1 -p1
 
-#multilibs
-%ifarch x86_64 sparc64 ppc64 amd64 s390x
-#This seems to cause build errors 
-#%{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
-#%{__sed} -i "s|KICAD_LIB \${CMAKE_INSTALL_PREFIX}/lib|KICAD_LIB \${CMAKE_INSTALL_PREFIX}/lib64|" CMakeLists.txt
-#%{__sed} -i "s|KICAD_USER_PLUGIN \${CMAKE_INSTALL_PREFIX}/lib/kicad/plugins|KICAD_USER_PLUGIN \${CMAKE_INSTALL_PREFIX}/lib64/kicad/plugins|" CMakeLists.txt
-#%{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
-%endif
-
 
 %build
 
