@@ -6,7 +6,6 @@ Epoch:          100
 Release:        nightlies%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 
-Group:          Applications/Engineering
 License:        GPLv2+
 URL:            http://www.kicad-pcb.org
 
