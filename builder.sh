@@ -68,7 +68,7 @@ show_help () {
 	echo "     is specified, a \"debug\" build of the HEAD will be built." >&2
 	echo "" >&2
 	echo "If neither -c nor -m is specified, then no build will be done, but" >&2
-	echo "the SRPM will stull be prepared, and can be used to manually kick off" >&2
+	echo "the SRPM will still be prepared, and can be used to manually kick off" >&2
 	echo "a build at a later time." >&2
 	echo "" >&2
 	echo "example: $0 -c your_copr_id/kicad" >&2
