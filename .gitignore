@@ -3,3 +3,4 @@ kicad*.bzr
 kicad-i18n
 *.src.rpm
 kicad.spec
+sources
