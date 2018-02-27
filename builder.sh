@@ -178,11 +178,7 @@ RPMBUILD=build/rpmbuild
 rpmbuild --define "_topdir ${RPMBUILD}" -bs "${RPMBUILD}/SPECS/kicad.spec"
 
 # Get the name of the SRPM file.
-if [ "${TAG}" != "HEAD" ]; then
-	SRPM="build/rpmbuild/SRPMS/kicad-${TAG}.*.src.rpm"
-else
-	SRPM="build/rpmbuild/SRPMS/kicad-${COUNT}-${SHA}.*.src.rpm"
-fi
+SRPM="build/rpmbuild/SRPMS/kicad-${FULL_VERSION}.*.src.rpm"
 set +x
 echo "Prepared ${SRPM}"
 set -x
