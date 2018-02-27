@@ -28,8 +28,11 @@ URL:            http://www.kicad-pcb.org
 Source:         %{name}-%{version}.tar.gz
 #Source: https://github.com/KiCad/kicad-source-mirror/archive/%{commit}/kicad-source-mirror-%{commit}.tar.gz
 Source1:        %{name}-i18n-%{version}.tar.gz
-Source2:        %{name}-libraries-%{version}.tar.gz
+#Source2:        %{name}-libraries-%{version}.tar.gz
 Source3:        %{name}-footprints-%{version}.tar.gz
+Source4:        %{name}-symbols-%{version}.tar.gz
+Source5:	%{name}-packages3D-%{version}.tar.gz
+Source6:	%{name}-templates-%{version}.tar.gz
 #Source7:        Epcos-MKT-1.0.tar.bz2
 #Source8:        %{name}-walter-libraries-%{version}.tar.xz
 #disabled, breaks in devel version
@@ -86,7 +89,7 @@ Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
 
 
 %prep
-%setup -q -a 1 -a 2 -a 3
+%setup -q -a 1 -a 3 -a 4 -a 5 -a 6
 
 #%patch1 -p1
 
@@ -121,19 +124,27 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 #cd ..
 
 #
-# Symbols libraries
+# Libraries
 #
-pushd %{name}-libraries-%{version}/
+
+pushd %{name}-footprints-%{version}/
 %cmake -DKICAD_STABLE_VERSION=OFF
 %{__make} -j3 VERBOSE=1
 popd
 
-#
-# Footprint libraries
-#
-pushd %{name}-footprints-%{version}/
-%cmake
-%{__make} %{?_smp_mflags} VERBOSE=1
+pushd %{name}-symbols-%{version}/
+%cmake -DKICAD_STABLE_VERSION=OFF
+%{__make} -j3 VERBOSE=1
+popd
+
+pushd %{name}-packages3D-%{version}/
+%cmake -DKICAD_STABLE_VERSION=OFF
+%{__make} -j3 VERBOSE=1
+popd
+
+pushd %{name}-templates-%{version}/
+%cmake -DKICAD_STABLE_VERSION=OFF
+%{__make} -j3 VERBOSE=1
 popd
 
 #
@@ -163,6 +174,7 @@ fi
           -DKICAD_USE_OCE=OFF \
           -DKICAD_SPICE=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
+          -DKICAD_VERSION_EXTRA=REVISION_NUMBER \
           -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config}
 # workaround to get WXPYTHON_VERSION set in config.h
 make rebuild_cache
@@ -200,22 +212,28 @@ for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
   ${desktopfile}
 done
 
-#
-# Symbols libraries
-#
-pushd %{name}-libraries-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
-popd
-
 # install template
 install -d %{buildroot}%{_datadir}/%{name}/template
 install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
 
-#
-# Footprint libraries
-#
+# Footprints
 pushd %{name}-footprints-%{version}/
-%make_install
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+popd
+
+# Symbols
+pushd %{name}-symbols-%{version}/
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+popd
+
+# 3D models
+pushd %{name}-packages3D-%{version}/
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+popd
+
+# Templates
+pushd %{name}-templates-%{version}/
+%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
 popd
 
 # Preparing for documentation pull-ups
@@ -275,6 +293,9 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Sun Feb 25 2018 Steven A. Falco <stevenfalco@gmail.com>
+- Use Kicad 5 libraries
+
 * Sat Jan 30 2016 Miguel Ángel Ajo <miguelangel@ajo.es>
 - Import the stable branch 4.0.0 patch for nostrip
 
