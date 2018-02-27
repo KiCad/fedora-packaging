@@ -17,10 +17,10 @@ URL:            http://www.kicad-pcb.org
 
 Source:         %{name}-%{version}.tar.gz
 Source1:        %{name}-i18n-%{version}.tar.gz
-Source3:        %{name}-footprints-%{version}.tar.gz
-Source4:        %{name}-symbols-%{version}.tar.gz
-Source5:	%{name}-packages3D-%{version}.tar.gz
-Source6:	%{name}-templates-%{version}.tar.gz
+Source2:        %{name}-templates-%{version}.tar.gz
+Source3:        %{name}-symbols-%{version}.tar.gz
+Source4:        %{name}-footprints-%{version}.tar.gz
+Source5:        %{name}-packages3D-%{version}.tar.gz
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
 
@@ -60,7 +60,7 @@ Kicad is a set of four softwares and a project manager:
 
 
 %prep
-%setup -q -a 1 -a 3 -a 4 -a 5 -a 6
+%setup -q -a 1 -a 2 -a 3 -a 4 -a 5
 
 #%patch1 -p1
 
@@ -75,30 +75,6 @@ Kicad is a set of four softwares and a project manager:
 
 
 %build
-
-#
-# Libraries
-#
-
-pushd %{name}-footprints-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-symbols-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-packages3D-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-templates-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
 
 # compat-wxGTK3-gtk2-devel is now merged with wxGTK3-devel and uses a single wx-config
 %if 0%{?fedora} > 27
@@ -137,6 +113,30 @@ pushd %{name}-i18n-%{version}/build
 %make_build VERBOSE=1
 popd
 
+# Templates
+pushd %{name}-templates-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# Symbol libraries
+pushd %{name}-symbols-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# Footprint libraries
+pushd %{name}-footprints-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# 3D models
+pushd %{name}-packages3D-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
 
 %install
 %{__rm} -rf %{buildroot}
@@ -157,28 +157,24 @@ for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
   ${desktopfile}
 done
 
-# install template
-install -d %{buildroot}%{_datadir}/%{name}/template
-install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
-
-# Footprints
-pushd %{name}-footprints-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+# Templates
+pushd %{name}-templates-%{version}/
+%make_install
 popd
 
-# Symbols
+# Symbol libraries
 pushd %{name}-symbols-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+%make_install
+popd
+
+# Footprint libraries
+pushd %{name}-footprints-%{version}/
+%make_install
 popd
 
 # 3D models
 pushd %{name}-packages3D-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
-popd
-
-# Templates
-pushd %{name}-templates-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+%make_install
 popd
 
 # Preparing for documentation pull-ups
