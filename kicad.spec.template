@@ -16,14 +16,11 @@ License:        GPLv2+
 URL:            http://www.kicad-pcb.org
 # URL2:         https://launchpad.net/kicad
 # URL3:         http://orson.net.pl/pub/kicad/
-# Additional librairies from Walter Lain
-# URL4:         http://smisioto.no-ip.org/elettronica/kicad/kicad-en.htm
 
 # Source files created with the following scripts ...
 #   kicad-clone.sh ... clone BZR repositories of main, libraries, doc
 #   kicad-update.sh ... update BZR repositories
 #   kicad-export.sh ... export BZR repositories and create tarballs
-#   kicad-walter-libs.sh ... download, unpack and prepare tarball with walter libs
 
 Source:         %{name}-%{version}.tar.gz
 #Source: https://github.com/KiCad/kicad-source-mirror/archive/%{commit}/kicad-source-mirror-%{commit}.tar.gz
@@ -32,8 +29,6 @@ Source3:        %{name}-footprints-%{version}.tar.gz
 Source4:        %{name}-symbols-%{version}.tar.gz
 Source5:	%{name}-packages3D-%{version}.tar.gz
 Source6:	%{name}-templates-%{version}.tar.gz
-#Source7:        Epcos-MKT-1.0.tar.bz2
-#Source8:        %{name}-walter-libraries-%{version}.tar.xz
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
 
@@ -108,19 +103,6 @@ iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUT
 
 
 %build
-
-
-# Add Epcos library
-#cd Epcos-MKT-1.0
-#cp -pR library ../%{name}-libraries-%{version}/
-#cp -pR modules ../%{name}-libraries-%{version}/
-#cd ..
-
-# Add Walter libraries
-#cd %{name}-walter-libraries-%{version}
-#cp -pR library ../%{name}-libraries-%{version}/
-#cp -pR modules ../%{name}-libraries-%{version}/
-#cd ..
 
 #
 # Libraries
