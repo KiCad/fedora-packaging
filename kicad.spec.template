@@ -46,12 +46,7 @@ Requires:       electronics-menu
 #Requires:       python
 Requires:       libcurl
 Requires:       compat-wxGTK3-gtk2
-
-%if 0%{?el7}
-%else
-# Requires:   freerouting
-Requires:	boost
-%endif
+Requires:       boost
 
 %description
 Kicad is an EDA software to design electronic schematic
@@ -110,19 +105,6 @@ pushd %{name}-templates-%{version}/
 %{__make} -j3 VERBOSE=1
 popd
 
-#
-# Core components
-#
-
-echo dist: "%{?dist}"
-
-if [ "%{?dist}" == ".el7.centos" ]; then
-   SKIP_BOOST=""
-   bzr whoami "KiCad COPR builder <builder@kicad-pcb.org>"
-else
-   SKIP_BOOST="-DKICAD_SKIP_BOOST=ON"
-fi
-
 # compat-wxGTK3-gtk2-devel is now merged with wxGTK3-devel and uses a single wx-config
 %if 0%{?fedora} > 27
 %global wx_config wx-config
@@ -130,20 +112,26 @@ fi
 %global wx_config wx-config-3.0-gtk2
 %endif
 
-%cmake -DKICAD_STABLE_VERSION=OFF $SKIP_BOOST \
-				  -DKICAD_SCRIPTING=OFF \
-				  -DKICAD_SCRIPTING_MODULES=OFF \
-				  -DKICAD_SCRIPTING_WXPYTHON=OFF \
-          -DKICAD_USE_OCE=OFF \
-          -DKICAD_SPICE=OFF \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DKICAD_VERSION_EXTRA=REVISION_NUMBER \
-          -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config}
+# KiCad application
+%cmake \
+    -DUSE_WX_GRAPHICS_CONTEXT=OFF \
+    -DUSE_WX_OVERLAY=OFF \
+    -DKICAD_SCRIPTING=OFF \
+    -DKICAD_SCRIPTING_MODULES=OFF \
+    -DKICAD_SCRIPTING_WXPYTHON=OFF \
+    -DKICAD_SCRIPTING_ACTION_MENU=OFF \
+    -DKICAD_USE_OCE=OFF \
+    -DKICAD_INSTALL_DEMOS=ON \
+    -DBUILD_GITHUB_PLUGIN=ON \
+    -DKICAD_SPICE=OFF \
+    -DKICAD_VERSION_EXTRA=REVISION_NUMBER%{?dist} \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \
+    .
 # workaround to get WXPYTHON_VERSION set in config.h
-make rebuild_cache
+%{__make} rebuild_cache
 # end workaround
-
-%{__make} %{?_smp_mflags} VERBOSE=1
+%make_build VERBOSE=1
 
 
 %install
