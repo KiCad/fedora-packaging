@@ -55,11 +55,11 @@ else
 	git clone https://github.com/KiCad/kicad-i18n.git
 fi
 
-#TODO(mangelajo): pull the new doc builds
-#if [ -d kicad-doc.bzr ]; then
-#	cd kicad-doc.bzr
-#	bzr update 
-#	cd ..
-#else
-#	bzr branch --stacked lp:~kicad-developers/kicad/doc kicad-doc.bzr
-#fi
+if [ -d kicad-doc ]; then
+	cd kicad-doc
+	git fetch origin
+	git reset --hard origin/master
+	cd ..
+else
+	git clone https://github.com/KiCad/kicad-doc.git
+fi

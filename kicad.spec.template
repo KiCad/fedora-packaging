@@ -19,6 +19,7 @@ Source2:        %{name}-templates-%{version}.tar.gz
 Source3:        %{name}-symbols-%{version}.tar.gz
 Source4:        %{name}-footprints-%{version}.tar.gz
 Source5:        %{name}-packages3D-%{version}.tar.gz
+Source6:        %{name}-doc-%{version}.tar.gz
 
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
@@ -41,6 +42,9 @@ BuildRequires:  gettext
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
 BuildRequires:  libappstream-glib
+BuildRequires:  asciidoc
+BuildRequires:  dblatex
+BuildRequires:  po4a
 
 Requires:       electronics-menu
 #Requires:       wxPython
@@ -59,10 +63,18 @@ Kicad is a set of four softwares and a project manager:
 - Cvpcb: footprint selector for components used in the circuit design
 - Gerbview: GERBER viewer (photoplotter documents)
 
+%package doc
+Summary:        Documentation for KiCad
+License:        GPLv3+
+BuildArch:      noarch
+
+%description doc
+Documentation for KiCad.
+
 
 %prep
 
-%setup -q -a 1 -a 2 -a 3 -a 4 -a 5
+%setup -q -a 1 -a 2 -a 3 -a 4 -a 5 -a 6
 #%patch1 -p1
 
 
@@ -129,6 +141,15 @@ pushd %{name}-packages3D-%{version}/
 %make_build VERBOSE=1
 popd
 
+# Documentation (HTML only)
+mkdir %{name}-doc-%{version}/build
+pushd %{name}-doc-%{version}/build
+%cmake \
+    -DBUILD_FORMATS=html \
+    ..
+%make_build
+popd
+
 
 %install
 
@@ -170,13 +191,10 @@ pushd %{name}-packages3D-%{version}/
 %make_install
 popd
 
-# Preparing for documentation pull-ups
-#%{__rm} -f  %{name}-doc-%{version}/doc/help/CMakeLists.txt
-#%{__rm} -f  %{name}-doc-%{version}/doc/help/makefile
-#%{__rm} -f  %{name}-doc-%{version}/doc/tutorials/CMakeLists.txt
-#
-#%{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
-#%{__cp} -pr AUTHORS.txt CHANGELOG* %{buildroot}%{_docdir}/%{name}
+# Documentation
+pushd %{name}-doc-%{version}/build
+%make_install
+popd
 
 %find_lang %{name}
 
@@ -219,12 +237,12 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 %{_datadir}/mime/packages/*.xml
 %{_datadir}/appdata/*.xml
 #%config(noreplace) %{_sysconfdir}/ld.so.conf.d/kicad.conf
-#%dir %{_docdir}/%{name}/
+
+%files doc
 %{_docdir}/%{name}/*.txt
-%dir %{_docdir}/%{name}/scripts/
+%{_docdir}/%{name}/help/*
 %{_docdir}/%{name}/scripts/*
-#%dir %{_docdir}/%{name}/scripts/bom-in-python/
-#%{_docdir}/%{name}/scripts/bom-in-python/*
+%license %{name}-doc-%{version}/LICENSE.adoc
 
 
 %changelog
