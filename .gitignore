@@ -1,6 +1,2 @@
-*.tar.gz
-kicad*.bzr
-kicad-i18n
-*.src.rpm
-kicad.spec
-sources
+.*.sw?
+build
