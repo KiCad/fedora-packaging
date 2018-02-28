@@ -177,8 +177,8 @@ set -x
 RPMBUILD=build/rpmbuild
 rpmbuild --define "_topdir ${RPMBUILD}" -bs "${RPMBUILD}/SPECS/kicad.spec"
 
-# Get the name of the SRPM file.
-SRPM="build/rpmbuild/SRPMS/kicad-${FULL_VERSION}.*.src.rpm"
+# Get the name of the SRPM file.  We have to fill in the "dist" field.
+SRPM=$(find build/rpmbuild/SRPMS -name "kicad-${FULL_VERSION}.*.src.rpm")
 set +x
 echo "Prepared ${SRPM}"
 set -x
