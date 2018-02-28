@@ -41,11 +41,6 @@ cd ../kicad-i18n
 echo "Creating kicad-i18n-$TIMESTAMP.tar.gz ..."
 git archive --format=tar.gz --prefix=kicad-i18n-$TIMESTAMP/ HEAD > ../kicad-i18n-$TIMESTAMP.tar.gz
 
-#TODO(mangelajo): new docs?
-#cd ../kicad-doc.bzr
-#rm -rf kicad-doc-$TIMESTAMP
-#bzr export kicad-doc-$TIMESTAMP
-#echo "Creating kicad-doc-$TIMESTAMP.tar.xz ..."
-#tar cJf ../kicad-doc-$TIMESTAMP.tar.xz kicad-doc-$TIMESTAMP
-#rm -rf kicad-doc-$TIMESTAMP
-#cd ..
+cd ../kicad-doc
+echo "Creating kicad-doc-$TIMESTAMP.tar.gz ..."
+git archive --format=tar.gz --prefix=kicad-doc-$TIMESTAMP/ HEAD > ../kicad-doc-$TIMESTAMP.tar.gz
