@@ -1,6 +1,3 @@
-#%global commit 56bf16c7849ea509296497ced621737e1f967108
-#%global shortcommit %(c=%{commit}; echo ${c:0:7})
-
 Name:           kicad
 Version:        REVISION_NUMBER
 # Higher epoch than stable builds to make sure your nightly builds are prioritized
@@ -8,32 +5,21 @@ Version:        REVISION_NUMBER
 Epoch:          100
 Release:        nightlies%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
-Summary(fr):    Saisie de schéma électronique et routage de circuit imprimé
-Summary(es):    Esquemas electrónicos y diseño de circuitos impresos
 
-Group:          Applications/Engineering
 License:        GPLv2+
 URL:            http://www.kicad-pcb.org
-# URL2:         https://launchpad.net/kicad
-# URL3:         http://orson.net.pl/pub/kicad/
-# Additional librairies from Walter Lain
-# URL4:         http://smisioto.no-ip.org/elettronica/kicad/kicad-en.htm
 
 # Source files created with the following scripts ...
 #   kicad-clone.sh ... clone BZR repositories of main, libraries, doc
 #   kicad-update.sh ... update BZR repositories
 #   kicad-export.sh ... export BZR repositories and create tarballs
-#   kicad-walter-libs.sh ... download, unpack and prepare tarball with walter libs
-
 Source:         %{name}-%{version}.tar.gz
-#Source: https://github.com/KiCad/kicad-source-mirror/archive/%{commit}/kicad-source-mirror-%{commit}.tar.gz
 Source1:        %{name}-i18n-%{version}.tar.gz
-Source3:        %{name}-footprints-%{version}.tar.gz
-Source4:        %{name}-symbols-%{version}.tar.gz
-Source5:	%{name}-packages3D-%{version}.tar.gz
-Source6:	%{name}-templates-%{version}.tar.gz
-#Source7:        Epcos-MKT-1.0.tar.bz2
-#Source8:        %{name}-walter-libraries-%{version}.tar.xz
+Source2:        %{name}-templates-%{version}.tar.gz
+Source3:        %{name}-symbols-%{version}.tar.gz
+Source4:        %{name}-footprints-%{version}.tar.gz
+Source5:        %{name}-packages3D-%{version}.tar.gz
+
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
 
@@ -54,17 +40,14 @@ BuildRequires:  bzr
 BuildRequires:  gettext
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
+BuildRequires:  libappstream-glib
+
 Requires:       electronics-menu
 #Requires:       wxPython
 #Requires:       python
 Requires:       libcurl
 Requires:       compat-wxGTK3-gtk2
-
-%if 0%{?el7}
-%else
-# Requires:   freerouting
-Requires:	boost
-%endif
+Requires:       boost
 
 %description
 Kicad is an EDA software to design electronic schematic
@@ -76,88 +59,14 @@ Kicad is a set of four softwares and a project manager:
 - Cvpcb: footprint selector for components used in the circuit design
 - Gerbview: GERBER viewer (photoplotter documents)
 
-%description -l fr
-Kicad est un logiciel open source (GPL) pour la création de schémas
-électroniques et le tracé de circuits imprimés jusqu'à 16 couches.
-Kicad est un ensemble de quatres logiciels et un gestionnaire de projet :
-- Kicad : gestionnaire de projet.
-- Eeschema : saisie de schémas
-- Pcbnew : éditeur de circuits imprimés
-- Cvpcb : sélecteur d'empreintes pour les composants utilisés dans le circuit
-- Gerbview : visualisateur GERBER (documents pour phototraçage)
-
 
 %prep
-%setup -q -a 1 -a 3 -a 4 -a 5 -a 6
 
+%setup -q -a 1 -a 2 -a 3 -a 4 -a 5
 #%patch1 -p1
 
 
-#kicad-doc.noarch: W: file-not-utf8 /usr/share/doc/kicad/AUTHORS.txt
-iconv -f iso8859-1 -t utf-8 AUTHORS.txt > AUTHORS.conv && mv -f AUTHORS.conv AUTHORS.txt
-
-
-#multilibs
-%ifarch x86_64 sparc64 ppc64 amd64 s390x
-#This seems to cause build errors 
-#%{__sed} -i "s|KICAD_PLUGINS lib/kicad/plugins|KICAD_PLUGINS lib64/kicad/plugins|" CMakeLists.txt
-#%{__sed} -i "s|KICAD_LIB \${CMAKE_INSTALL_PREFIX}/lib|KICAD_LIB \${CMAKE_INSTALL_PREFIX}/lib64|" CMakeLists.txt
-#%{__sed} -i "s|KICAD_USER_PLUGIN \${CMAKE_INSTALL_PREFIX}/lib/kicad/plugins|KICAD_USER_PLUGIN \${CMAKE_INSTALL_PREFIX}/lib64/kicad/plugins|" CMakeLists.txt
-#%{__sed} -i "s|/usr/lib/kicad|/usr/lib64/kicad|" %{SOURCE3}
-%endif
-
-
 %build
-
-
-# Add Epcos library
-#cd Epcos-MKT-1.0
-#cp -pR library ../%{name}-libraries-%{version}/
-#cp -pR modules ../%{name}-libraries-%{version}/
-#cd ..
-
-# Add Walter libraries
-#cd %{name}-walter-libraries-%{version}
-#cp -pR library ../%{name}-libraries-%{version}/
-#cp -pR modules ../%{name}-libraries-%{version}/
-#cd ..
-
-#
-# Libraries
-#
-
-pushd %{name}-footprints-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-symbols-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-packages3D-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-pushd %{name}-templates-%{version}/
-%cmake -DKICAD_STABLE_VERSION=OFF
-%{__make} -j3 VERBOSE=1
-popd
-
-#
-# Core components
-#
-
-echo dist: "%{?dist}"
-
-if [ "%{?dist}" == ".el7.centos" ]; then
-   SKIP_BOOST=""
-   bzr whoami "KiCad COPR builder <builder@kicad-pcb.org>"
-else
-   SKIP_BOOST="-DKICAD_SKIP_BOOST=ON"
-fi
 
 # compat-wxGTK3-gtk2-devel is now merged with wxGTK3-devel and uses a single wx-config
 %if 0%{?fedora} > 27
@@ -166,73 +75,99 @@ fi
 %global wx_config wx-config-3.0-gtk2
 %endif
 
-%cmake -DKICAD_STABLE_VERSION=OFF $SKIP_BOOST \
-				  -DKICAD_SCRIPTING=OFF \
-				  -DKICAD_SCRIPTING_MODULES=OFF \
-				  -DKICAD_SCRIPTING_WXPYTHON=OFF \
-          -DKICAD_USE_OCE=OFF \
-          -DKICAD_SPICE=OFF \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DKICAD_VERSION_EXTRA=REVISION_NUMBER \
-          -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config}
+# KiCad application
+%cmake \
+    -DUSE_WX_GRAPHICS_CONTEXT=OFF \
+    -DUSE_WX_OVERLAY=OFF \
+    -DKICAD_SCRIPTING=OFF \
+    -DKICAD_SCRIPTING_MODULES=OFF \
+    -DKICAD_SCRIPTING_WXPYTHON=OFF \
+    -DKICAD_SCRIPTING_ACTION_MENU=OFF \
+    -DKICAD_USE_OCE=OFF \
+    -DKICAD_INSTALL_DEMOS=ON \
+    -DBUILD_GITHUB_PLUGIN=ON \
+    -DKICAD_SPICE=OFF \
+    -DKICAD_VERSION_EXTRA=REVISION_NUMBER%{?dist} \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \
+    .
 # workaround to get WXPYTHON_VERSION set in config.h
-make rebuild_cache
+%{__make} rebuild_cache
 # end workaround
+%make_build VERBOSE=1
 
-%{__make} %{?_smp_mflags} VERBOSE=1
-
-
-%install
-%{__rm} -rf %{buildroot}
-
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
-
-
-# install localization
-
-cd %{name}-i18n-%{version}
-mkdir build
-cd build
-cmake ..
-rm -rf CMakeFiles
-for dir in `ls -d */`
-do
-  install -m 644 -D ${dir}%{name}.mo %{buildroot}%{_datadir}/locale/${dir}/LC_MESSAGES/%{name}.mo
-done
-cd ../..
-
-
-# install desktop
-for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
-  desktop-file-install \
-  --dir %{buildroot}%{_datadir}/applications \
-  --remove-category Development              \
-  --delete-original                          \
-  ${desktopfile}
-done
-
-# install template
-install -d %{buildroot}%{_datadir}/%{name}/template
-install -m 644 template/%{name}.pro %{buildroot}%{_datadir}/%{name}/template
-
-# Footprints
-pushd %{name}-footprints-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
-popd
-
-# Symbols
-pushd %{name}-symbols-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
-popd
-
-# 3D models
-pushd %{name}-packages3D-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+# Localization
+mkdir %{name}-i18n-%{version}/build
+pushd %{name}-i18n-%{version}/build
+%cmake \
+    -DKICAD_I18N_UNIX_STRICT_PATH=ON \
+    ..
+%make_build VERBOSE=1
 popd
 
 # Templates
 pushd %{name}-templates-%{version}/
-%{__make} INSTALL="install -p" DESTDIR=%{buildroot} install
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# Symbol libraries
+pushd %{name}-symbols-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# Footprint libraries
+pushd %{name}-footprints-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+# 3D models
+pushd %{name}-packages3D-%{version}/
+%cmake .
+%make_build VERBOSE=1
+popd
+
+
+%install
+
+# KiCad application
+%make_install
+%{__cp} -p AUTHORS.txt %{buildroot}%{_docdir}/%{name}
+
+# Localization
+pushd %{name}-i18n-%{version}/build
+%make_install
+popd
+
+# Desktop integration
+for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
+    desktop-file-install \
+    --dir %{buildroot}%{_datadir}/applications \
+    --remove-category Development \
+    --delete-original \
+    ${desktopfile}
+done
+
+# Templates
+pushd %{name}-templates-%{version}/
+%make_install
+popd
+
+# Symbol libraries
+pushd %{name}-symbols-%{version}/
+%make_install
+popd
+
+# Footprint libraries
+pushd %{name}-footprints-%{version}/
+%make_install
+popd
+
+# 3D models
+pushd %{name}-packages3D-%{version}/
+%make_install
 popd
 
 # Preparing for documentation pull-ups
@@ -242,11 +177,12 @@ popd
 #
 #%{__cp} -pr %{name}-doc-%{version}/doc/* %{buildroot}%{_docdir}/%{name}
 #%{__cp} -pr AUTHORS.txt CHANGELOG* %{buildroot}%{_docdir}/%{name}
-#
-# Drop this, it's no longer able to webstart the freerouter
-# and we have it available locally anyway
 
 %find_lang %{name}
+
+
+%check
+appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata.xml
 
 
 %post
@@ -258,10 +194,10 @@ update-desktop-database &> /dev/null || :
 %postun
 if [ $1 -eq 0 ]
 then
-  touch --no-create %{_datadir}/icons/hicolor || :
-  gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
-  touch --no-create %{_datadir}/mime/packages &> /dev/null || :
-  update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
+    touch --no-create %{_datadir}/icons/hicolor || :
+    gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+    touch --no-create %{_datadir}/mime/packages &> /dev/null || :
+    update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 fi
 update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
 
@@ -284,7 +220,7 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 %{_datadir}/appdata/*.xml
 #%config(noreplace) %{_sysconfdir}/ld.so.conf.d/kicad.conf
 #%dir %{_docdir}/%{name}/
-#%{_docdir}/%{name}/*.txt
+%{_docdir}/%{name}/*.txt
 %dir %{_docdir}/%{name}/scripts/
 %{_docdir}/%{name}/scripts/*
 #%dir %{_docdir}/%{name}/scripts/bom-in-python/
