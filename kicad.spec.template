@@ -3,15 +3,13 @@
 Name:           kicad
 Version:        @VERSION@
 Release:        %{version_suffix}%{?dist}
-Epoch:          1
+Epoch:          @EPOCH@
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 
 License:        GPLv3+
 URL:            http://www.kicad-pcb.org
 
-# Source files created with the following scripts ...
-#   kicad-clone.sh ... clone GIT repositories of main, doc, libs, etc.
-#   kicad-export.sh ... export GIT repositories and create tarballs
+# Source files created with the builder.sh script.
 Source0:        %{name}-%{version}-%{version_suffix}.tar.gz
 Source1:        %{name}-i18n-%{version}-%{version_suffix}.tar.gz
 Source2:        %{name}-doc-%{version}-%{version_suffix}.tar.gz

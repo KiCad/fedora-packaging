@@ -155,6 +155,7 @@ make_tar "kicad-packages3D"	"${FULL_VERSION}"	"${TAG}"
 if [ "${TAG}" != "HEAD" ]; then
 	# Building for release.
 	sed \
+		-e "s/@EPOCH@/1/" \
 		-e "s/@BUILD_TYPE@/Release/" \
 		-e "s/@VERSION@/${VERSION}/" \
 		-e "s/@VERSION_SUFFIX@/${SUFFIX}/" \
@@ -163,6 +164,7 @@ if [ "${TAG}" != "HEAD" ]; then
 else
 	# Building for debug.
 	sed \
+		-e "s/@EPOCH@/100/" \
 		-e "s/@BUILD_TYPE@/Debug/" \
 		-e "s/@VERSION@/${COUNT}/" \
 		-e "s/@VERSION_SUFFIX@/${SHA}/" \
