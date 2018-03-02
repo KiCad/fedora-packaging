@@ -64,6 +64,10 @@ show_help () {
 	echo "  -h shows this help message." >&2
 	echo "  -c COPR_ID performs a remote COPR build using the specified ID." >&2
 	echo "  -m MOCK_TARGET performs a local MOCK build for the specified target." >&2
+	echo "  -r RELEASE is only used when building a non-rc build via a tag.  It" >&2
+	echo "     defaults to \"1\".  Typical usage would be -t 5.0.0 -r 3 in" >&2
+	echo "     order to indicate that this is the 3rd iteration of the 5.0.0" >&2
+	echo "     build." >&2
 	echo "  -t TAG builds a \"release\" build of the specific tag.  If no tag" >&2
 	echo "     is specified, a \"debug\" build of the HEAD will be built." >&2
 	echo "" >&2
@@ -80,7 +84,8 @@ show_help () {
 COPR_ID=
 MOCK_TARGET=
 TAG=HEAD
-while getopts ":hc:m:t:" opt; do
+RELEASE=1
+while getopts ":hc:m:r:t:" opt; do
 	case "$opt" in
 		h)
 			show_help
@@ -91,6 +96,9 @@ while getopts ":hc:m:t:" opt; do
 			;;
 		m)
 			MOCK_TARGET="${OPTARG}"
+			;;
+		r)
+			RELEASE="${OPTARG}"
 			;;
 		t)
 			TAG="${OPTARG}"
@@ -126,20 +134,64 @@ get_one "kicad-symbols"		"https://github.com/KiCad"	"${TAG}"
 get_one "kicad-footprints"	"https://github.com/KiCad"	"${TAG}"
 get_one "kicad-packages3D"	"https://github.com/KiCad"	"${TAG}"
 
-# If our caller provided a tag we use it for all repos.  The tag will be
-# something like 5.0.0-rc1, and we need to split it into a version and
-# suffix for use in generating the spec file.
+# If our caller provided a tag, we use it for all repos.
 #
 # If no tag was specified, we use the latest revisions of all repos and we
 # synthesize a version string.
 if [ "${TAG}" != "HEAD" ]; then
-	VERSION="${TAG%%-*}"
-	SUFFIX="${TAG##*-}"
+	# Building for release via a tag.
 	FULL_VERSION="${TAG}"
+
+	# The tag will be something like 5.0.0-rc1 or 5.0.0.
+	#
+	# If it is like 5.0.0-rc1 then we need to split it into a version
+	# and suffix because spec files don't allow a "-" in the "Version:"
+	# line.
+	#
+	# If it is like 5.0.0 then there is nothing to split.
+	case "${TAG}" in
+		*-*)
+			# Split the tag.
+			VERSION="${TAG%%-*}"
+			RELEASE="${TAG##*-}"
+
+			# Create the spec file.
+			sed \
+				-e "s/@EPOCH@/1/" \
+				-e "s/@BUILD_TYPE@/Release/" \
+				-e "s/@VERSION@/${VERSION}/" \
+				-e "s/@RELEASE@/${RELEASE}/" \
+				-e "s/@FULL_VERSION@/${FULL_VERSION}/" \
+				-e "/@VERSION_EXTRA@/d" \
+				kicad.spec.template > build/rpmbuild/SPECS/kicad.spec
+			;;
+		*)
+			# Nothing to split.  Just create the spec file.
+			sed \
+				-e "s/@EPOCH@/1/" \
+				-e "s/@BUILD_TYPE@/Release/" \
+				-e "s/@VERSION@/${FULL_VERSION}/" \
+				-e "s/@RELEASE@/${RELEASE}/" \
+				-e "s/@FULL_VERSION@/${FULL_VERSION}/" \
+				-e "/@VERSION_EXTRA@/d" \
+				kicad.spec.template > build/rpmbuild/SPECS/kicad.spec
+			;;
+	esac
 else
+	# Building for debug without a tag.  Synthesize a version string
 	COUNT="$(get_rev_count 'build/kicad')"
 	SHA="$(get_last_rev 'build/kicad')"
 	FULL_VERSION="${COUNT}-${SHA}"
+
+	# Create the spec file.
+	sed \
+		-e "s/@EPOCH@/100/" \
+		-e "s/@BUILD_TYPE@/Debug/" \
+		-e "s/@VERSION@/${COUNT}/" \
+		-e "s/@RELEASE@/${SHA}/" \
+		-e "s/@FULL_VERSION@/${FULL_VERSION}/" \
+		-e "s/@VERSION_EXTRA@/-DKICAD_VERSION_EXTRA=${FULL_VERSION}/" \
+		kicad.spec.template > build/rpmbuild/SPECS/kicad.spec
 fi
 
 # Create tar-balls for each component of the build.
@@ -151,27 +203,6 @@ make_tar "kicad-symbols"	"${FULL_VERSION}"	"${TAG}"
 make_tar "kicad-footprints"	"${FULL_VERSION}"	"${TAG}"
 make_tar "kicad-packages3D"	"${FULL_VERSION}"	"${TAG}"
 
-# Create the spec file from a template.
-if [ "${TAG}" != "HEAD" ]; then
-	# Building for release.
-	sed \
-		-e "s/@EPOCH@/1/" \
-		-e "s/@BUILD_TYPE@/Release/" \
-		-e "s/@VERSION@/${VERSION}/" \
-		-e "s/@VERSION_SUFFIX@/${SUFFIX}/" \
-		-e "/@VERSION_EXTRA@/d" \
-		kicad.spec.template > build/rpmbuild/SPECS/kicad.spec
-else
-	# Building for debug.
-	sed \
-		-e "s/@EPOCH@/100/" \
-		-e "s/@BUILD_TYPE@/Debug/" \
-		-e "s/@VERSION@/${COUNT}/" \
-		-e "s/@VERSION_SUFFIX@/${SHA}/" \
-		-e "s/@VERSION_EXTRA@/-DKICAD_VERSION_EXTRA=${COUNT}-${SHA}/" \
-		kicad.spec.template > build/rpmbuild/SPECS/kicad.spec
-fi
-
 # Now that we have the components, we can generate an SRPM file.
 set +x
 echo "Generating SRPM" >&2
@@ -180,7 +211,7 @@ RPMBUILD=build/rpmbuild
 rpmbuild --define "_topdir ${RPMBUILD}" -bs "${RPMBUILD}/SPECS/kicad.spec"
 
 # Get the name of the SRPM file.  We have to fill in the "dist" field.
-SRPM=$(find build/rpmbuild/SRPMS -name "kicad-${FULL_VERSION}.*.src.rpm")
+SRPM=$(find build/rpmbuild/SRPMS -name "kicad-${FULL_VERSION}*.src.rpm")
 set +x
 echo "Prepared ${SRPM}"
 set -x
