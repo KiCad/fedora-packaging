@@ -196,8 +196,9 @@ fi
 # Do a remote copr build.
 if [ -n "${COPR_ID}" ]; then
 	set +x
+	STATUS_LOCATION=$(echo ${COPR_ID} | sed -e 's/@/g\//')
 	echo "Starting the remote copr build.  Check the status of the build here:"
-	echo "https://copr.fedoraproject.org/coprs/${COPR_ID}/builds/"
+	echo "https://copr.fedoraproject.org/coprs/${STATUS_LOCATION}/builds/"
 	set -x
 	copr-cli build "${COPR_ID}" "${SRPM}"
 fi
