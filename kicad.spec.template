@@ -1,9 +1,11 @@
+%global version_suffix @VERSION_SUFFIX@
+
 Name:           kicad
-Version:        REVISION_NUMBER
+Version:        @VERSION@
 # Higher epoch than stable builds to make sure your nightly builds are prioritized
 # if you enabled the nightly build repo
-Epoch:          100
-Release:        nightlies%{?dist}
+Epoch:          @EPOCH@
+Release:        %{version_suffix}%{?dist}
 Summary:        Electronic schematic diagrams and printed circuit board artwork
 
 License:        GPLv2+
@@ -13,13 +15,13 @@ URL:            http://www.kicad-pcb.org
 #   kicad-clone.sh ... clone BZR repositories of main, libraries, doc
 #   kicad-update.sh ... update BZR repositories
 #   kicad-export.sh ... export BZR repositories and create tarballs
-Source:         %{name}-%{version}.tar.gz
-Source1:        %{name}-i18n-%{version}.tar.gz
-Source2:        %{name}-templates-%{version}.tar.gz
-Source3:        %{name}-symbols-%{version}.tar.gz
-Source4:        %{name}-footprints-%{version}.tar.gz
-Source5:        %{name}-packages3D-%{version}.tar.gz
-Source6:        %{name}-doc-%{version}.tar.gz
+Source:         %{name}-%{version}-%{version_suffix}.tar.gz
+Source1:        %{name}-i18n-%{version}-%{version_suffix}.tar.gz
+Source2:        %{name}-templates-%{version}-%{version_suffix}.tar.gz
+Source3:        %{name}-symbols-%{version}-%{version_suffix}.tar.gz
+Source4:        %{name}-footprints-%{version}-%{version_suffix}.tar.gz
+Source5:        %{name}-packages3D-%{version}-%{version_suffix}.tar.gz
+Source6:        %{name}-doc-%{version}-%{version_suffix}.tar.gz
 
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
@@ -75,7 +77,7 @@ Documentation for KiCad.
 
 %prep
 
-%setup -q -a 1 -a 2 -a 3 -a 4 -a 5 -a 6
+%setup -q -n %{name}-%{version}-%{version_suffix} -a 1 -a 2 -a 3 -a 4 -a 5 -a 6
 #%patch1 -p1
 
 
@@ -100,8 +102,8 @@ Documentation for KiCad.
     -DKICAD_INSTALL_DEMOS=ON \
     -DBUILD_GITHUB_PLUGIN=ON \
     -DKICAD_SPICE=OFF \
-    -DKICAD_VERSION_EXTRA=REVISION_NUMBER%{?dist} \
-    -DCMAKE_BUILD_TYPE=Debug \
+    @VERSION_EXTRA@ \
+    -DCMAKE_BUILD_TYPE=@BUILD_TYPE@ \
     -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \
     .
 # workaround to get WXPYTHON_VERSION set in config.h
@@ -110,8 +112,8 @@ Documentation for KiCad.
 %make_build VERBOSE=1
 
 # Localization
-mkdir %{name}-i18n-%{version}/build
-pushd %{name}-i18n-%{version}/build
+mkdir %{name}-i18n-%{version}-%{version_suffix}/build
+pushd %{name}-i18n-%{version}-%{version_suffix}/build
 %cmake \
     -DKICAD_I18N_UNIX_STRICT_PATH=ON \
     ..
@@ -119,32 +121,32 @@ pushd %{name}-i18n-%{version}/build
 popd
 
 # Templates
-pushd %{name}-templates-%{version}/
+pushd %{name}-templates-%{version}-%{version_suffix}/
 %cmake .
 %make_build VERBOSE=1
 popd
 
 # Symbol libraries
-pushd %{name}-symbols-%{version}/
+pushd %{name}-symbols-%{version}-%{version_suffix}/
 %cmake .
 %make_build VERBOSE=1
 popd
 
 # Footprint libraries
-pushd %{name}-footprints-%{version}/
+pushd %{name}-footprints-%{version}-%{version_suffix}/
 %cmake .
 %make_build VERBOSE=1
 popd
 
 # 3D models
-pushd %{name}-packages3D-%{version}/
+pushd %{name}-packages3D-%{version}-%{version_suffix}/
 %cmake .
 %make_build VERBOSE=1
 popd
 
 # Documentation (HTML only)
-mkdir %{name}-doc-%{version}/build
-pushd %{name}-doc-%{version}/build
+mkdir %{name}-doc-%{version}-%{version_suffix}/build
+pushd %{name}-doc-%{version}-%{version_suffix}/build
 %cmake \
     -DBUILD_FORMATS=html \
     ..
@@ -159,7 +161,7 @@ popd
 %{__cp} -p AUTHORS.txt %{buildroot}%{_docdir}/%{name}
 
 # Localization
-pushd %{name}-i18n-%{version}/build
+pushd %{name}-i18n-%{version}-%{version_suffix}/build
 %make_install
 popd
 
@@ -173,27 +175,27 @@ for desktopfile in %{buildroot}%{_datadir}/applications/*.desktop ; do
 done
 
 # Templates
-pushd %{name}-templates-%{version}/
+pushd %{name}-templates-%{version}-%{version_suffix}/
 %make_install
 popd
 
 # Symbol libraries
-pushd %{name}-symbols-%{version}/
+pushd %{name}-symbols-%{version}-%{version_suffix}/
 %make_install
 popd
 
 # Footprint libraries
-pushd %{name}-footprints-%{version}/
+pushd %{name}-footprints-%{version}-%{version_suffix}/
 %make_install
 popd
 
 # 3D models
-pushd %{name}-packages3D-%{version}/
+pushd %{name}-packages3D-%{version}-%{version_suffix}/
 %make_install
 popd
 
 # Documentation
-pushd %{name}-doc-%{version}/build
+pushd %{name}-doc-%{version}-%{version_suffix}/build
 %make_install
 popd
 
@@ -243,7 +245,7 @@ update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 %{_docdir}/%{name}/*.txt
 %{_docdir}/%{name}/help/*
 %{_docdir}/%{name}/scripts/*
-%license %{name}-doc-%{version}/LICENSE.adoc
+%license %{name}-doc-%{version}-%{version_suffix}/LICENSE.adoc
 
 
 %changelog
