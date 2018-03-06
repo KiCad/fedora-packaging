@@ -109,8 +109,8 @@ Documentation for KiCad.
 %make_build VERBOSE=1
 
 # Localization
-mkdir %{name}-i18n-%{full_version}/build
-pushd %{name}-i18n-%{full_version}/build
+mkdir %{name}-i18n-%{full_version}/build/
+pushd %{name}-i18n-%{full_version}/build/
 %cmake \
     -DKICAD_I18N_UNIX_STRICT_PATH=ON \
     ..
@@ -142,8 +142,8 @@ pushd %{name}-packages3D-%{full_version}/
 popd
 
 # Documentation (HTML only)
-mkdir %{name}-doc-%{full_version}/build
-pushd %{name}-doc-%{full_version}/build
+mkdir %{name}-doc-%{full_version}/build/
+pushd %{name}-doc-%{full_version}/build/
 %cmake \
     -DBUILD_FORMATS=html \
     ..
@@ -155,10 +155,10 @@ popd
 
 # KiCad application
 %make_install
-%{__cp} -p AUTHORS.txt %{buildroot}%{_docdir}/%{name}
+%{__cp} -p AUTHORS.txt %{buildroot}%{_docdir}/%{name}/
 
 # Localization
-pushd %{name}-i18n-%{full_version}/build
+pushd %{name}-i18n-%{full_version}/build/
 %make_install
 popd
 
@@ -192,7 +192,7 @@ pushd %{name}-packages3D-%{full_version}/
 popd
 
 # Documentation
-pushd %{name}-doc-%{full_version}/build
+pushd %{name}-doc-%{full_version}/build/
 %make_install
 popd
 
