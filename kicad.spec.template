@@ -23,35 +23,35 @@ Source6:        %{name}-doc-%{full_version}.tar.gz
 #disabled, breaks in devel version
 #Patch1:         kicad-4.0.0-nostrip.patch
 
+BuildRequires:  cmake
+BuildRequires:  doxygen
 BuildRequires:  desktop-file-utils
+BuildRequires:  gettext
+BuildRequires:  git
+BuildRequires:  libappstream-glib
+BuildRequires:  swig
+BuildRequires:  boost-devel
+BuildRequires:  bzip2-devel
 BuildRequires:  compat-wxGTK3-gtk2-devel
+BuildRequires:  glew-devel
+BuildRequires:  glm-devel
+BuildRequires:  libcurl-devel
+BuildRequires:  openssl-devel
+#BuildRequires:  python-devel
 #BuildRequires:  wxPython-devel
 #BuildRequires:  compat-wxPython3-gtk2
 #BuildRequires:  compat-wxPython3-gtk2-devel
-#BuildRequires:  python-devel
-BuildRequires:  swig
-BuildRequires:  boost-devel
-BuildRequires:  cmake
-BuildRequires:  doxygen
-BuildRequires:  glew-devel
-BuildRequires:  openssl-devel
-BuildRequires:  bzip2-devel
-BuildRequires:  bzr
-BuildRequires:  gettext
-BuildRequires:  glm-devel
-BuildRequires:  libcurl-devel
-BuildRequires:  libappstream-glib
 BuildRequires:  asciidoc
 BuildRequires:  dblatex
 BuildRequires:  po4a
 BuildRequires:  perl(Unicode::GCString)
 
-Requires:       electronics-menu
-#Requires:       wxPython
-#Requires:       python
-Requires:       libcurl
-Requires:       compat-wxGTK3-gtk2
 Requires:       boost
+Requires:       compat-wxGTK3-gtk2
+Requires:       electronics-menu
+Requires:       libcurl
+#Requires:       python
+#Requires:       wxPython
 
 %description
 Kicad is an EDA software to design electronic schematic
