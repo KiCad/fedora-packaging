@@ -48,14 +48,13 @@ Requires:       boost
 Requires:       electronics-menu
 
 %description
-Kicad is an EDA software to design electronic schematic
-diagrams and printed circuit board artwork up to 16 layers.
-Kicad is a set of four softwares and a project manager:
-- Kicad: project manager
-- Eeschema: schematic entry
-- Pcbnew: board editor
-- Cvpcb: footprint selector for components used in the circuit design
-- Gerbview: GERBER viewer (photoplotter documents)
+KiCad is an open-source software tool for the creation of electronic schematic
+diagrams and PCB artwork. It does not present any board-size limitation and it
+can handle up to 32 copper layers, 14 technical layers and 4 auxiliary layers.
+Beneath its singular surface, KiCad incorporates an elegant ensemble of the
+following software tools: KiCad (project manager), Eeschema (schematic editor
+and component editor), Pcbnew (circuit board layout editor and footprint
+editor) and GerbView (Gerber viewer).
 
 %package doc
 Summary:        Documentation for KiCad
