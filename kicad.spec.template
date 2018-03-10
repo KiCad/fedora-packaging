@@ -45,12 +45,7 @@ BuildRequires:  po4a
 BuildRequires:  perl(Unicode::GCString)
 
 Requires:       boost
-Requires:       compat-wxGTK3-gtk2
 Requires:       electronics-menu
-Requires:       libcurl
-Requires:       OCE-visualization
-Requires:       python2
-#Requires:       wxPython
 
 %description
 Kicad is an EDA software to design electronic schematic
