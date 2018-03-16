@@ -47,7 +47,6 @@ BuildRequires:  dblatex
 BuildRequires:  po4a
 BuildRequires:  perl(Unicode::GCString)
 
-Requires:       boost
 Requires:       electronics-menu
 
 %description
