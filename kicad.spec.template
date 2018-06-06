@@ -26,6 +26,7 @@ ExclusiveArch: %{ix86} x86_64 %{arm} aarch64
 BuildRequires:  cmake
 BuildRequires:  doxygen
 BuildRequires:  desktop-file-utils
+BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
