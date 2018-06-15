@@ -200,7 +200,6 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 
 %post
 touch --no-create %{_datadir}/icons/hicolor || :
-touch --no-create %{_datadir}/mime/packages &> /dev/null || :
 update-desktop-database &> /dev/null || :
 
 
@@ -209,15 +208,12 @@ if [ $1 -eq 0 ]
 then
     touch --no-create %{_datadir}/icons/hicolor || :
     gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
-    touch --no-create %{_datadir}/mime/packages &> /dev/null || :
-    update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 fi
 update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
 
 
 %posttrans
 gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-update-mime-database %{?fedora:-n} %{_datadir}/mime &> /dev/null || :
 
 
 %files -f %{name}.lang
