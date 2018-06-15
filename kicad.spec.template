@@ -200,7 +200,6 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 
 %post
 touch --no-create %{_datadir}/icons/hicolor || :
-update-desktop-database &> /dev/null || :
 
 
 %postun
@@ -209,7 +208,6 @@ then
     touch --no-create %{_datadir}/icons/hicolor || :
     gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
 fi
-update-desktop-database %{_datadir}/applications > /dev/null 2>&1 || :
 
 
 %posttrans
