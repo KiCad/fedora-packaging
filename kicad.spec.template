@@ -24,15 +24,14 @@ Source6:        %{name}-doc-%{full_version}.tar.gz
 ExclusiveArch: %{ix86} x86_64 %{arm} aarch64
 
 BuildRequires:  cmake
-BuildRequires:  doxygen
 BuildRequires:  desktop-file-utils
+BuildRequires:  doxygen
 BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  git
 BuildRequires:  libappstream-glib
 BuildRequires:  swig
 BuildRequires:  boost-devel
-BuildRequires:  bzip2-devel
 BuildRequires:  compat-wxGTK3-gtk2-devel
 BuildRequires:  glew-devel
 BuildRequires:  glm-devel
@@ -40,8 +39,9 @@ BuildRequires:  libcurl-devel
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
 BuildRequires:  python2-devel
+
+# Documentation
 BuildRequires:  asciidoc
-BuildRequires:  dblatex
 BuildRequires:  po4a
 BuildRequires:  perl(Unicode::GCString)
 
