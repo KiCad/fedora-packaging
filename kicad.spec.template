@@ -56,6 +56,15 @@ following software tools: KiCad (project manager), Eeschema (schematic editor
 and component editor), Pcbnew (circuit board layout editor and footprint
 editor) and GerbView (Gerber viewer).
 
+%package packages3d
+Summary:        3D models for KiCad
+License:        CC-BY-SA
+BuildArch:      noarch
+Requires:       kicad
+
+%description packages3d
+3D models for KiCad.
+
 %package doc
 Summary:        Documentation for KiCad
 License:        GPLv3+
@@ -197,12 +206,17 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 %{_libdir}/libkicad_3dsg.so*
 %{_libdir}/%{name}/plugins/*
 %{python2_sitelib}/*
+%exclude %{_datadir}/%{name}/modules/packages3d/*
 %{_datadir}/%{name}/*
 %{_datadir}/appdata/*.xml
 %{_datadir}/applications/*.desktop
 %{_datadir}/icons/hicolor/*/mimetypes/application-x-*.*
 %{_datadir}/icons/hicolor/*/apps/*.*
 %{_datadir}/mime/packages/*.xml
+
+%files packages3d
+%{_datadir}/%{name}/modules/packages3d/*.3dshapes
+%license %{name}-packages3D-%{full_version}/LICENSE.md
 
 %files doc
 %{_docdir}/%{name}/*.txt
