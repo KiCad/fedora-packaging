@@ -103,7 +103,7 @@ Documentation for KiCad.
     -DCMAKE_BUILD_TYPE=@BUILD_TYPE@ \
     -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \
     .
-%make_build VERBOSE=1
+%make_build
 
 # Localization
 mkdir %{name}-i18n-%{full_version}/build/
@@ -111,31 +111,31 @@ pushd %{name}-i18n-%{full_version}/build/
 %cmake \
     -DKICAD_I18N_UNIX_STRICT_PATH=ON \
     ..
-%make_build VERBOSE=1
+%make_build
 popd
 
 # Templates
 pushd %{name}-templates-%{full_version}/
 %cmake .
-%make_build VERBOSE=1
+%make_build
 popd
 
 # Symbol libraries
 pushd %{name}-symbols-%{full_version}/
 %cmake .
-%make_build VERBOSE=1
+%make_build
 popd
 
 # Footprint libraries
 pushd %{name}-footprints-%{full_version}/
 %cmake .
-%make_build VERBOSE=1
+%make_build
 popd
 
 # 3D models
 pushd %{name}-packages3D-%{full_version}/
 %cmake .
-%make_build VERBOSE=1
+%make_build
 popd
 
 # Documentation (HTML only)
