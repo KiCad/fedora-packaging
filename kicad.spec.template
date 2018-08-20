@@ -202,11 +202,11 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 
 %files -f %{name}.lang
 %{_bindir}/*
+%{_libdir}/%{name}/
 %{_libdir}/libkicad_3dsg.so*
-%{_libdir}/%{name}/plugins/*
 %{python2_sitelib}/*
+%{_datadir}/%{name}/
 %exclude %{_datadir}/%{name}/modules/packages3d/*
-%{_datadir}/%{name}/*
 %{_datadir}/appdata/*.xml
 %{_datadir}/applications/*.desktop
 %{_datadir}/icons/hicolor/*/mimetypes/application-x-*.*
@@ -214,13 +214,11 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 %{_datadir}/mime/packages/*.xml
 
 %files packages3d
-%{_datadir}/%{name}/modules/packages3d/*.3dshapes
+%{_datadir}/%{name}/modules/packages3d/*.3dshapes/
 %license %{name}-packages3D-%{full_version}/LICENSE.md
 
 %files doc
-%{_docdir}/%{name}/*.txt
-%{_docdir}/%{name}/help/*
-%{_docdir}/%{name}/scripts/*
+%{_docdir}/%{name}/
 %license %{name}-doc-%{full_version}/LICENSE.adoc
 
 
