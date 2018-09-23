@@ -1,0 +1,10 @@
+diff --git a/pcbnew/python/plugins/touch_slider_wizard.py b/pcbnew/python/plugins/touch_slider_wizard.py
+index e0086e427..70924511f 100644
+--- a/pcbnew/python/plugins/touch_slider_wizard.py
++++ b/pcbnew/python/plugins/touch_slider_wizard.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python2
+ 
+ #
+ # This program source code file is part of KiCad, a free EDA CAD application.

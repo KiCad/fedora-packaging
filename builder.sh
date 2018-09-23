@@ -125,6 +125,9 @@ done
 rm -fr build/rpmbuild
 mkdir -p build/rpmbuild/{SPECS,SOURCES}
 
+# Copy all patches to the SOURCES directory.
+cp *.patch build/rpmbuild/SOURCES/
+
 # Get/update the source repos.
 get_one "kicad"			"https://git.launchpad.net"	"${TAG}"
 get_one "kicad-i18n"		"https://github.com/KiCad"	"${TAG}"
