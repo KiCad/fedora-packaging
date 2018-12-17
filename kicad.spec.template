@@ -39,7 +39,6 @@ BuildRequires:  libcurl-devel
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
 BuildRequires:  python2-devel
-BuildRequires:  mesa-libEGL-devel
 
 # Documentation
 BuildRequires:  asciidoc
