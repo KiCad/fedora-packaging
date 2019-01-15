@@ -20,6 +20,8 @@ Source4:        %{name}-footprints-%{full_version}.tar.gz
 Source5:        %{name}-packages3D-%{full_version}.tar.gz
 Source6:        %{name}-doc-%{full_version}.tar.gz
 
+Patch1:         kicad-5.0.2-ngspice.patch
+
 # https://bugs.launchpad.net/kicad/+bug/1755752
 ExclusiveArch: %{ix86} x86_64 %{arm} aarch64
 
@@ -39,12 +41,14 @@ BuildRequires:  libcurl-devel
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
 BuildRequires:  python2-devel
+BuildRequires:  libngspice-devel
 
 # Documentation
 BuildRequires:  asciidoc
 BuildRequires:  po4a
 
 Requires:       electronics-menu
+Requires:       libngspice
 
 %description
 KiCad is an open-source software tool for the creation of electronic schematic
@@ -77,6 +81,8 @@ Documentation for KiCad.
 
 %setup -q -n %{name}-%{full_version} -a 1 -a 2 -a 3 -a 4 -a 5 -a 6
 
+%patch1 -p1
+
 
 %build
 
@@ -97,8 +103,8 @@ Documentation for KiCad.
     -DKICAD_SCRIPTING_ACTION_MENU=ON \
     -DKICAD_USE_OCE=ON \
     -DKICAD_INSTALL_DEMOS=ON \
-    -DBUILD_GITHUB_PLUGIN=ON \
-    -DKICAD_SPICE=OFF \
+    -DBUILD_GITHUB_PLUGIN=OFF \
+    -DKICAD_SPICE=ON \
     @VERSION_EXTRA@ \
     -DCMAKE_BUILD_TYPE=@BUILD_TYPE@ \
     -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \

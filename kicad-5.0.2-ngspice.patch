@@ -1,0 +1,37 @@
+From d8d2b70eab51656a8805461f3a8c8fd207519e86 Mon Sep 17 00:00:00 2001
+From: "Steven A. Falco" <stevenfalco@gmail.com>
+Date: Mon, 14 Jan 2019 10:39:17 -0500
+Subject: [PATCH] Filter out ngspice status lines containing backspaces.
+
+The ngspice library can output "percent complete" status lines, and the
+amount of status produced can exceed 1 megabyte.  Those lines contain
+embedded backspaces, and don't print correctly.  Therefore, we filter
+them out.
+---
+ eeschema/sim/sim_plot_frame.cpp | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/eeschema/sim/sim_plot_frame.cpp b/eeschema/sim/sim_plot_frame.cpp
+index 3812d0c3b..aa1d6b465 100644
+--- a/eeschema/sim/sim_plot_frame.cpp
++++ b/eeschema/sim/sim_plot_frame.cpp
+@@ -1282,8 +1282,14 @@ void SIM_PLOT_FRAME::onSimUpdate( wxCommandEvent& aEvent )
+ 
+ void SIM_PLOT_FRAME::onSimReport( wxCommandEvent& aEvent )
+ {
+-    m_simConsole->AppendText( aEvent.GetString() + "\n" );
+-    m_simConsole->SetInsertionPointEnd();
++    wxString t = aEvent.GetString();
++
++    // Toss any text with a string of embedded backspaces, as these are
++    // progress status lines that don't print properly.
++    if( t.find("\b\b\b") == wxString::npos ) {
++        m_simConsole->AppendText( t + "\n" );
++        m_simConsole->SetInsertionPointEnd();
++    }
+ }
+ 
+ 
+-- 
+2.20.1
+

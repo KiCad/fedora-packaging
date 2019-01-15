@@ -203,6 +203,9 @@ make_tar "kicad-symbols"	"${FULL_VERSION}"	"${TAG}"
 make_tar "kicad-footprints"	"${FULL_VERSION}"	"${TAG}"
 make_tar "kicad-packages3D"	"${FULL_VERSION}"	"${TAG}"
 
+# Copy in any patches.
+compgen -G "*.patch" > /dev/null && cp *.patch build/rpmbuild/SOURCES || :
+
 # Now that we have the components, we can generate an SRPM file.
 set +x
 echo "Generating SRPM" >&2
