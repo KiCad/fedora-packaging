@@ -20,8 +20,6 @@ Source4:        %{name}-footprints-%{full_version}.tar.gz
 Source5:        %{name}-packages3D-%{full_version}.tar.gz
 Source6:        %{name}-doc-%{full_version}.tar.gz
 
-Patch1:         kicad-5.0.2-ngspice.patch
-
 # https://bugs.launchpad.net/kicad/+bug/1755752
 ExclusiveArch: %{ix86} x86_64 %{arm} aarch64
 
@@ -81,8 +79,6 @@ Documentation for KiCad.
 %prep
 
 %setup -q -n %{name}-%{full_version} -a 1 -a 2 -a 3 -a 4 -a 5 -a 6
-
-%patch1 -p1
 
 
 %build
