@@ -32,7 +32,15 @@ BuildRequires:  git
 BuildRequires:  libappstream-glib
 BuildRequires:  swig
 BuildRequires:  boost-devel
+%if 0%{?fedora} > 28
+BuildRequires:  wxGTK3-devel
+BuildRequires:  wxPython-devel
+BuildRequires:  python3-wxpython4
+BuildRequires:  python3-devel
+%else
 BuildRequires:  compat-wxGTK3-gtk2-devel
+BuildRequires:  python2-devel
+%endif
 BuildRequires:  glew-devel
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
@@ -41,7 +49,6 @@ BuildRequires:  libngspice-devel
 %endif
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
-BuildRequires:  python2-devel
 
 # Documentation
 BuildRequires:  asciidoc
@@ -92,13 +99,21 @@ Documentation for KiCad.
 %global kicad_spice OFF
 %endif
 
+%if 0%{?fedora} > 28
+%global wx_scripting ON
+%else
+%global wx_scripting OFF
+%endif
+
 # KiCad application
 %cmake \
     -DUSE_WX_GRAPHICS_CONTEXT=OFF \
     -DUSE_WX_OVERLAY=OFF \
     -DKICAD_SCRIPTING=ON \
     -DKICAD_SCRIPTING_MODULES=ON \
-    -DKICAD_SCRIPTING_WXPYTHON=OFF \
+    -DKICAD_SCRIPTING_WXPYTHON=%{wx_scripting} \
+    -DKICAD_SCRIPTING_WXPYTHON_PHOENIX=%{wx_scripting} \
+    -DKICAD_SCRIPTING_PYTHON3=%{wx_scripting} \
     -DKICAD_SCRIPTING_ACTION_MENU=ON \
     -DKICAD_USE_OCE=ON \
     -DKICAD_INSTALL_DEMOS=ON \
@@ -209,7 +224,11 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 %{_bindir}/*
 %{_libdir}/%{name}/
 %{_libdir}/libkicad_3dsg.so*
+%if 0%{?fedora} > 28
+%{python3_sitelib}/*
+%else
 %{python2_sitelib}/*
+%endif
 %{_datadir}/%{name}/
 %exclude %{_datadir}/%{name}/modules/packages3d/*
 %{_datadir}/appdata/*.xml
