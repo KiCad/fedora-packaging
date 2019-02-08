@@ -32,15 +32,6 @@ BuildRequires:  git
 BuildRequires:  libappstream-glib
 BuildRequires:  swig
 BuildRequires:  boost-devel
-%if 0%{?fedora} > 28
-BuildRequires:  wxGTK3-devel
-BuildRequires:  wxPython-devel
-BuildRequires:  python3-wxpython4
-BuildRequires:  python3-devel
-%else
-BuildRequires:  compat-wxGTK3-gtk2-devel
-BuildRequires:  python2-devel
-%endif
 BuildRequires:  glew-devel
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
@@ -49,12 +40,23 @@ BuildRequires:  libngspice-devel
 %endif
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
+%if 0%{?fedora} > 28
+BuildRequires:  python3-wxpython4
+BuildRequires:  python3-devel
+BuildRequires:  wxGTK3-devel
+%else
+BuildRequires:  compat-wxGTK3-gtk2-devel
+BuildRequires:  python2-devel
+%endif
 
 # Documentation
 BuildRequires:  asciidoc
 BuildRequires:  po4a
 
 Requires:       electronics-menu
+%if 0%{?fedora} > 28
+Requires:       python3-wxpython4
+%endif
 
 %description
 KiCad is an open-source software tool for the creation of electronic schematic
