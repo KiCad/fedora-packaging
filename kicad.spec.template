@@ -35,9 +35,7 @@ BuildRequires:  boost-devel
 BuildRequires:  glew-devel
 BuildRequires:  glm-devel
 BuildRequires:  libcurl-devel
-%if 0%{?fedora} > 27
 BuildRequires:  libngspice-devel
-%endif
 BuildRequires:  OCE-devel
 BuildRequires:  openssl-devel
 %if 0%{?fedora} > 28
@@ -92,15 +90,6 @@ Documentation for KiCad.
 
 %build
 
-# compat-wxGTK3-gtk2-devel is now merged with wxGTK3-devel and uses a single wx-config
-%if 0%{?fedora} > 27
-%global wx_config wx-config
-%global kicad_spice ON
-%else
-%global wx_config wx-config-3.0-gtk2
-%global kicad_spice OFF
-%endif
-
 %if 0%{?fedora} > 28
 %global wx_scripting ON
 %else
@@ -120,10 +109,9 @@ Documentation for KiCad.
     -DKICAD_USE_OCE=ON \
     -DKICAD_INSTALL_DEMOS=ON \
     -DBUILD_GITHUB_PLUGIN=ON \
-    -DKICAD_SPICE=%{kicad_spice} \
+    -DKICAD_SPICE=ON \
     @VERSION_EXTRA@ \
     -DCMAKE_BUILD_TYPE=@BUILD_TYPE@ \
-    -DwxWidgets_CONFIG_EXECUTABLE=%{_bindir}/%{wx_config} \
     .
 %make_build
 
