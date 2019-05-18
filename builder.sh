@@ -78,7 +78,7 @@ show_help () {
 	echo "a build at a later time." >&2
 	echo "" >&2
 	echo "example: $0 -c your_copr_id/kicad" >&2
-	echo "example: $0 -m fedora-27-x86_64" >&2
+	echo "example: $0 -m fedora-30-x86_64" >&2
 	set -x
 }
 
