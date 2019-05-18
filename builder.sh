@@ -14,7 +14,7 @@ get_one () {
 		cd "build/${WHAT}"
 		git fetch origin
 		git reset --hard origin/master
-		git checkout "${TAG}"
+		git checkout "${TAG}" || git checkout HEAD
 		)
 	else 
 		(
@@ -53,6 +53,8 @@ make_tar () {
 	echo "Creating ${WHAT}-${FULL_VERSION}.tar.gz from ${TAG}..."
 	set -x
 	git archive --format=tar.gz --prefix="${WHAT}-${FULL_VERSION}/" "${TAG}" > \
+		"../rpmbuild/SOURCES/${WHAT}-${FULL_VERSION}.tar.gz" ||
+	git archive --format=tar.gz --prefix="${WHAT}-${FULL_VERSION}/" HEAD > \
 		"../rpmbuild/SOURCES/${WHAT}-${FULL_VERSION}.tar.gz"
 	)
 }
