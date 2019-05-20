@@ -21,7 +21,7 @@ get_one () {
 		cd build
 		git clone "${WHERE}/${WHAT}"
 		cd "${WHAT}"
-		git checkout "${TAG}"
+		git checkout "${TAG}" || git checkout HEAD
 		)
 	fi
 }
