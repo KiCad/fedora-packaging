@@ -201,7 +201,8 @@ appstream-util validate-relax --nonet %{buildroot}/%{_datadir}/appdata/*.appdata
 %{_bindir}/*
 %{_libdir}/%{name}/
 %{_libdir}/libkicad_3dsg.so*
-%{python3_sitelib}/*
+%{python3_sitelib}/*pcbnew*
+%{python3_sitelib}/__pycache__/*
 %{_datadir}/%{name}/
 %exclude %{_datadir}/%{name}/modules/packages3d/*
 %{_datadir}/appdata/*.xml
