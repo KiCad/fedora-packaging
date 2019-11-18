@@ -40,15 +40,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  python3-wxpython4
 BuildRequires:  python3-devel
 BuildRequires:  wxGTK3-devel
-
-# For F32 and up, use opencascade rather than the community edition.
-%if 0%{?fedora} > 31
-%define CASCADE KICAD_USE_OCC
 BuildRequires:  opencascade-devel
-%else
-%define CASCADE KICAD_USE_OCE
-BuildRequires:  OCE-devel
-%endif
 
 # Documentation
 BuildRequires:  asciidoc
@@ -101,7 +93,7 @@ Documentation for KiCad.
     -DKICAD_SCRIPTING_WXPYTHON_PHOENIX=ON \
     -DKICAD_SCRIPTING_PYTHON3=ON \
     -DKICAD_SCRIPTING_ACTION_MENU=ON \
-    -D%{CASCADE}=ON \
+    -DKICAD_USE_OCC=ON \
     -DKICAD_INSTALL_DEMOS=ON \
     -DBUILD_GITHUB_PLUGIN=ON \
     -DKICAD_SPICE=ON \
