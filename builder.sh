@@ -128,7 +128,7 @@ rm -fr build/rpmbuild
 mkdir -p build/rpmbuild/{SPECS,SOURCES}
 
 # Get/update the source repos.
-get_one "kicad"			"https://git.launchpad.net"	"${TAG}"
+get_one "kicad.git"			"https://gitlab.com/kicad/code"	"${TAG}"
 get_one "kicad-i18n"		"https://github.com/KiCad"	"${TAG}"
 get_one "kicad-doc"		"https://github.com/KiCad"	"${TAG}"
 get_one "kicad-templates"	"https://github.com/KiCad"	"${TAG}"
